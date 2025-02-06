@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling==1.26.3"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pikaia"
+version = "0.0.2"
+authors = [
+  { name="Philipp Wissgott", email="philipp@danube.ai" },
+  { name="Andreas Roschal", email="andreas@danube.ai" },
+  { name="Martin Bär", email="martin@danube.ai" }
+]
+description = "Data analysis with evolutionary simulation"
+keywords = ["data analysis", "AI", "evolutionary simulation"]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "numpy",
+  "matplotlib>=3.6.3",
+  "string",
+  "pandas>=1.5.3"
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["*.py"]
+exclude = ["tmp", "examples"]
+
+[project.urls]
+Homepage = "https://github.com/danube-ai/pikaia"
+Issues = "https://github.com/danube-ai/pikaia/issues"
