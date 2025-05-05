@@ -5,14 +5,25 @@ import numpy as np
 import pikaia
 import pikaia.alg
 
+from pikaia.alg import GSStrategy
+from pikaia.alg import OSStrategy
+
 class Search:
     """
     Class that performs a string-based search over a data matrix
-    using Genetic AI.
-    """
+    and sorts the results using Genetic AI.
 
+    Args:
+        inputdata(matrix of shape `(n, m)`): A matrix containing
+            structured data.
+        orgs_labels(list of strings, optional): The organism labels used 
+            for plotting.
+        gene_labels(list of strings, optional): The gene labels used
+            for plotting. Length should be m.
+        
+    """
     def __init__(self, input_data, orgs_labels, gene_labels):
-        self._data = input_data  
+        self._data = input_data
         self._gene_labels = gene_labels
         self._orgs_labels = orgs_labels
 
@@ -39,7 +50,7 @@ class Search:
         if cutoff is None:
             cutoff = self._data.shape[0]
 
-        # Get the relevant colum for each feature and create a new matrix
+        # Get the relevant column for each feature and create a new matrix
         data_subset = self._data[:cutoff, query_feature_ids]
 
         # Use percentage rule for all features except year
@@ -67,12 +78,14 @@ class Search:
         # Convert raw data to population
         population = pikaia.alg.Population(data_subset, gvfitnessrules)
 
-        strategy = ["GS Dominant", "OS Balanced"]
-        # Use this for AltSel strategies (reduce maxiter for performance)
-        # strategy = ["GS Altruistic", "OS Selfish"]
+        strategies = pikaia.alg.Strategies(GSStrategy.DOMINANT, OSStrategy.BALANCED)
+
+        # Use this for AltSel strategies
+        #strategies = pikaia.alg.Strategies(GSStrategy.ALTRUISTIC, OSStrategy.SELFISH,
+        #kinrange=10)
 
         # Initialize model
-        model = pikaia.alg.Model(population, strategy)
+        model = pikaia.alg.Model(population, strategies)
 
         # Start with a uniform distribution
         n_features = data_subset.shape[1]
@@ -89,7 +102,7 @@ class Search:
             return [f_name for f_weight, f_name in zip(self._data[org_index,:], self._gene_labels)
                     if f_weight != 0]
 
-        # Function to get the feature values for a selected organism 
+        # Function to get the feature values for a selected organism
         def get_feature_values(organism):
             org_index = self._orgs_labels.index(organism)
             return [(f_name, f_weight)
@@ -104,6 +117,7 @@ class Search:
         ))
 
         gene_fitness_labels = [(l, f) for l, f in zip(query_features, gene_fitness)]
+
         # Return the top_k fittest organisms
         return org_fitness[:top_k], gene_fitness_labels
 

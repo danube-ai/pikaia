@@ -16,6 +16,7 @@ import pandas as pd
 
 from pikaia.search import Search
 
+
 def load_data(path: Union[str, os.PathLike]) -> Tuple[np.array, list, list]:
     """
     Loads the data and converts it to numpy.

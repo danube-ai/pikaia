@@ -2,12 +2,16 @@ import numpy as np
 import string
 
 import pikaia.alg
-
+from pikaia.alg import GVRule
 
 rawdata3x3 = np.zeros([3,3])
+rawdata3x3B = np.zeros([3,3])
 rawdata3x3[:,:] = [[ 300, 10, 2],
                    [ 600,  5, 2],
                    [1500,  4, 1]]
+rawdata3x3B[:,:] = [[ 300, 10, 2],
+                    [ 600,  5, 1],
+                    [700,  4, 1]]
 
 rawdata10x5 = np.zeros([10,5])
 rawdata10x5[:,:] = [[300, 10 , 2, 0, 2.5],
@@ -22,7 +26,18 @@ rawdata10x5[:,:] = [[300, 10 , 2, 0, 2.5],
                     [1700, 4, 1, 2, 5.0]]
 
 class Example:
-    
+    """Class encapsulating the raw data and plotting information.
+
+    Args:
+        inputdata(matrix of shape `(n, m)`): A matrix containing
+            structured data.
+        genelabels(list of strings, optional): The gene labels used 
+            for plotting. Length should be m.
+        orglabels(list of strings, optional): The organism labels used 
+            for plotting.
+        labelpostfix(list of strings, optional): Postfixes describing
+            the strategy. Will be added to the labels when plotting.
+    """
     def __init__(self, inputdata, genelabels=None, orgslabels=None, labelpostfix=None):
         self._data = inputdata  
         self._genelabelsbase = genelabels
@@ -76,7 +91,9 @@ def assemble_example(specifier):
     """
     if specifier == "3x3-DomBal+AltSal":
         
-        gvfitnessrules = ["inv_percentage", "inv_percentage", "inv_percentage"]
+        gvfitnessrules = [GVRule.PERCENTAGE_INVERTED,
+                          GVRule.PERCENTAGE_INVERTED,
+                          GVRule.PERCENTAGE_INVERTED]
         inputdata = pikaia.alg.Population(rawdata3x3, gvfitnessrules)
 
         # defining plotting labels
@@ -84,21 +101,41 @@ def assemble_example(specifier):
         orgslabels = []
         for i in range(0, inputdata.n):
             orgslabels.append("flight " + string.ascii_uppercase[i])
-        labelpostfixes = ["(DomBal)", "(AltSel)"]
+        labelpostfixes = ["(DomBal)", "(AltSel)","(sc)"]
 
         return Example(inputdata, genelabels, orgslabels, labelpostfixes)
 
-    if specifier == "10x5-DomBal+AltSal":
+    elif specifier == "3x3-DomBal+AltSal-Capped":
         
-        gvfitnessrules = ["inv_percentage", "inv_percentage", "inv_percentage",
-                          "percentage", "percentage"] 
+        gvfitnessrules = [GVRule.PERCENTAGE_INVERTED_CAPPED,
+                          GVRule.PERCENTAGE_INVERTED_CAPPED,
+                          GVRule.PERCENTAGE_INVERTED_CAPPED]
+        
+        inputdata = pikaia.alg.Population(rawdata3x3, gvfitnessrules)
+
+        # defining plotting labels
+        genelabels = ["gene 1 = price", "gene 2 = time", "gene 3 = stops"]
+        orgslabels = []
+        for i in range(0, inputdata.n):
+            orgslabels.append("flight " + string.ascii_uppercase[i])
+        labelpostfixes = ["(DomBal)", "(AltSel)","(sc)"]
+
+        return Example(inputdata, genelabels, orgslabels, labelpostfixes)
+    
+    elif specifier == "10x5-DomBal+AltSal":
+        
+        gvfitnessrules = [GVRule.PERCENTAGE_INVERTED,
+                          GVRule.PERCENTAGE_INVERTED,
+                          GVRule.PERCENTAGE_INVERTED,
+                          GVRule.PERCENTAGE,
+                          GVRule.PERCENTAGE] 
         inputdata = pikaia.alg.Population(rawdata10x5, gvfitnessrules)
         genelabels = ["gene 1 = price", "gene 2 = time", "gene 3 = stops",
                       "gene 4 = luggage", "gene 5 = rating"]
         orgslabels = []
         for i in range(0, inputdata.n):
             orgslabels.append("flight " + string.ascii_uppercase[i])
-        labelpostfixes = ["(DomBal)", "(AltSel)"]
+        labelpostfixes = ["(DomBal)", "(AltSel)", "(sc)"]
 
         return Example(inputdata, genelabels, orgslabels, labelpostfixes)
         

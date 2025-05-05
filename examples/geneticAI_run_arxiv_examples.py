@@ -8,7 +8,8 @@ import pikaia.alg
 import pikaia.examples
 import pikaia.plot
 
-       
+from pikaia.alg import GSStrategy
+from pikaia.alg import OSStrategy
         
 
 if __name__ == "__main__":
@@ -44,14 +45,14 @@ if __name__ == "__main__":
     filename10x5orgs = relpath + 'Realworldexample_10x5_orgfitness'
     
     
-    iterations3x3 = 50
-    iterations10x5 = 500
+    iterations3x3 = 30
+    iterations10x5 = 60
     # Using epsilon allows to stop the simulation at ESE
     epsilon = None #0.00005
     
     # define used gene and organism strategies
-    strategyDomBal = ["GS Dominant", "OS Balanced"]
-    strategyAltSel = ["GS Altruistic", "OS Selfish"] 
+    strategyDomBal = pikaia.alg.Strategies(GSStrategy.DOMINANT, OSStrategy.BALANCED)
+    strategyAltSel = pikaia.alg.Strategies(GSStrategy.ALTRUISTIC, OSStrategy.SELFISH, kinrange=10)
     
     # create models and converge them for simple example 3x3
     dombalSmall = pikaia.alg.Model(example3x3.exampledata, strategyDomBal,
@@ -70,10 +71,11 @@ if __name__ == "__main__":
                           example10x5.get_gene_labels(0), example10x5.get_org_labels(0),
                           linestyles, markerstylesDomBal)
     dombalLarge.complete_run(initialgenefitness10x5, iterations10x5, epsilon=epsilon)
-    
+
+    #import pdb; pdb.set_trace()    
     altselLarge = pikaia.alg.Model(example10x5.exampledata, strategyAltSel,
                           example10x5.get_gene_labels(1), example10x5.get_org_labels(1),
-                          linestyles, markerstylesDomBal)
+                          linestyles, markerstylesAltSel)
     altselLarge.complete_run(initialgenefitness10x5, iterations10x5, epsilon=epsilon)
     pikaia.plot.plot_gene_fitness([dombalLarge, altselLarge], 1, show=True, savename=filename10x5gene)
      

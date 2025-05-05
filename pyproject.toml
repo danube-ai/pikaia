@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pikaia"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Philipp Wissgott", email="philipp@danube.ai" },
   { name="Andreas Roschal", email="andreas@danube.ai" },
@@ -23,7 +23,6 @@ license-files = ["LICEN[CS]E*"]
 dependencies = [
   "numpy",
   "matplotlib>=3.6.3",
-  "string",
   "pandas>=1.5.3"
 ]
 
