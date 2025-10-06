@@ -1,70 +1,208 @@
-# pikaia - Genetic AI
+<p align="center">
+    <img src="https://img.shields.io/pypi/v/pikaia?color=blue" alt="PyPI version">
+    <img src="https://img.shields.io/pypi/pyversions/pikaia" alt="Python version">
+    <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
+    <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
+</p>
 
-pikaia is the Python implementation of Genetic AI (evolutionary simulation for data analysis).
+# 🧬 Pikaia
 
-## Installation
+Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic programming, and AI-driven optimization. This package is designed for researchers, students, and practitioners interested in evolutionary computation and data analysis.
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install pikaia 
+---
+
+## ✨ Key Features
+
+- 🧬 Evolutionary simulation for data analysis
+- 📊 Built-in plotting and visualization
+- 🧩 Modular, extensible strategy system
+- 📝 Jupyter notebook examples included
+- 🔬 Scientific approach, ready for research and teaching
+
+---
+
+---
+
+## 📚 Table of Contents
+
+- [🧬 Pikaia](#-pikaia)
+  - [✨ Key Features](#-key-features)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [🚀 Installation](#-installation)
+  - [🛠️ Local Development](#️-local-development)
+    - [Prerequisites](#prerequisites)
+    - [Install UV](#install-uv)
+    - [Set up a Local Environment](#set-up-a-local-environment)
+  - [📝 Quickstart](#-quickstart)
+  - [🧬 Scientific Background](#-scientific-background)
+  - [👥 Authors \& Contact](#-authors--contact)
+  - [📄 License](#-license)
+  - [📚 How to Cite](#-how-to-cite)
+
+---
+
+## 🚀 Installation
+
+Install the package using pip:
 
 ```bash
 pip install pikaia
 ```
 
-## Usage 
+<p align="right">(<a href="#top">back to top</a>)</p>
 
-We provide here the code for the "hello_model" example
+---
 
-```python
-import pikaia
-import pikaia.alg
-          
+## 🛠️ Local Development
 
-rawdata = np.zeros([3,3])
-rawdata[:,:] = [[ 300, 10, 2],
-                [ 600,  5, 2],
-                [1500,  4, 1]]
-# defines the variant fitness rules
-gvfitnessrules = ["inv_percentage", "inv_percentage", "inv_percentage"]
-# converts the raw data to a genetic population
-data = pikaia.alg.Population(rawdata, gvfitnessrules)
-# defines the used evolutionary strategies
-strategy = ["GS Dominant", "OS Balanced"]
-iterations = 1
+For local development, we recommend using [UV](https://astral.sh/uv), a fast Python package installer and resolver.
 
-# creating the genetic model
-model = pikaia.alg.Model(data, strategy)
+### Prerequisites
 
-initialgenefitness = [1.0/3.0, 1.0/3.0, 1.0/3.0]
-# returns the gene fitness values after 1 iteration
-model.complete_run(initialgenefitness, iterations)
+Clone the repository and navigate to the project directory:
 
+```bash
+git clone https://github.com/danube-ai/pikaia.git
+cd pikaia
 ```
 
-## Examples
-```python
-# provides the data for a small decision problem
-example3x3 = pikaia.examples.assemble_example("3x3-DomBal+AltSal")
+### Install UV
 
-# provides the data for a real-world decision problem
-example10x5 = pikaia.examples.assemble_example("10x5-DomBal+AltSal")
+Install UV using the official installer:
 
-# use genetic ai to search a datafile using keywords and rank results
-# for a more detailed example we refer to examples/geneticAI_run_search_example.py
-search = pikaia.search.Search(data, orgs_labels, gens_labels)
-fitnessOrganisms, fitnessGenes = search.search_request(query, top_k=5)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-For details see examples/README.md.
+For more installation options, visit the [UV installation guide](https://astral.sh/uv/installation).
 
-## Scientific Background
+### Set up a Local Environment
 
-Please find the preprint of Genetic AI [here](http://arxiv.org/abs/2501.19113)
+1. Create a virtual environment:
 
+   ```bash
+   uv venv
+   ```
 
-In Genetic AI, we convert a data problem to a model of genes and organisms. Afterwards, we run evolutionary simulations to obtain understanding of the input data.
+2. Sync the dependencies (including development and notebook extras):
 
-Genetic AI is an AI that does not use training data to 'learn' but fully autonomously analyzes a problem. This is done by evolutionary strategies that cover certain 'behavior' and correlations of the input data.
+   ```bash
+   uv sync --extra dev --extra notebooks
+   ```
 
-## License
+3. Activate the virtual environment:
 
-[MIT](https://choosealicense.com/licenses/mit/)
+   ```bash
+   source .venv/bin/activate
+   ```
+
+   This installs the package in editable mode along with tools for development (e.g., testing with pytest, linting with ruff) and Jupyter notebooks. The `uv sync` command ensures reproducible installations using the locked dependencies in `uv.lock`.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+---
+
+## 📝 Quickstart
+
+Here's a minimal example to get you started:
+
+```python
+import numpy as np
+from pikaia.data import PikaiaPopulation
+from pikaia.models import PikaiaModel
+from pikaia.schemas import GeneStrategyEnum, OrgStrategyEnum, MixStrategyEnum
+from pikaia.strategies import GeneStrategyFactory, OrgStrategyFactory, MixStrategyFactory
+
+# Prepare a small dataset (3 samples, 3 features)
+data_3x3_raw = np.array([[300, 10, 2], [600, 5, 2], [1500, 4, 1]])
+data_min = data_3x3_raw.min(axis=0)
+data_max = data_3x3_raw.max(axis=0)
+data_3x3_scaled = (data_3x3_raw - data_min) / (data_max - data_min)
+population = PikaiaPopulation(data_3x3_scaled)
+
+# Define strategies
+gene_strategies = [
+    GeneStrategyFactory.get_strategy(GeneStrategyEnum.DOMINANT),
+    GeneStrategyFactory.get_strategy(GeneStrategyEnum.ALTRUISTIC),
+]
+org_strategies = [
+    OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED),
+    OrgStrategyFactory.get_strategy(OrgStrategyEnum.SELFISH),
+]
+gene_mix_strategy = org_mix_strategy = MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED)
+
+# Create and fit the model
+model = PikaiaModel(
+    population=population,
+    gene_strategies=gene_strategies,
+    org_strategies=org_strategies,
+    gene_mix_strategy=gene_mix_strategy,
+    org_mix_strategy=org_mix_strategy,
+    max_iter=32,
+)
+model.fit()
+
+print("Gene fitness history:", model.gene_fitness_history())
+```
+
+- Explore the `examples/` directory for Jupyter notebooks, Python scripts, and data files.
+- See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
+- See `examples/paper_example.py` for the paper example script.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+---
+
+## 🧬 Scientific Background
+
+Genetic AI is a framework for evolutionary simulation and data analysis. In Genetic AI, a data problem is converted into a model of genes and organisms, and evolutionary simulations are run to gain insight into the input data.
+
+- Genetic AI does **not** use training data to 'learn', but instead autonomously analyzes a problem using evolutionary strategies that capture behaviors and correlations in the data.
+- This approach is useful for understanding complex datasets, optimization, and exploring emergent properties in data-driven systems.
+
+**Preprint:** [Genetic AI (arXiv)](http://arxiv.org/abs/2501.19113)
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+---
+
+## 👥 Authors & Contact
+
+- Philipp Wissgott (<philipp@danube.ai>)
+- Andreas Roschal (<andreas@danube.ai>)
+- Martin Bär (<martin@danube.ai>)
+- Carlos U. Pérez Malla (<carlos@danube.ai>)
+
+For questions, suggestions, or contributions, please feel free to open an issue.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+---
+
+## 📄 License
+
+This project is licensed under the terms of the MIT License. See the [LICENSE](../LICENSE) file for details.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+---
+
+## 📚 How to Cite
+
+If you use Pikaia in your research, please cite our preprint:
+
+```bibtex
+@misc{wissgott2025geneticaievolutionarygames,
+            title={Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization},
+            author={Philipp Wissgott},
+            year={2025},
+            eprint={2501.19113},
+            archivePrefix={arXiv},
+            primaryClass={cs.NE},
+            url={https://arxiv.org/abs/2501.19113},
+}
+```
+
+**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
+
+<p align="right">(<a href="#top">back to top</a>)</p>

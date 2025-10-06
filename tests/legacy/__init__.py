@@ -1,0 +1,1 @@
+# Makes legacy a package
