@@ -67,8 +67,8 @@ class PikaiaModel:
                 Initial fitness values for each gene.
                 Defaults to a uniform distribution.
             max_iter (int, optional):
-                The maximum number of iterations for the simulation. Defaults to 1.
-                When set to 1, strategies and initial gene fitness will be ignored and
+                The maximum number of iterations for the simulation. Defaults to None.
+                When not set, strategies and initial gene fitness will be ignored and
                 the optimal solution will be computed directly.
             epsilon (float, optional):
                 The convergence threshold. If the L2 norm of the

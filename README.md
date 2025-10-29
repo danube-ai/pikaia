@@ -168,10 +168,10 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 
 ## 👥 Authors & Contact
 
-- Philipp Wissgott (<philipp@danube.ai>)
-- Andreas Roschal (<andreas@danube.ai>)
-- Martin Bär (<martin@danube.ai>)
-- Carlos U. Pérez Malla (<carlos@danube.ai>)
+- Philipp Wissgott
+- Andreas Roschal
+- Martin Bär
+- Carlos U. Pérez Malla
 
 For questions, suggestions, or contributions, please feel free to open an issue.
 

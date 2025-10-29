@@ -79,8 +79,10 @@ print("Fitting model...")
 model.fit()
 
 print("Gene fitness history shape:", model.gene_fitness_history.shape)
+print("Initial gene fitness:", model.gene_fitness_history[0])
 print("Final gene fitness:", model.gene_fitness_history[-1])
 print("Org fitness history shape:", model.organism_fitness_history.shape)
+print("Initial org fitness:", model.organism_fitness_history[0])
 print("Final org fitness:", model.organism_fitness_history[-1])
 print()
 

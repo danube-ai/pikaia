@@ -85,13 +85,17 @@ model_iterative = PikaiaModel(
 )
 model_iterative.fit()
 
+gene_fitness_iterative_initial = model_iterative._gene_fitness_hist[0, :]
+org_fitness_iterative_initial = model_iterative._org_fitness_hist[0, :]
 gene_fitness_iterative = model_iterative._gene_fitness_hist[-1, :]
 org_fitness_iterative = model_iterative._org_fitness_hist[-1, :]
 
 print(
     "Iterative model fitness values:"
-    f"\nGene Fitness:\n\t{gene_fitness_iterative}"
-    f"\nOrganism Fitness:\n\t{org_fitness_iterative}"
+    f"\nInitial Gene Fitness:\n\t{gene_fitness_iterative_initial}"
+    f"\nInitial Organism Fitness:\n\t{org_fitness_iterative_initial}"
+    f"\nFinal Gene Fitness:\n\t{gene_fitness_iterative}"
+    f"\nFinal Organism Fitness:\n\t{org_fitness_iterative}"
 )
 
 # Analytical model
@@ -103,13 +107,17 @@ model_analytical = PikaiaModel(
 )
 model_analytical.fit()
 
+gene_fitness_analytical_initial = model_analytical._gene_fitness_hist[0, :]
+org_fitness_analytical_initial = model_analytical._org_fitness_hist[0, :]
 gene_fitness_analytical = model_analytical._gene_fitness_hist[-1, :]
 org_fitness_analytical = model_analytical._org_fitness_hist[-1, :]
 
 print(
     "Analytical model fitness values:"
-    f"\nGene Fitness:\n\t{gene_fitness_analytical}"
-    f"\nOrganism Fitness:\n\t{org_fitness_analytical}"
+    f"\nInitial Gene Fitness:\n\t{gene_fitness_analytical_initial}"
+    f"\nInitial Organism Fitness:\n\t{org_fitness_analytical_initial}"
+    f"\nFinal Gene Fitness:\n\t{gene_fitness_analytical}"
+    f"\nFinal Organism Fitness:\n\t{org_fitness_analytical}"
 )
 
 # Difference plot
