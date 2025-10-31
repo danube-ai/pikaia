@@ -95,7 +95,7 @@ class TestGeneticLayer:
 
     def test_deterministic_output(self):
         """Test that output is deterministic for same input."""
-        layer = GeneticLayer(64, 32, 16)
+        layer = GeneticLayer(64, 32, 16, dropout_rate=0.0)
         x = torch.randn(10, 64)
         y1 = layer(x)
         y2 = layer(x)

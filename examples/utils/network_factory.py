@@ -20,7 +20,7 @@ def closest_power_of_2(x: float) -> int:
 
 
 class ClassicalNet(nn.Module):
-    """Classical feed-forward network with residual connections, ReLU, and dropout."""
+    """Classical feed-forward network with residual connections, SiLU, layer norm, and dropout."""
 
     def __init__(
         self,
@@ -33,7 +33,8 @@ class ClassicalNet(nn.Module):
         super().__init__()
         self.num_layers = num_layers
         self.linears = nn.ModuleList()
-        self.relus = nn.ModuleList()
+        self.layer_norms = nn.ModuleList()
+        self.silus = nn.ModuleList()
         self.dropouts = nn.ModuleList()
 
         in_features = input_size
@@ -41,7 +42,8 @@ class ClassicalNet(nn.Module):
             out_features = hidden_size if i < num_layers - 1 else output_size
             self.linears.append(nn.Linear(in_features, out_features))
             if i < num_layers - 1:
-                self.relus.append(nn.ReLU())
+                self.layer_norms.append(nn.LayerNorm(out_features))
+                self.silus.append(nn.SiLU())
                 self.dropouts.append(nn.Dropout(dropout))
             in_features = out_features
 
@@ -50,7 +52,8 @@ class ClassicalNet(nn.Module):
             identity = x
             x = self.linears[i](x)
             if i < self.num_layers - 1:
-                x = self.relus[i](x)
+                x = self.layer_norms[i](x)
+                x = self.silus[i](x)
                 x = self.dropouts[i](x)
                 # Residual connection if dimensions match
                 if x.shape == identity.shape:
