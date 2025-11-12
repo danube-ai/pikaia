@@ -203,6 +203,9 @@ If you use Pikaia in your research, please cite our preprint:
 }
 ```
 
-**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
+**Preprints:**
+
+- [Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization (arXiv)](https://arxiv.org/abs/2501.19113)
+- [Feature weighting for data analysis via evolutionary simulation (arXiv)](https://arxiv.org/abs/2511.06454)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
