@@ -8,10 +8,11 @@ from pytorch_lightning import LightningModule, Trainer
 class LitClassifier(LightningModule):
     """PyTorch Lightning module for classification."""
 
-    def __init__(self, model, learning_rate=1e-3):
+    def __init__(self, model, learning_rate=1e-3, genetic_lr_multiplier=0.5):
         super().__init__()
         self.model = model
         self.lr = learning_rate
+        self.genetic_lr_multiplier = genetic_lr_multiplier
         self.criterion = nn.CrossEntropyLoss()
         self.train_loss_history = []
         self.val_loss_history = []
@@ -30,6 +31,11 @@ class LitClassifier(LightningModule):
         loss = self.criterion(y_hat, y)
         self.log("train_loss", loss)
         self.epoch_train_losses.append(loss)
+
+        # Apply gradient clipping for genetic networks to prevent exploding gradients
+        if hasattr(self.model, "genetic_layers") or hasattr(self.model, "heads"):
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+
         return loss
 
     def on_train_epoch_end(self):
@@ -80,10 +86,21 @@ class LitClassifier(LightningModule):
 
 
 def train_and_evaluate(
-    model, train_loader, val_loader, max_epochs=10, learning_rate=1e-3
+    model,
+    train_loader,
+    val_loader,
+    max_epochs=10,
+    learning_rate=1e-3,
+    genetic_lr_multiplier=0.5,
 ):
     """Train the model and return evaluation metrics."""
-    lit_model = LitClassifier(model, learning_rate)
+    # Adjust learning rate multiplier based on architecture
+    if hasattr(model, "genetic_layers"):  # Feedforward genetic network
+        genetic_lr_multiplier = 0.9  # Less aggressive reduction for feedforward - they need higher learning rates
+    elif hasattr(model, "heads"):  # Heads genetic network
+        genetic_lr_multiplier = 0.5  # Keep more aggressive reduction for heads
+
+    lit_model = LitClassifier(model, learning_rate, genetic_lr_multiplier)
     trainer = Trainer(
         max_epochs=max_epochs,
         enable_progress_bar=False,
