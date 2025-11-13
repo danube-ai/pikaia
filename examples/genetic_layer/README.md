@@ -171,8 +171,17 @@ The benchmark results show clear performance differences between genetic and cla
 ![Digits Feedforward Comparison](artefacts/feedforward_comparison_digits.png)
 *Training curves for digits dataset (feedforward architecture): Classical networks converge to higher accuracy.*
 
+![Digits Accuracy vs Parameters (Feedforward)](artefacts/bal_acc_vs_params_digits_feedforward.png)
+*Accuracy vs parameter efficiency for digits (feedforward): Classical achieves better accuracy-parameter trade-off.*
+
+![Olivetti Feedforward Comparison](artefacts/feedforward_comparison_olivetti.png)
+*Training curves for Olivetti Faces dataset (feedforward architecture): Massive performance gap favoring classical.*
+
 ![Olivetti Heads Comparison](artefacts/heads_comparison_olivetti.png)
-*Training curves for Olivetti Faces dataset (heads architecture): Classical maintains superiority even with genetic heads-3.*
+*Training curves for Olivetti Faces (heads architecture): Classical maintains superiority even with genetic heads-3.*
+
+![Olivetti Accuracy vs Parameters (Heads)](artefacts/bal_acc_vs_params_olivetti_heads.png)
+*Accuracy vs parameter efficiency for Olivetti (heads): Genetic heads-3 approaches competitive accuracy with more parameters.*
 
 **Hypothesized Factors (requiring further investigation):**
 
@@ -202,11 +211,20 @@ The significant performance difference on high-dimensional datasets suggests sev
 
 **Visual Comparison:**
 
-![Wine Heads Comparison](artefacts/heads_comparison_wine.png)
-*Training curves for wine dataset (heads architecture): Genetic heads-2 matches classical performance.*
+![Iris Heads Comparison](artefacts/heads_comparison_iris.png)
+*Training curves for Iris dataset (heads architecture): Classical heads-2 significantly outperforms genetic.*
 
-![Wine Accuracy vs Parameters](artefacts/bal_acc_vs_params_wine_heads.png)
-*Accuracy vs parameter count for wine dataset: Genetic layers achieve competitive efficiency.*
+![Iris Accuracy vs Parameters (Heads)](artefacts/bal_acc_vs_params_iris_heads.png)
+*Accuracy vs parameter efficiency for Iris (heads): Classical achieves superior accuracy with fewer parameters.*
+
+![Wine Feedforward Comparison](artefacts/feedforward_comparison_wine.png)
+*Training curves for Wine dataset (feedforward architecture): Classical maintains edge over genetic.*
+
+![Wine Heads Comparison](artefacts/heads_comparison_wine.png)
+*Training curves for Wine (heads architecture): Genetic heads-2 matches classical performance - competitive convergence.*
+
+![Wine Accuracy vs Parameters (Heads)](artefacts/bal_acc_vs_params_wine_heads.png)
+*Accuracy vs parameter efficiency for Wine (heads): Genetic heads-2 achieves parity with classical at 97% accuracy.*
 
 **Hypothesized Factors (requiring further investigation):**
 
@@ -226,7 +244,7 @@ The near-parity performance on low-dimensional datasets, particularly with genet
 
 **Feedforward Architectures:**
 
-- **Breast Cancer**: Classical feedforward-6 achieves 99.3% accuracy vs genetic feedforward-2 at 95.6%
+- **Breast Cancer**: Classical feedforward-6 achieves 99.25% accuracy vs genetic feedforward-2 at 95.6%
 - **Synthetic**: Classical feedforward-6 achieves 61.0% accuracy vs genetic feedforward-2 at 31.0%
 - **CovType**: Classical feedforward-6 achieves 77.4% accuracy vs genetic feedforward-2 at 61.0%
 
@@ -238,11 +256,29 @@ The near-parity performance on low-dimensional datasets, particularly with genet
 
 **Visual Comparison:**
 
-![CovType Heads Comparison](artefacts/heads_comparison_covtype.png)
-*Training curves for CovType dataset (heads architecture): Genetic heads-3 outperforms classical.*
+![Breast Cancer Feedforward Comparison](artefacts/feedforward_comparison_breast_cancer.png)
+*Training curves for Breast Cancer (feedforward): Classical networks achieve higher and more stable accuracy.*
 
-![CovType Accuracy vs Parameters](artefacts/bal_acc_vs_params_covtype_heads.png)
-*Accuracy vs parameter count for CovType: Genetic heads-3 achieves better accuracy with more parameters.*
+![Breast Cancer Accuracy vs Parameters (Feedforward)](artefacts/bal_acc_vs_params_breast_cancer_feedforward.png)
+*Accuracy vs parameter efficiency for Breast Cancer (feedforward): Classical superior despite genetic using fewer parameters.*
+
+![Synthetic Feedforward Comparison](artefacts/feedforward_comparison_synthetic.png)
+*Training curves for Synthetic dataset (feedforward): Classical benefits from depth while genetic degrades.*
+
+![Synthetic Heads Comparison](artefacts/heads_comparison_synthetic.png)
+*Training curves for Synthetic (heads): Genetic heads-2 outperforms classical - notable reversal of typical pattern.*
+
+![Synthetic Accuracy vs Parameters (Heads)](artefacts/bal_acc_vs_params_synthetic_heads.png)
+*Accuracy vs parameter efficiency for Synthetic (heads): Genetic heads-2 achieves better accuracy with more parameters.*
+
+![CovType Feedforward Comparison](artefacts/feedforward_comparison_covtype.png)
+*Training curves for CovType (feedforward): Classical maintains significant advantage across all depths.*
+
+![CovType Heads Comparison](artefacts/heads_comparison_covtype.png)
+*Training curves for CovType (heads): Genetic heads-3 outperforms classical - strongest genetic success case.*
+
+![CovType Accuracy vs Parameters (Heads)](artefacts/bal_acc_vs_params_covtype_heads.png)
+*Accuracy vs parameter efficiency for CovType (heads): Genetic heads-3 achieves 75% accuracy, surpassing classical 66.6%.*
 
 **Speculative Interpretations (requiring validation):**
 
