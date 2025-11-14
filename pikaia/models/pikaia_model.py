@@ -118,24 +118,14 @@ class PikaiaModel:
             )
         self._org_mix_strategy = org_mix_strategy or FixedMixStrategy()
 
-        self._initial_gene_mixing_coeffs = (
-            gene_mixing_coeffs
-            if gene_mixing_coeffs is not None
-            else (
-                [1.0 / len(self._gene_strategies) for _ in self._gene_strategies]
-                if self._gene_strategies
-                else []
-            )
+        # Initialize and validate mixing coefficients
+        self._initial_gene_mixing_coeffs = self._init_and_validate_mixing_coeffs(
+            gene_mixing_coeffs, self._gene_strategies, "gene_mixing_coeffs"
         )
-        self._initial_org_mixing_coeffs = (
-            org_mixing_coeffs
-            if org_mixing_coeffs is not None
-            else (
-                [1.0 / len(self._org_strategies) for _ in self._org_strategies]
-                if self._org_strategies
-                else []
-            )
+        self._initial_org_mixing_coeffs = self._init_and_validate_mixing_coeffs(
+            org_mixing_coeffs, self._org_strategies, "org_mixing_coeffs"
         )
+
         self._max_iter = max_iter
 
         if epsilon is not None and max_iter is None:
@@ -199,6 +189,66 @@ class PikaiaModel:
             self._n_jobs = multiprocessing.cpu_count()
         else:
             self._n_jobs = n_jobs
+
+    @staticmethod
+    def _init_and_validate_mixing_coeffs(
+        coeffs: list[float] | None,
+        strategies: list,
+        param_name: str,
+    ) -> list[float]:
+        """
+        Initializes, validates, and normalizes mixing coefficients to sum to 1.
+
+        Args:
+            coeffs (list[float] | None): User-provided coefficients or None.
+            strategies (list): List of strategies.
+            param_name (str): Parameter name for error messages.
+
+        Returns:
+            list[float]: Validated and normalized coefficients that sum to 1.
+
+        Raises:
+            ValueError: If the length doesn't match or all coefficients are zero/negative.
+        """
+        if not strategies:
+            return []
+
+        # Use provided coefficients or create uniform distribution
+        if coeffs is None:
+            return [1.0 / len(strategies)] * len(strategies)
+
+        # Validate length
+        if len(coeffs) != len(strategies):
+            raise ValueError(
+                f"{param_name} must have length {len(strategies)}, got {len(coeffs)}"
+            )
+
+        coeffs_array = np.array(coeffs)
+
+        # Validate non-negativity
+        if np.any(coeffs_array < 0):
+            raise ValueError(
+                f"{param_name} contains negative values. All coefficients must be non-negative."
+            )
+
+        # Validate non-zero sum
+        total = np.sum(coeffs_array)
+        if total == 0:
+            raise ValueError(
+                f"{param_name} sums to zero. At least one coefficient must be positive."
+            )
+
+        # Normalize to sum to 1
+        normalized = coeffs_array / total
+
+        # Log warning if normalization was needed
+        if not np.isclose(total, 1.0, rtol=1e-9):
+            logger.warning(
+                f"{param_name} did not sum to 1 (sum={total:.6f}). "
+                f"Normalized coefficients to sum to 1."
+            )
+
+        return normalized.tolist()
 
     def _compute_similarity(self, mode: str = "org") -> np.ndarray:
         """
