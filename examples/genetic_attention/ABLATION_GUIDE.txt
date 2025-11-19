@@ -1,0 +1,251 @@
+"""
+Complete Ablation Study Configuration Guide
+============================================
+
+This guide shows all the configurable options for comprehensive ablation studies.
+
+## Configuration Dimensions
+
+### 1. Attention Mechanisms
+- Multi-Head Attention (MHA)
+- Grouped-Query Attention (GQA)
+- Multi-Head Latent Attention (MLA)
+
+### 2. Normalization Strategies
+- Pre-norm ('pre') - Llama 3 8B style
+- Post-norm ('post') - OLMo 2 7B style
+- Sandwich ('sandwich') - Both pre and post
+
+### 3. QK Normalization
+- Enabled (qk_norm=True)
+- Disabled (qk_norm=False)
+
+### 4. Sliding Window Attention
+- Enabled with various window sizes (256, 512, 1024, etc.)
+- Disabled (full attention)
+
+## Example Configurations
+
+### Configuration 1: Baseline (Llama 3 style)
+```python
+attention = MultiHeadAttention(
+    embed_dim=576,
+    num_heads=9,
+    qk_norm=False,
+    use_sliding_window=False,
+)
+
+model = create_smollm_with_attention(
+    attention_module=attention,
+    norm_strategy='pre',
+)
+```
+
+### Configuration 2: Efficient (GQA + Sliding Window)
+```python
+attention = GroupedQueryAttention(
+    embed_dim=576,
+    num_heads=9,
+    num_kv_heads=3,
+    qk_norm=False,
+    use_sliding_window=True,
+    window_size=256,
+)
+
+model = create_smollm_with_attention(
+    attention_module=attention,
+    norm_strategy='pre',
+)
+```
+
+### Configuration 3: Maximum Efficiency (MLA + Post-norm)
+```python
+attention = MultiHeadLatentAttention(
+    embed_dim=576,
+    num_heads=9,
+    latent_dim=288,
+    qk_norm=False,
+    use_sliding_window=False,
+)
+
+model = create_smollm_with_attention(
+    attention_module=attention,
+    norm_strategy='post',
+)
+```
+
+### Configuration 4: Stable Training (QK-norm + Sandwich)
+```python
+attention = MultiHeadAttention(
+    embed_dim=576,
+    num_heads=9,
+    qk_norm=True,  # Enable QK normalization
+    use_sliding_window=False,
+)
+
+model = create_smollm_with_attention(
+    attention_module=attention,
+    norm_strategy='sandwich',  # Both pre and post norm
+)
+```
+
+### Configuration 5: OLMo 2 Style
+```python
+attention = MultiHeadAttention(
+    embed_dim=576,
+    num_heads=9,
+    qk_norm=True,  # OLMo uses QK-norm
+    use_sliding_window=False,
+)
+
+model = create_smollm_with_attention(
+    attention_module=attention,
+    norm_strategy='post',  # OLMo 2 uses post-norm
+)
+```
+
+## Systematic Ablation Study
+
+### Phase 1: Attention Mechanism Baseline
+Test each attention mechanism with standard settings:
+- MHA + pre-norm + no QK-norm + full attention
+- GQA + pre-norm + no QK-norm + full attention
+- MLA + pre-norm + no QK-norm + full attention
+
+### Phase 2: Normalization Strategy
+For best attention from Phase 1, test:
+- pre-norm
+- post-norm
+- sandwich
+
+### Phase 3: QK Normalization
+For best combo from Phase 2, test:
+- With QK-norm
+- Without QK-norm
+
+### Phase 4: Sliding Window
+For best combo from Phase 3, test window sizes:
+- Full attention (baseline)
+- Window 1024
+- Window 512
+- Window 256
+
+### Phase 5: Architecture Variants
+Test variations on best overall:
+- Different num_kv_heads for GQA (1, 3, 9)
+- Different latent_dim for MLA (144, 288, 432)
+- Different num_heads (6, 9, 12)
+
+## Expected Outcomes
+
+### Memory Efficiency
+Best to Worst: MLA > GQA > MHA
+Further improved with: Sliding Window >> Full Attention
+
+### Training Speed
+Best to Worst: MLA > GQA > MHA
+Further improved with: Sliding Window > Full Attention
+
+### Model Quality (Perplexity)
+Typically: MHA ≥ GQA > MLA
+QK-norm: Can improve all mechanisms
+Norm strategy: Task-dependent
+
+### Training Stability
+Pre-norm: Generally most stable
+Post-norm: Can be unstable without QK-norm
+Sandwich: Most stable but slower
+QK-norm: Improves stability for all strategies
+
+## Metrics to Track
+
+For each configuration, measure:
+
+1. **Performance**
+   - Validation perplexity
+   - Downstream task accuracy
+   - Sample quality
+
+2. **Efficiency**
+   - Training tokens/second
+   - Peak memory usage (GB)
+   - KV cache size (inference)
+
+3. **Stability**
+   - Loss curve smoothness
+   - Gradient norm statistics
+   - Learning rate sensitivity
+
+4. **Scalability**
+   - Performance at different sequence lengths
+   - Behavior with different batch sizes
+   - Multi-GPU scaling efficiency
+
+## Implementation Tips
+
+1. **Start Simple**: Begin with MHA + pre-norm as baseline
+2. **Isolate Variables**: Change one dimension at a time
+3. **Multiple Seeds**: Run 3+ seeds per configuration
+4. **Fair Comparison**: Use same hyperparameters, data, compute budget
+5. **Early Stopping**: Monitor val loss to detect convergence
+6. **Log Everything**: Track all metrics for analysis
+
+## Code Template
+
+```python
+from utils.nn_components import MultiHeadAttention, GroupedQueryAttention, MultiHeadLatentAttention
+from utils.smollm import create_smollm_with_attention
+
+def create_model_config(
+    attention_type='mha',
+    norm_strategy='pre',
+    qk_norm=False,
+    use_sliding_window=False,
+    window_size=256,
+):
+    # Create attention module
+    if attention_type == 'mha':
+        attention = MultiHeadAttention(
+            embed_dim=576,
+            num_heads=9,
+            qk_norm=qk_norm,
+            use_sliding_window=use_sliding_window,
+            window_size=window_size if use_sliding_window else None,
+        )
+    elif attention_type == 'gqa':
+        attention = GroupedQueryAttention(
+            embed_dim=576,
+            num_heads=9,
+            num_kv_heads=3,
+            qk_norm=qk_norm,
+            use_sliding_window=use_sliding_window,
+            window_size=window_size if use_sliding_window else None,
+        )
+    else:  # mla
+        attention = MultiHeadLatentAttention(
+            embed_dim=576,
+            num_heads=9,
+            latent_dim=288,
+            qk_norm=qk_norm,
+            use_sliding_window=use_sliding_window,
+            window_size=window_size if use_sliding_window else None,
+        )
+    
+    # Create model
+    model = create_smollm_with_attention(
+        attention_module=attention,
+        norm_strategy=norm_strategy,
+    )
+    
+    return model
+
+# Example: Create all baseline configurations
+configs = [
+    {'attention_type': 'mha', 'norm_strategy': 'pre'},
+    {'attention_type': 'gqa', 'norm_strategy': 'pre'},
+    {'attention_type': 'mla', 'norm_strategy': 'pre'},
+]
+
+models = {f"config_{i}": create_model_config(**cfg) for i, cfg in enumerate(configs)}
+```
+"""

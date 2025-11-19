@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 
-from pikaia.layers.genetic_layer import GeneticLayer
+from pikaia.nn_components.genetic_layer import GeneticLayer
 
 
 def closest_power_of_2(x: float) -> int:
