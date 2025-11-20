@@ -1,0 +1,98 @@
+{
+  "mha": {
+    "attention_type": "mha",
+    "total_params": 40263104,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.234660307876766,
+    "perplexity": 510.1272277832031,
+    "tokens_per_sec": 285878.13522056077,
+    "total_tokens": 1748157,
+    "total_time": 6.115042686462402
+  },
+  "mha_genetic": {
+    "attention_type": "mha_genetic",
+    "total_params": 40263104,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.2968811290338635,
+    "perplexity": 542.8761596679688,
+    "tokens_per_sec": 128255.11254295077,
+    "total_tokens": 1764634,
+    "total_time": 13.75878095626831
+  },
+  "gqa": {
+    "attention_type": "gqa",
+    "total_params": 39819968,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.255129229277372,
+    "perplexity": 520.6766967773438,
+    "tokens_per_sec": 276654.9783422842,
+    "total_tokens": 1750653,
+    "total_time": 6.327928781509399
+  },
+  "gqa_genetic": {
+    "attention_type": "gqa_genetic",
+    "total_params": 39819968,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.250119743868709,
+    "perplexity": 518.0748291015625,
+    "tokens_per_sec": 94836.3438638332,
+    "total_tokens": 1749643,
+    "total_time": 18.449076890945435
+  },
+  "mla": {
+    "attention_type": "mla",
+    "total_params": 39935072,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.248515325132757,
+    "perplexity": 517.2442016601562,
+    "tokens_per_sec": 243140.7644320776,
+    "total_tokens": 1747990,
+    "total_time": 7.189209938049316
+  },
+  "mla_genetic": {
+    "attention_type": "mla_genetic",
+    "total_params": 39935072,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.253089340869337,
+    "perplexity": 519.6156616210938,
+    "tokens_per_sec": 73210.15859926266,
+    "total_tokens": 1751077,
+    "total_time": 23.918497562408447
+  },
+  "sla": {
+    "attention_type": "sla",
+    "total_params": 39936096,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.258026736788452,
+    "perplexity": 522.1874389648438,
+    "tokens_per_sec": 221975.53373278692,
+    "total_tokens": 1745265,
+    "total_time": 7.862420558929443
+  },
+  "sla_genetic": {
+    "attention_type": "sla_genetic",
+    "total_params": 39936096,
+    "allocated_mb": 0.0,
+    "reserved_mb": 0.0,
+    "peak_mb": 0.0,
+    "loss": 6.28775270562619,
+    "perplexity": 537.9429931640625,
+    "tokens_per_sec": 133858.86087229484,
+    "total_tokens": 1752862,
+    "total_time": 13.094852209091187
+  }
+}

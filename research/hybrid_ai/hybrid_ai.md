@@ -311,61 +311,56 @@ Linear attention variants like Gated DeltaNet are used in models such as Qwen3-N
 
 ### 1.1.7. Multi-Head Genetic Attention (MGA)
 
-Multi-Head Genetic Attention (MGA) is a novel attention mechanism that replaces the scaled dot-product similarity with a correlation-based genetic fitness evaluation. It treats token relationships as a population and uses evolutionary principles to determine attention weights.
+Multi-Head Genetic Attention (MGA) is a novel attention mechanism that follows the classical Multi-Head Attention (MHA) pipeline but applies genetic sorting to modulate attention weights based on evolutionary fitness principles.
 
 Given input embeddings $X \in \mathbb{R}^{(B \times T \times D)}$, where $B$ is batch size, $T$ is sequence length, $D$ is embedding dimension, and $h$ is the number of heads:
 
-The process involves:
+The process follows classical MHA with genetic modulation:
 
-1. **Projections**: Project the input into Genetic (G) matrices:
-   - $G = XW^G \in \mathbb{R}^{(B \times T \times D)}$
-   - Reshape to heads: $G \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
-   - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$ (standard value projection)
+1. **Projections**: Project inputs to Queries (Q), Keys (K), and Values (V):
+   - $Q = XW^Q \in \mathbb{R}^{(B \times T \times D)}$
+   - $K = XW^K \in \mathbb{R}^{(B \times T \times D)}$
+   - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$
+   - Reshape to heads: $Q, K, V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
 
-2. **Correlation Matrix Computation**:
-   Instead of $QK^T$, compute correlations between token pairs within a sliding window $w$:
+2. **QK RMS Normalization**: Always apply RMS normalization to stabilize training:
+   - $Q' = \text{RMSNorm}(Q)$
+   - $K' = \text{RMSNorm}(K)$
 
-   For each head, create correlation matrix $G^C \in \mathbb{R}^{(T \times T)}$ where:
-   $$ G^C_{ij} = \frac{G_i \cdot G_j}{\|G_i\| \cdot \|G_j\|} \quad \text{if } |i-j| \leq w \text{ and } j \leq i $$
-   $$ G^C_{ij} = 0 \quad \text{otherwise} $$
+3. **Attention Scores**: Compute scaled dot-product attention within sliding window:
+   - $\text{scores} = \frac{Q' K'^T}{\sqrt{d_{\text{head}}}} \in \mathbb{R}^{(B \times h \times T \times T)}$
+   - Apply causal masking and windowing: $\text{scores}_{ij} = -\infty$ if $j > i$ or $|i-j| > w$
 
-3. **Scale to [0,1]**: Transform correlations to fitness values:
-   $$ G^C = \frac{G^C + 1}{2} $$
+4. **Genetic Fitness Evaluation**: Apply genetic sorting to the attention matrix:
+   - Scale scores to [0,1]: $\text{scaled} = \sigma(\text{scores})$ where $\sigma$ is sigmoid
+   - Compute gene fitness per query token: $\text{fitness}_i = f(\text{scaled}_{i,:})$
+   - Where $f$ implements genetic sorting based on evolutionary principles
 
-4. **Genetic Fitness Evaluation**:
-   Apply genetic sorting to the correlation matrix. For each "gene" (row in $G^C$):
+5. **Genetic Weighting**: Modulate attention scores by fitness:
+   - $\text{weighted}_{ij} = \text{fitness}_i \cdot \text{scores}_{ij}$
 
-   - **Gene Means**: Compute mean correlation across all valid pairs:
-     $$ \mu_g = \frac{1}{T} \sum_{j=1}^{T} G^C_{gj} $$
+6. **Softmax Normalization**: Apply row-wise softmax:
+   - $\text{weights}_{ij} = \frac{\exp(\text{weighted}_{ij})}{\sum_k \exp(\text{weighted}_{ik})}$
 
-   - **Gene Fitness**: Determine importance based on evolutionary principles:
-     $$ \text{fitness}_g = \frac{1}{(\mu_g + 0.5) \sum (\mu_g + 0.5)^{-1}} $$
-
-5. **Weighted Correlations**: Weight the correlation matrix by gene fitness:
-   $$ G^F_{ij} = \text{fitness}_i \cdot G^C_{ij} $$
-
-6. **Softmax Normalization**: Apply row-wise softmax to get attention weights:
-   $$ \text{weights}_{ij} = \frac{\exp(G^F_{ij})}{\sum_{k} \exp(G^F_{ik})} $$
-
-7. **Weighted Sum**: Compute the output by weighting the values:
-   $$ \text{output} = \text{weights} \cdot V $$
+7. **Weighted Sum**: Compute final output:
+   - $\text{output} = \text{weights} \cdot V$
 
 #### Key Differences from Standard Attention
 
-- **Correlation-Based**: Uses cosine similarity instead of dot-product
-- **Windowed Computation**: Only computes correlations within sliding window for efficiency
-- **Genetic Weighting**: Applies evolutionary fitness to modulate attention strengths
-- **Mandatory Windowing**: SWA is required, not optional, for computational tractability
+- **Genetic Modulation**: Attention weights are modulated by evolutionary fitness scores
+- **Windowed Causal Attention**: Always applies sliding window and causal masking
+- **Fitness-Based Weighting**: Uses genetic sorting to determine token importance
+- **RMS Normalization**: Always applies QK RMS normalization for stability
 
 #### Variants and Optimizations
 
 MGA supports several advanced optimizations:
 
-- **Grouped-Query Attention (GQA)**: Uses fewer value heads ($h_v < h_g$) to reduce memory bandwidth
+- **Grouped-Query Attention (GQA)**: Uses fewer value heads ($h_v < h$) to reduce memory bandwidth
 - **Multi-Head Latent Attention (MLA)**: Compresses inputs into a low-rank latent space before projection
 - **Gated DeltaNet Integration**: Applies gating mechanism to the output
 
-This mechanism offers a biologically inspired alternative to dot-product attention, potentially capturing different types of contextual relationships while maintaining computational efficiency through windowed correlations.
+This mechanism offers a biologically inspired alternative to standard attention, potentially capturing different contextual relationships through evolutionary fitness evaluation.
 
 ### 1.2. Mixture of Experts (MoE)
 

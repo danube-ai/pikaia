@@ -1,16 +1,27 @@
 """
 Training script for ablation study comparing different attention mechanisms.
 
-This script trains small LLM models with different attention mechanisms on the
-SmolLM corpus and tracks:
-- Tokens per second (throughput)
-- Memory usage of attention components
-- Training loss over time
-- Model perplexity
+This script trains small LLM models with 8 different attention mechanism combinations
+for systematic ablation studies:
+
+1. Standard MHA (Multi-Head Attention)
+2. MHA + Genetic sorting
+3. GQA (Grouped Query Attention)
+4. GQA + Genetic sorting
+5. MLA (Multi-Head Latent Attention)
+6. MLA + Genetic sorting
+7. SLA (Single-Head Latent Attention)
+8. SLA + Genetic sorting
+
+Each combination is trained on the SmolLM corpus for a full epoch with increased batch size
+and data shards to maximize training tokens. Only metrics are saved (no model checkpoints).
 
 Usage:
-    python train_ablation.py              # Train all attention mechanisms
-    python train_ablation.py --only-mga   # Train only MGA for testing
+    Usage:
+    python train_ablation.py                    # Train all 8 attention mechanism combinations
+    python train_ablation.py --only-genetic     # Train only the 4 variants with genetic sorting
+    python train_ablation.py --max-steps 100    # Train for only 100 steps per model
+    python train_ablation.py --quick-test       # Run 10 steps per model for quick validation
 """
 
 import os
@@ -34,12 +45,12 @@ try:
 except ImportError:
     AutoTokenizer = None
 
-from utils.nn_components.gqa import GroupedQueryAttention
-from utils.nn_components.mha import MultiHeadAttention
-from utils.nn_components.mla import MultiHeadLatentAttention
+from utils.nn_components.ablation_attention import (
+    AblationAttention,
+    create_ablation_configs,
+    get_config_name,
+)
 from utils.smollm import create_smollm_with_attention
-
-from pikaia.nn_components.mga import MultiHeadGeneticAttention
 
 
 class ParquetTextDataset(Dataset):
@@ -106,8 +117,16 @@ class ParquetTextDataset(Dataset):
         }
 
 
-def collate_fn(batch):
-    """Collate function for DataLoader."""
+def collate_fn(batch: list[dict]) -> dict[str, torch.Tensor]:
+    """
+    Collate function for DataLoader to batch tokenized samples.
+
+    Args:
+        batch: List of samples from dataset
+
+    Returns:
+        Dict with batched tensors
+    """
     input_ids = torch.stack([item["input_ids"] for item in batch])
     attention_mask = torch.stack([item["attention_mask"] for item in batch])
 
@@ -272,51 +291,60 @@ def create_attention_variants(
     window_size: int = 256,
     dropout: float = 0.1,
     is_causal: bool = True,
-    only_mga: bool = False,
-):
-    """Create different attention mechanism variants."""
+    only_genetic: bool = False,
+) -> dict[str, torch.nn.Module]:
+    """
+    Create attention mechanism variants for ablation study.
+
+    When only_genetic=False, creates all 8 ablation configurations using AblationAttention.
+    When only_genetic=True, creates only the 4 variants with genetic sorting enabled.
+
+    Args:
+        embed_dim: Total dimension of the model
+        num_heads: Number of attention heads
+        window_size: Size of the sliding window for attention
+        dropout: Dropout probability
+        is_causal: Whether to use causal masking
+        only_genetic: If True, only create variants with genetic sorting enabled
+
+    Returns:
+        Dictionary mapping variant names to attention modules
+    """
     variants = {}
 
-    if not only_mga:
-        # MHA - Standard multi-head attention
-        variants["mha"] = MultiHeadAttention(
-            embed_dim=embed_dim,
-            num_heads=num_heads,
-            dropout=dropout,
-            is_causal=is_causal,
+    # Create all 8 ablation configurations using AblationAttention
+    configs = create_ablation_configs(embed_dim, num_heads, window_size)
+
+    for i, config in enumerate(configs):
+        # Skip non-genetic variants if only_genetic is True
+        if only_genetic and not config.get("use_genetic", False):
+            continue
+
+        # Update config with runtime parameters
+        config.update(
+            {
+                "dropout": dropout,
+                "is_causal": is_causal,
+            }
         )
 
-        # GQA - Grouped query attention (3 KV heads)
-        variants["gqa"] = GroupedQueryAttention(
-            embed_dim=embed_dim,
-            num_heads=num_heads,
-            num_kv_heads=3,
-            dropout=dropout,
-            is_causal=is_causal,
-        )
+        # Create attention module
+        attention = AblationAttention(**config)
 
-        # MLA - Multi-head latent attention
-        variants["mla"] = MultiHeadLatentAttention(
-            embed_dim=embed_dim,
-            num_heads=num_heads,
-            latent_dim=embed_dim // 2,
-            dropout=dropout,
-            is_causal=is_causal,
-        )
+        # Get human-readable name
+        name = get_config_name(config).lower().replace(" + ", "_").replace(" ", "_")
 
-    # MGA - Multi-head genetic attention (always included when only_mga=True)
-    variants["mga"] = MultiHeadGeneticAttention(
-        d_model=embed_dim,
-        num_heads=num_heads,
-        window_size=window_size,
-        dropout=dropout,
-    )
+        variants[name] = attention
 
     return variants
 
 
-def main(only_mga: bool = False):
-    """Main training function."""
+def main(
+    only_genetic: bool = False,
+    max_steps: Optional[int] = None,
+    quick_test: bool = False,
+) -> None:
+    """Main training function for ablation study."""
     # Configuration
     device = "cpu"
 
@@ -324,6 +352,16 @@ def main(only_mga: bool = False):
         device = "cuda"
     elif torch.backends.mps.is_available():
         device = "mps"
+
+    # Adjust config based on quick_test flag
+    if quick_test:
+        batch_size = 4  # Smaller batch for quick testing
+        num_shards = 1  # Use minimal data
+        max_steps = max_steps or 16  # Default to 16 steps for quick test
+    else:
+        batch_size = 8
+        num_shards = 2
+        max_steps = max_steps or 512
 
     config = {
         "vocab_size": 49152,
@@ -338,10 +376,10 @@ def main(only_mga: bool = False):
         "tie_embeddings": True,
         "norm_strategy": "pre",
         # Training config
-        "batch_size": 4,
+        "batch_size": batch_size,
         "learning_rate": 3e-4,
-        "max_steps": 1000,  # Train for 1000 steps per model
-        "num_shards": 2,
+        "max_steps": max_steps,
+        "num_shards": num_shards,
         "device": device,
         "log_interval": 10,
     }
@@ -400,7 +438,7 @@ def main(only_mga: bool = False):
         num_heads=config["num_heads"],
         window_size=config["window_size"],
         dropout=config["dropout"],
-        only_mga=only_mga,
+        only_genetic=only_genetic,
     )
 
     # Results storage
@@ -475,20 +513,7 @@ def main(only_mga: bool = False):
         print(f"  Tokens/sec: {train_metrics['tokens_per_sec']:.0f}")
         print(f"  Total tokens: {train_metrics['total_tokens']:,}")
 
-        # Save model checkpoint
-        checkpoint_path = results_dir / f"{name}_model.pt"
-        torch.save(
-            {
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "config": config,
-                "results": results,
-            },
-            checkpoint_path,
-        )
-        print(f"  Saved checkpoint to {checkpoint_path}")
-
-        # Clean up
+        # Clean up (no checkpoint saving)
         del model, optimizer
         gc.collect()
         if torch.cuda.is_available():
@@ -499,23 +524,30 @@ def main(only_mga: bool = False):
     with open(results_path, "w") as f:
         json.dump(all_results, f, indent=2)
 
+    # Save results as CSV for easier analysis
+    results_df = pd.DataFrame.from_dict(all_results, orient="index")
+    csv_path = results_dir / "ablation_results.csv"
+    results_df.to_csv(csv_path)
+
     print("\n" + "=" * 80)
     print("Ablation Study Complete!")
     print("=" * 80)
-    print(f"\nResults saved to: {results_path}")
+    print("\nResults saved to:")
+    print(f"  JSON: {results_path}")
+    print(f"  CSV:  {csv_path}")
 
     # Print comparison table
     print("\n" + "=" * 80)
     print("Results Comparison")
     print("=" * 80)
     print(
-        f"\n{'Model':<10} {'Loss':<10} {'Perplexity':<12} {'Tok/s':<10} {'Params':<12} {'Peak Mem (MB)':<15}"
+        f"\n{'Model':<12} {'Loss':<10} {'Perplexity':<12} {'Tok/s':<10} {'Params':<12} {'Peak Mem (MB)':<15}"
     )
-    print("-" * 80)
+    print("-" * 85)
 
     for name, results in all_results.items():
         print(
-            f"{name.upper():<10} "
+            f"{name.upper():<12} "
             f"{results['loss']:<10.4f} "
             f"{results['perplexity']:<12.2f} "
             f"{results['tokens_per_sec']:<10.0f} "
@@ -542,10 +574,25 @@ if __name__ == "__main__":
         description="Train attention mechanism ablation study"
     )
     parser.add_argument(
-        "--only-mga",
+        "--only-genetic",
         action="store_true",
-        help="Train only the MGA (Multi-Head Genetic Attention) model for testing",
+        help="Train only the attention variants with genetic sorting enabled",
+    )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=512,
+        help="Maximum number of training steps per model (default: 512)",
+    )
+    parser.add_argument(
+        "--quick-test",
+        action="store_true",
+        help="Run a quick test with just 10 steps per model for validation",
     )
     args = parser.parse_args()
 
-    main(only_mga=args.only_mga)
+    main(
+        only_genetic=args.only_genetic,
+        max_steps=args.max_steps if not args.quick_test else 10,
+        quick_test=args.quick_test,
+    )
