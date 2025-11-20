@@ -7,11 +7,9 @@ from .genetic_layer import (
     OutputProjection,
     StrategyModule,
 )
-from .mga import MultiHeadGeneticAttention
 
 __all__ = [
     "GeneticLayer",
-    "MultiHeadGeneticAttention",
     "InputProjection",
     "GeneticProjection",
     "StrategyModule",

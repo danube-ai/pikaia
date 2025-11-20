@@ -313,44 +313,46 @@ Linear attention variants like Gated DeltaNet are used in models such as Qwen3-N
 
 Multi-Head Genetic Attention (MGA) is a novel attention mechanism that follows the classical Multi-Head Attention (MHA) pipeline but applies genetic sorting to modulate attention weights based on evolutionary fitness principles.
 
+#### Genetic Fitness Scores
+
+The genetic fitness scores \(\gamma_j^{*}\) are computed as:
+
+\[
+\gamma_j^{*} \;=\; \left( \sum_{s=1}^{m}
+\frac{\widetilde{\Phi}_j + \tfrac{1}{2}}{\widetilde{\Phi}_s + \tfrac{1}{2}}
+\right)^{-1}, \qquad \forall j\in\{1,\dots,m\}.
+\]
+
+where \(\gamma_j^{*}\) is the gene fitness score for gene \(j\), and \(\widetilde{\Phi}_j\) is the gene average across organisms for gene \(j\).
+
 Given input embeddings $X \in \mathbb{R}^{(B \times T \times D)}$, where $B$ is batch size, $T$ is sequence length, $D$ is embedding dimension, and $h$ is the number of heads:
 
-The process follows classical MHA with genetic modulation:
+The process follows a novel genetic attention formulation:
 
-1. **Projections**: Project inputs to Queries (Q), Keys (K), and Values (V):
-   - $Q = XW^Q \in \mathbb{R}^{(B \times T \times D)}$
-   - $K = XW^K \in \mathbb{R}^{(B \times T \times D)}$
+1. **Value Projection**: Project inputs to Values (V) only:
    - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$
-   - Reshape to heads: $Q, K, V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
+   - Reshape to heads: $V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
 
-2. **QK RMS Normalization**: Always apply RMS normalization to stabilize training:
-   - $Q' = \text{RMSNorm}(Q)$
-   - $K' = \text{RMSNorm}(K)$
+2. **Genetic Attention Matrix Construction**: Construct attention matrices from V:
+   - For each head, create matrices of shape $(T \times T \times d_{\text{head}})$ where invalid positions (future tokens or outside sliding window) are masked to zeros
+   - This results in $V_{\text{masked}} \in \mathbb{R}^{(B \times h \times T \times T \times d_{\text{head}})}$
 
-3. **Attention Scores**: Compute scaled dot-product attention within sliding window:
-   - $\text{scores} = \frac{Q' K'^T}{\sqrt{d_{\text{head}}}} \in \mathbb{R}^{(B \times h \times T \times T)}$
-   - Apply causal masking and windowing: $\text{scores}_{ij} = -\infty$ if $j > i$ or $|i-j| > w$
+3. **Genetic Sorting**: Apply genetic sorting to each $(T \times d_{\text{head}})$ matrix:
+   - For each batch, head, and query position $i$, treat the $(T \times d_{\text{head}})$ matrix as a population of organisms (rows) and genes (columns)
+   - Compute organism fitness values $G_{ij} \in \mathbb{R}^{(B \times h \times T \times T)}$ using genetic sorting
 
-4. **Genetic Fitness Evaluation**: Apply genetic sorting to the attention matrix:
-   - Scale scores to [0,1]: $\text{scaled} = \sigma(\text{scores})$ where $\sigma$ is sigmoid
-   - Compute gene fitness per query token: $\text{fitness}_i = f(\text{scaled}_{i,:})$
-   - Where $f$ implements genetic sorting based on evolutionary principles
+4. **Normalization and Softmax**: Normalize and apply softmax to fitness scores:
+   - $\text{weights} = \text{softmax}(G) \in \mathbb{R}^{(B \times h \times T \times T)}$
 
-5. **Genetic Weighting**: Modulate attention scores by fitness:
-   - $\text{weighted}_{ij} = \text{fitness}_i \cdot \text{scores}_{ij}$
-
-6. **Softmax Normalization**: Apply row-wise softmax:
-   - $\text{weights}_{ij} = \frac{\exp(\text{weighted}_{ij})}{\sum_k \exp(\text{weighted}_{ik})}$
-
-7. **Weighted Sum**: Compute final output:
-   - $\text{output} = \text{weights} \cdot V$
+5. **Weighted Sum**: Compute final output by weighting values:
+   - $\text{output} = \text{weights} \cdot V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
 
 #### Key Differences from Standard Attention
 
-- **Genetic Modulation**: Attention weights are modulated by evolutionary fitness scores
-- **Windowed Causal Attention**: Always applies sliding window and causal masking
-- **Fitness-Based Weighting**: Uses genetic sorting to determine token importance
-- **RMS Normalization**: Always applies QK RMS normalization for stability
+- **Value-Only Projections**: Only computes Value projections, eliminating Query-Key interactions
+- **Genetic Matrix Construction**: Builds attention matrices directly from Value embeddings with masking
+- **Organism Fitness Computation**: Uses genetic sorting to compute fitness scores for each token pair
+- **Direct Fitness Weighting**: Attention weights are derived directly from genetic fitness scores
 
 #### Variants and Optimizations
 

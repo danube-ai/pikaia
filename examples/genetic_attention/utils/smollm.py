@@ -352,7 +352,7 @@ def create_smollm_with_attention(
 
     Example:
         >>> from nn_components.mha import MultiHeadAttention
-        >>> attention = MultiHeadAttention(embed_dim=576, num_heads=9)
+        >>> attention = MultiHeadAttention(embed_dim=576, num_heads=8)
         >>> model = create_smollm_with_attention(attention)
         >>> print(f"Total parameters: {model.count_parameters():,}")
     """

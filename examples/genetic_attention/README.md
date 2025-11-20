@@ -145,7 +145,7 @@ from utils.smollm import create_smollm_with_attention
 # Create attention module with optional features
 attention = MultiHeadAttention(
     embed_dim=576,
-    num_heads=9,
+    num_heads=8,
     dropout=0.0,
     use_sliding_window=False,  # Enable sliding window attention
     qk_norm=False,  # Enable QK normalization
@@ -233,7 +233,7 @@ model_mga = create_smollm_with_attention(attention_module=mga)
 # Enable causal masking for autoregressive generation
 attention = MultiHeadAttention(
     embed_dim=576,
-    num_heads=9,
+    num_heads=8,
     is_causal=True,  # Prevent attending to future tokens
 )
 ```
@@ -244,7 +244,7 @@ attention = MultiHeadAttention(
 # Enable sliding window with 256-token context
 attention = MultiHeadAttention(
     embed_dim=576,
-    num_heads=9,
+    num_heads=8,
     is_causal=True,
     use_sliding_window=True,
     window_size=256,
@@ -253,7 +253,7 @@ attention = MultiHeadAttention(
 # For MGA (window_size is required)
 mga = MultiHeadGeneticAttention(
     d_model=576,
-    num_heads=9,
+    num_heads=8,
     window_size=256,  # Required for MGA
 )
 ```
@@ -264,7 +264,7 @@ mga = MultiHeadGeneticAttention(
 # Enable QK normalization for more stable attention
 attention = MultiHeadAttention(
     embed_dim=576,
-    num_heads=9,
+    num_heads=8,
     is_causal=True,
     qk_norm=True,  # Normalizes queries and keys
 )

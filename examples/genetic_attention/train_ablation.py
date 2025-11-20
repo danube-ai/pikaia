@@ -238,7 +238,7 @@ def train_epoch(
         labels[:, -1] = -100  # Ignore last token
 
         # Forward pass with timing
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         optimizer.zero_grad()
         outputs = model(input_ids, labels=labels)
@@ -248,7 +248,7 @@ def train_epoch(
         loss.backward()
         optimizer.step()
 
-        end_time = time.time()
+        end_time = time.perf_counter()
         batch_time = end_time - start_time
 
         # Calculate tokens processed
