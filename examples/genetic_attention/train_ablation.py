@@ -7,12 +7,17 @@ SmolLM corpus and tracks:
 - Memory usage of attention components
 - Training loss over time
 - Model perplexity
+
+Usage:
+    python train_ablation.py              # Train all attention mechanisms
+    python train_ablation.py --only-mga   # Train only MGA for testing
 """
 
 import os
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+import argparse
 import gc
 import json
 import time
@@ -264,49 +269,53 @@ def train_epoch(
 def create_attention_variants(
     embed_dim: int = 576,
     num_heads: int = 9,
+    window_size: int = 256,
     dropout: float = 0.1,
     is_causal: bool = True,
+    only_mga: bool = False,
 ):
     """Create different attention mechanism variants."""
     variants = {}
 
-    # MHA - Standard multi-head attention
-    variants["mha"] = MultiHeadAttention(
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        dropout=dropout,
-        is_causal=is_causal,
-    )
+    if not only_mga:
+        # MHA - Standard multi-head attention
+        variants["mha"] = MultiHeadAttention(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            dropout=dropout,
+            is_causal=is_causal,
+        )
 
-    # GQA - Grouped query attention (3 KV heads)
-    variants["gqa"] = GroupedQueryAttention(
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        num_kv_heads=3,
-        dropout=dropout,
-        is_causal=is_causal,
-    )
+        # GQA - Grouped query attention (3 KV heads)
+        variants["gqa"] = GroupedQueryAttention(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            num_kv_heads=3,
+            dropout=dropout,
+            is_causal=is_causal,
+        )
 
-    # MLA - Multi-head latent attention
-    variants["mla"] = MultiHeadLatentAttention(
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        latent_dim=embed_dim // 2,
-        dropout=dropout,
-        is_causal=is_causal,
-    )
+        # MLA - Multi-head latent attention
+        variants["mla"] = MultiHeadLatentAttention(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            latent_dim=embed_dim // 2,
+            dropout=dropout,
+            is_causal=is_causal,
+        )
 
-    # MGA - Multi-head genetic attention
+    # MGA - Multi-head genetic attention (always included when only_mga=True)
     variants["mga"] = MultiHeadGeneticAttention(
         d_model=embed_dim,
         num_heads=num_heads,
+        window_size=window_size,
         dropout=dropout,
     )
 
     return variants
 
 
-def main():
+def main(only_mga: bool = False):
     """Main training function."""
     # Configuration
     device = "cpu"
@@ -323,6 +332,7 @@ def main():
         "num_heads": 9,
         "ffn_hidden_dim": 1536,
         "max_seq_len": 512,  # Reduced for memory efficiency
+        "window_size": 256,  # Sliding window size for MGA
         "dropout": 0.1,
         "use_bias": False,
         "tie_embeddings": True,
@@ -388,7 +398,9 @@ def main():
     attention_variants = create_attention_variants(
         embed_dim=config["embed_dim"],
         num_heads=config["num_heads"],
+        window_size=config["window_size"],
         dropout=config["dropout"],
+        only_mga=only_mga,
     )
 
     # Results storage
@@ -526,4 +538,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Train attention mechanism ablation study"
+    )
+    parser.add_argument(
+        "--only-mga",
+        action="store_true",
+        help="Train only the MGA (Multi-Head Genetic Attention) model for testing",
+    )
+    args = parser.parse_args()
+
+    main(only_mga=args.only_mga)

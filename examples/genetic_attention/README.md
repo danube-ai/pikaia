@@ -52,9 +52,15 @@ cd examples/genetic_attention
 python train_ablation.py
 ```
 
+Or to test only the MGA model:
+
+```bash
+python train_ablation.py --only-mga
+```
+
 This will:
 
-- Train 4 small LLM models (MHA, GQA, MLA, MGA) on the downloaded data
+- Train 4 small LLM models (MHA, GQA, MLA, MGA) on the downloaded data, or only MGA if `--only-mga` is specified
 - Track metrics: tokens/sec, memory usage, loss, perplexity
 - Save checkpoints to `ablation_results/`
 - Generate a comparison table
@@ -216,7 +222,7 @@ model_mla = create_smollm_with_attention(attention_module=mla)
 mga = MultiHeadGeneticAttention(
     d_model=embed_dim,
     num_heads=num_heads,
-    # Causal masking is built-in
+    window_size=256,  # Required sliding window for efficiency
 )
 model_mga = create_smollm_with_attention(attention_module=mga)
 ```
@@ -244,11 +250,11 @@ attention = MultiHeadAttention(
     window_size=256,
 )
 
-# For MGA (causal is built-in)
+# For MGA (window_size is required)
 mga = MultiHeadGeneticAttention(
     d_model=576,
     num_heads=9,
-    window_size=256,  # Optional sliding window
+    window_size=256,  # Required for MGA
 )
 ```
 

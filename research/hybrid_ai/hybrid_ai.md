@@ -311,51 +311,61 @@ Linear attention variants like Gated DeltaNet are used in models such as Qwen3-N
 
 ### 1.1.7. Multi-Head Genetic Attention (MGA)
 
-Multi-Head Genetic Attention (MGA) is a novel attention mechanism that replaces the scaled dot-product similarity with a genetic fitness evaluation. It treats the sequence of tokens as a population of organisms and their embeddings as genes (where each embedding dimension is a gene), using evolutionary principles to determine the "fitness" (attention weight) of each token relative to others.
+Multi-Head Genetic Attention (MGA) is a novel attention mechanism that replaces the scaled dot-product similarity with a correlation-based genetic fitness evaluation. It treats token relationships as a population and uses evolutionary principles to determine attention weights.
 
 Given input embeddings $X \in \mathbb{R}^{(B \times T \times D)}$, where $B$ is batch size, $T$ is sequence length, $D$ is embedding dimension, and $h$ is the number of heads:
 
 The process involves:
 
-1. **Projections**: Project the input into Genetic (G) and Value (V) matrices:
-   - $G = XW^G \in \mathbb{R}^{(B \times T \times D)}$ (analogous to Keys/Queries combined)
-   - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$
-   - Reshape to heads: $G, V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
+1. **Projections**: Project the input into Genetic (G) matrices:
+   - $G = XW^G \in \mathbb{R}^{(B \times T \times D)}$
+   - Reshape to heads: $G \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
+   - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$ (standard value projection)
 
-2. **Genetic Fitness Computation**:
-   Instead of $QK^T$, we compute fitness scores based on the Balanced Organism and Dominant Gene strategies.
+2. **Correlation Matrix Computation**:
+   Instead of $QK^T$, compute correlations between token pairs within a sliding window $w$:
 
-   For each token $i$ (viewing token) and candidate organism $j$ (where $j \le i$ for causal masking):
+   For each head, create correlation matrix $G^C \in \mathbb{R}^{(T \times T)}$ where:
+   $$ G^C_{ij} = \frac{G_i \cdot G_j}{\|G_i\| \cdot \|G_j\|} \quad \text{if } |i-j| \leq w \text{ and } j \leq i $$
+   $$ G^C_{ij} = 0 \quad \text{otherwise} $$
 
-   - **Gene Means**: Compute the mean value of each gene (embedding dimension) across the valid population history $[1..i]$:
-     $$ \mu_{g} = \frac{1}{i} \sum_{k=1}^{i} G_{k} $$
-     *Note: In the current implementation, this is computed using masked aggregations.*
+3. **Scale to [0,1]**: Transform correlations to fitness values:
+   $$ G^C = \frac{G^C + 1}{2} $$
 
-   - **Gene Fitness**: Determine the importance of each gene based on its rarity/dominance:
+4. **Genetic Fitness Evaluation**:
+   Apply genetic sorting to the correlation matrix. For each "gene" (row in $G^C$):
+
+   - **Gene Means**: Compute mean correlation across all valid pairs:
+     $$ \mu_g = \frac{1}{T} \sum_{j=1}^{T} G^C_{gj} $$
+
+   - **Gene Fitness**: Determine importance based on evolutionary principles:
      $$ \text{fitness}_g = \frac{1}{(\mu_g + 0.5) \sum (\mu_g + 0.5)^{-1}} $$
 
-   - **Organism Fitness**: Compute the raw fitness of organism $j$ from the perspective of token $i$:
-     $$ \text{raw\_score}_{ij} = \sum_{d=1}^{d_{\text{head}}} G_{j,d} \cdot \text{fitness}_{g,d} $$
+5. **Weighted Correlations**: Weight the correlation matrix by gene fitness:
+   $$ G^F_{ij} = \text{fitness}_i \cdot G^C_{ij} $$
 
-   - **Normalization**: Normalize scores to sum to 1 across the valid history:
-     $$ \text{weights}_{ij} = \frac{\text{raw\_score}_{ij}}{\sum_{k=1}^{i} \text{raw\_score}_{ik}} $$
+6. **Softmax Normalization**: Apply row-wise softmax to get attention weights:
+   $$ \text{weights}_{ij} = \frac{\exp(G^F_{ij})}{\sum_{k} \exp(G^F_{ik})} $$
 
-3. **Weighted Sum**: Compute the output by weighting the values:
+7. **Weighted Sum**: Compute the output by weighting the values:
    $$ \text{output} = \text{weights} \cdot V $$
+
+#### Key Differences from Standard Attention
+
+- **Correlation-Based**: Uses cosine similarity instead of dot-product
+- **Windowed Computation**: Only computes correlations within sliding window for efficiency
+- **Genetic Weighting**: Applies evolutionary fitness to modulate attention strengths
+- **Mandatory Windowing**: SWA is required, not optional, for computational tractability
 
 #### Variants and Optimizations
 
-MGA supports several advanced optimizations inspired by other efficient attention mechanisms:
+MGA supports several advanced optimizations:
 
-- **Grouped-Query Attention (GQA)**: Uses fewer value heads ($h_v < h_g$) to reduce memory bandwidth. The value heads are broadcasted to match the number of genetic heads during computation.
-- **Multi-Head Latent Attention (MLA)**: Compresses inputs into a low-rank latent space before projecting to $G$ and $V$, reducing parameter count and KV cache size.
-  $$ C = X W_{down}, \quad G = C W_{up}^G, \quad V = C W_{up}^V $$
-- **Sliding Window Attention (SWA)**: Restricts the genetic population history to a fixed window size $w$, reducing complexity from $\mathcal{O}(T^2)$ to $\mathcal{O}(T \cdot w)$.
-- **Gated DeltaNet Integration**: Applies a gating mechanism to the output, combining a 1D convolution for local context with a data-dependent gate:
-  $$ \text{Gate} = \sigma(\text{Conv1D}(X) W_{gate}) $$
-  $$ \text{Output} = \text{MGA}(X) \odot \text{Gate} $$
+- **Grouped-Query Attention (GQA)**: Uses fewer value heads ($h_v < h_g$) to reduce memory bandwidth
+- **Multi-Head Latent Attention (MLA)**: Compresses inputs into a low-rank latent space before projection
+- **Gated DeltaNet Integration**: Applies gating mechanism to the output
 
-This mechanism offers a biologically inspired alternative to dot-product attention, potentially capturing different types of dependencies in the data.
+This mechanism offers a biologically inspired alternative to dot-product attention, potentially capturing different types of contextual relationships while maintaining computational efficiency through windowed correlations.
 
 ### 1.2. Mixture of Experts (MoE)
 

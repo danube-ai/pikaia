@@ -1,90 +1,130 @@
+import time
 from typing import Optional
 
 import torch
 import torch.nn as nn
 
+from pikaia.config.logger import logger
+
 
 class GeneticFitness(nn.Module):
     """
-    Computes genetic fitness scores (attention weights) from a population matrix.
+    Computes genetic fitness scores from correlations within a sliding window.
 
-    This module implements the "fixed organism, balanced gene, dominant strategy"
-    adapted for attention mechanisms. It ensures that masking is applied *before*
-    genetic sorting to prevent information leakage in autoregressive settings.
+    This module implements correlation-based genetic attention where:
+    1. Correlations between token pairs within window are computed
+    2. Genetic sorting is applied to the correlation matrix
+    3. Gene fitness weights the correlations for attention
     """
 
-    def __init__(self, window_size: Optional[int] = None):
+    def __init__(self, window_size: int):
         super().__init__()
         self.window_size = window_size
 
-    def forward(self, population_matrix: torch.Tensor) -> torch.Tensor:
+    def forward(self, token_embeddings: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            population_matrix: Shape (batch_size, num_heads, seq_length, head_dim)
-                             or (batch_size, seq_length, head_dim)
+            token_embeddings: Shape (batch_size, num_heads, seq_length, head_dim)
 
         Returns:
-            normalized_fitness: Shape (batch_size, num_heads, seq_length, seq_length)
-                              or (batch_size, seq_length, seq_length)
+            attention_weights: Shape (batch_size, num_heads, seq_length, seq_length)
         """
-        # Handle input shapes
-        if population_matrix.dim() == 3:
-            # (B, T, D) -> (B, 1, T, D)
-            population_matrix = population_matrix.unsqueeze(1)
+        B, H, T, D = token_embeddings.shape
+        device = token_embeddings.device
 
-        B, H, T, D = population_matrix.shape
-        device = population_matrix.device
+        start_time = time.perf_counter()
 
-        # 1. Create Mask
-        # Start with full causal mask
-        mask = torch.tril(torch.ones(T, T, device=device))
+        # 1. Compute all pairwise correlations using vectorized operations
+        # emb: (B, H, T, D)
+        emb_i = token_embeddings.unsqueeze(3)  # (B, H, T, 1, D)
+        emb_j = token_embeddings.unsqueeze(2)  # (B, H, 1, T, D)
 
-        # Apply Sliding Window Attention (SWA) if configured
-        if self.window_size is not None:
-            # Keep only the band within window_size
-            # tril(ones) - tril(ones, diagonal=-window_size)
-            window_mask = torch.tril(
-                torch.ones(T, T, device=device), diagonal=0
-            ) - torch.tril(torch.ones(T, T, device=device), diagonal=-self.window_size)
-            mask = mask * window_mask
+        # Compute dot products for all pairs
+        dot = (emb_i * emb_j).sum(-1)  # (B, H, T, T)
 
-        # Reshape mask for broadcasting: (1, 1, T, T, 1)
-        # We need to apply it to the expanded population
-        mask_expanded = mask.view(1, 1, T, T, 1)
+        # Compute norms
+        norm_i = torch.norm(token_embeddings, dim=-1).unsqueeze(-1)  # (B, H, T, 1)
+        norm_j = torch.norm(token_embeddings, dim=-1).unsqueeze(2)  # (B, H, 1, T)
 
-        # 2. Expand Population and Apply Mask BEFORE computation
-        # We broadcast the population to create a "view" for each token.
-        # population_matrix: (B, H, T, D) -> unsqueeze(2) -> (B, H, 1, T, D)
-        # mask_expanded: (1, 1, T, T, 1)
-        # Result: (B, H, T, T, D) where dim 2 is "viewing token" and dim 3 is "organism"
+        # Compute correlations
+        correlations = dot / (norm_i * norm_j + 1e-8)  # (B, H, T, T)
+        correlations = torch.nan_to_num(correlations, nan=0.0, posinf=1.0, neginf=-1.0)
 
-        masked_pop = population_matrix.unsqueeze(2) * mask_expanded
+        # Mask out invalid positions (outside window and non-causal)
+        # Create mask for valid positions
+        causal_mask = torch.tril(torch.ones(T, T, device=device))  # (T, T)
+        window_mask = torch.zeros(T, T, device=device)
+        for i in range(T):
+            start_j = max(0, i - self.window_size)
+            window_mask[i, start_j : i + 1] = 1
 
-        # 3. Compute means over the valid organisms for each token
-        # Sum over dim 3 (organisms) -> (B, H, T, D)
-        active_counts = mask.sum(dim=1).view(1, 1, T, 1)
-        active_counts = active_counts.clamp(min=1)  # Avoid div by zero
+        combined_mask = causal_mask * window_mask  # (T, T)
+        combined_mask = combined_mask.unsqueeze(0).unsqueeze(0)  # (1, 1, T, T)
 
-        gene_means = masked_pop.sum(dim=3) / active_counts
+        # Zero out invalid correlations
+        correlations = correlations * combined_mask
 
-        # 4. Standard genetic fitness computation
-        # Shape: (B, H, T, D)
-        denom = gene_means + 0.5
-        sum_inv_denom = torch.sum(1 / denom, dim=-1, keepdim=True)
-        gene_fitness = 1 / (denom * sum_inv_denom)
+        logger.info(
+            f"GeneticFitness: Correlation computation took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
 
-        # 5. Compute raw fitness scores using the MASKED population
-        # masked_pop: (B, H, T, T, D)
-        # gene_fitness: (B, H, T, D) -> unsqueeze(3) -> (B, H, T, 1, D)
-        # Product sums over D -> (B, H, T, T)
+        # 2. Scale correlations to [0, 1] range
+        # Correlations are in [-1, 1], shift to [0, 1]
+        correlations = (correlations + 1) / 2  # (B, H, T, T)
 
-        org_fitness = (masked_pop * gene_fitness.unsqueeze(3)).sum(dim=-1)
+        logger.info(
+            f"GeneticFitness: Scaling correlations took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
 
-        # 6. Normalize each row to sum to 1
-        row_sums = org_fitness.sum(dim=-1, keepdim=True).clamp(min=1e-10)
-        normalized_fitness = org_fitness / row_sums
+        # 3. Apply genetic sorting on correlation matrix
+        # Vectorized: compute gene fitness for all batches and heads at once
+        # correlations: (B, H, T, T)
+        gene_means = torch.mean(correlations, dim=3)  # (B, H, T) mean over j for each i
+        denom = gene_means + 0.5  # (B, H, T)
+        sum_inv_denom = torch.sum(
+            1 / denom, dim=2, keepdim=True
+        )  # (B, H, 1) sum over T
+        gene_fitness = 1 / (denom * sum_inv_denom)  # (B, H, T)
 
-        return normalized_fitness
+        logger.info(
+            f"GeneticFitness: Genetic sorting took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
+
+        # 4. Compute weighted correlations
+        # gene_fitness: (B, H, T) -> (B, H, T, 1)
+        # correlations: (B, H, T, T)
+        weighted_corr = correlations * gene_fitness.unsqueeze(-1)  # (B, H, T, T)
+
+        logger.info(
+            f"GeneticFitness: Weighted correlations took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
+
+        # 5. Apply softmax by row to get attention weights
+        # Mask out invalid positions (outside window and non-causal)
+        causal_mask = torch.tril(torch.ones(T, T, device=device))  # (T, T)
+        window_mask = torch.zeros(T, T, device=device)
+        for i in range(T):
+            start_j = max(0, i - self.window_size)
+            window_mask[i, start_j : i + 1] = 1
+
+        combined_mask = causal_mask * window_mask  # (T, T)
+        combined_mask = combined_mask.view(1, 1, T, T)  # (1, 1, T, T)
+
+        # Apply mask
+        masked_corr = weighted_corr * combined_mask + (1 - combined_mask) * (-1e10)
+
+        # Softmax
+        attention_weights = torch.softmax(masked_corr, dim=-1)
+
+        logger.info(
+            f"GeneticFitness: Softmax took {time.perf_counter() - start_time:.4f}s"
+        )
+
+        return attention_weights
 
 
 class MultiHeadGeneticAttention(nn.Module):
@@ -103,8 +143,8 @@ class MultiHeadGeneticAttention(nn.Module):
         self,
         d_model: int,
         num_heads: int,
+        window_size: int,
         num_value_heads: Optional[int] = None,
-        window_size: Optional[int] = None,
         use_mla: bool = False,
         mla_compression_dim: Optional[int] = None,
         use_gated_deltanet: bool = False,
@@ -114,6 +154,7 @@ class MultiHeadGeneticAttention(nn.Module):
         self.d_model = d_model
         self.num_heads = num_heads
         self.head_dim = d_model // num_heads
+        self.window_size = window_size
         self.use_mla = use_mla
         self.use_gated_deltanet = use_gated_deltanet
         self.dropout = nn.Dropout(dropout)
@@ -173,6 +214,8 @@ class MultiHeadGeneticAttention(nn.Module):
         """
         B, T, D = x.shape
 
+        start_time = time.perf_counter()
+
         # 1. Projections to G (Genetic/Key) and V (Value)
         if self.use_mla:
             # MLA: Down-project then Up-project
@@ -184,6 +227,11 @@ class MultiHeadGeneticAttention(nn.Module):
             g = self.w_g(x)
             v = self.w_v(x)
 
+        logger.info(
+            f"MultiHeadGeneticAttention: Projections took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
+
         # 2. Reshape for Multi-Head / GQA
         # G: (B, T, H_g, D_h) -> (B, H_g, T, D_h)
         g = g.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
@@ -191,10 +239,20 @@ class MultiHeadGeneticAttention(nn.Module):
         # V: (B, T, H_v, D_h) -> (B, H_v, T, D_h)
         v = v.view(B, T, self.num_value_heads, self.head_dim).transpose(1, 2)
 
+        logger.info(
+            f"MultiHeadGeneticAttention: Reshape took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
+
         # 3. Compute Genetic Fitness (Attention Scores)
         # Input: (B, H_g, T, D_h)
         # Output: (B, H_g, T, T)
         attn_weights = self.genetic_fitness(g)
+
+        logger.info(
+            f"MultiHeadGeneticAttention: Genetic Fitness took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
 
         # 4. Apply Attention to Values
         # Handle GQA: Repeat V to match G's heads if needed
@@ -205,6 +263,11 @@ class MultiHeadGeneticAttention(nn.Module):
 
         # Weighted sum: (B, H, T, T) @ (B, H, T, D_h) -> (B, H, T, D_h)
         out = torch.matmul(attn_weights, v)
+
+        logger.info(
+            f"MultiHeadGeneticAttention: Apply Attention took {time.perf_counter() - start_time:.4f}s"
+        )
+        start_time = time.perf_counter()
 
         # 5. Reshape and Project Output
         # (B, H, T, D_h) -> (B, T, H, D_h) -> (B, T, D)
@@ -220,4 +283,9 @@ class MultiHeadGeneticAttention(nn.Module):
             out = out * torch.sigmoid(gate)
 
         out = self.out_proj(out)
+
+        logger.info(
+            f"MultiHeadGeneticAttention: Output Projection took {time.perf_counter() - start_time:.4f}s"
+        )
+
         return self.dropout(out)
