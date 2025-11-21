@@ -12,8 +12,12 @@ different attention mechanisms for systematic ablation studies. It supports:
 The class allows for 8 different ablation combinations by toggling 4 flags:
 - use_gqa: Enable Grouped Query Attention
 - use_mla: Enable Multi-Head Latent Attention
-- use_sla: Enable Single-Head Latent Attention (overrides MLA)
+- use_sla: Enable Single-Head Latent Attention (overrides MLA, uses windowed causal masking)
 - use_genetic: Enable genetic sorting on attention weights
+
+Masking logic:
+- SLA variants: Windowed causal mask (attention limited to window_size past positions)
+- Non-SLA variants: Full causal mask (attention to all past positions)
 
 Default configuration provides standard multi-head causal autoregressive attention with QK RMS normalization.
 """
@@ -26,17 +30,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def single_gemm_masked_weighted_output(
+def compute_genetic_fitness_scores(
     X: torch.Tensor,
     mask: torch.Tensor,
     empty: str = "nan",
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Single-GEMM implementation, no Python loops.
+    Compute genetic fitness scores using single-GEMM masked weighted output.
+
+    This function calculates fitness scores for genetic attention by performing
+    masked weighted aggregation across sequence positions.
 
     Inputs
     ------
-    X : (A, B, C, D)   - input data
+    X : (A, B, C, D)   - input data (batch, heads, seq_len, head_dim)
     mask : (C, C)      - mask/weights (rows are target i, cols are source j)
     empty : 'nan'|'0'|'leave' - behaviour for mask rows with zero sum
 
@@ -59,7 +66,7 @@ def single_gemm_masked_weighted_output(
     # --- flatten (A,B,D) into L so we can do one GEMM ---
     # move channel to front and flatten remaining dims:
     # X_perm: (C, A, B, D)
-    X_perm = X.permute(2, 0, 1, 3)  # X_perm: (C, A, B, D)
+    X_perm = X.permute(2, 0, 1, 3).contiguous()  # X_perm: (C, A, B, D)
     L = A * B * D
     # X_flat: (C, L)
     X_flat = X_perm.reshape(C, L)  # X_flat: (C, L)   <-- big matrix, memory-critical
@@ -232,6 +239,81 @@ class AblationAttention(nn.Module):
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.dropout_layer = nn.Dropout(dropout)
 
+    def _compute_standard_attention(
+        self,
+        x: torch.Tensor,
+        batch_size: int,
+        seq_len: int,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Compute standard attention mechanisms (MHA, GQA, MLA, SLA)."""
+        # 1. Project inputs to Q, K, V
+        if self.use_mla:
+            # MLA: Compress inputs then project to Q, K, V
+            compressed = self.mla_down(x)
+            q = self.ln_q(self.mla_up_q(compressed))
+            k = self.ln_k(self.mla_up_k(compressed))
+            v = self.ln_v(self.mla_up_v(compressed))
+        else:
+            # Standard projections
+            q = self.w_q(x)
+            k = self.w_k(x)
+            v = self.w_v(x)
+
+        # 2. Reshape for multi-head attention
+        q = q.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        k = k.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
+            1, 2
+        )
+        v = v.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
+            1, 2
+        )
+
+        # 3. Apply QK normalization if enabled
+        if self.qk_norm:
+            q = self.q_norm(q)
+            k = self.k_norm(k)
+
+        # 4. Handle GQA: expand K and V to match number of query heads
+        if self.use_gqa:
+            k = k.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
+            k = k.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
+            v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
+            v = v.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
+
+        # 5. Compute attention scores
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+
+        # 6. Apply masking
+        if self.use_sla:
+            # SLA: Use windowed causal mask
+            sliding_mask = self._create_sliding_window_mask(seq_len, device=x.device)
+            scores = scores.masked_fill(sliding_mask, float("-inf"))
+        else:
+            # Non-SLA: Use full causal mask
+            if self.is_causal:
+                causal_mask = torch.triu(
+                    torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
+                    diagonal=1,
+                )
+                scores = scores.masked_fill(
+                    causal_mask.unsqueeze(0).unsqueeze(0), float("-inf")
+                )
+
+        # Apply attention mask if provided
+        if attention_mask is not None:
+            if attention_mask.dim() == 3:
+                attention_mask = attention_mask.unsqueeze(1)
+            scores = scores.masked_fill(attention_mask, float("-inf"))
+
+        # 7. Compute attention weights
+        attn_weights = F.softmax(scores, dim=-1)
+
+        # 8. Apply attention to values
+        attn_output = torch.matmul(attn_weights, v)
+
+        return attn_output
+
     def forward(
         self,
         x: torch.Tensor,
@@ -247,6 +329,7 @@ class AblationAttention(nn.Module):
         Returns:
             Output tensor of shape (batch_size, seq_len, embed_dim)
         """
+        # All modalities now use consistent masking: full causal unless SLA, then windowed causal
         batch_size, seq_len, embed_dim = x.shape
 
         if self.use_genetic:
@@ -261,33 +344,42 @@ class AblationAttention(nn.Module):
                 v = self.w_v(x)
 
             # 2. Reshape V for multi-head
-            v = v.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(
-                1, 2
-            )  # (B, H, T, D_h)
+            v = (
+                v.view(batch_size, seq_len, self.num_kv_heads, self.head_dim)
+                .transpose(1, 2)
+                .contiguous()
+            )  # (B, num_kv_heads, T, D_h)
 
             # 3. Handle GQA: expand V to match number of heads
             if self.use_gqa:
                 v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
-                v = v.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
+                v = v.reshape(
+                    batch_size, self.num_heads, seq_len, self.head_dim
+                ).contiguous()
 
-            # 4. Create sliding window mask (includes causal constraint)
-            # Shape: (T, T)
-            combined_mask = (
-                self._create_sliding_window_mask(seq_len, device=x.device)
-                .squeeze(0)
-                .squeeze(0)
-            )
+            # 4. Create mask based on SLA
+            if self.use_sla:
+                # SLA: Use windowed causal mask
+                mask = (
+                    self._create_sliding_window_mask(seq_len, device=x.device)
+                    .squeeze(0)
+                    .squeeze(0)
+                )
+            else:
+                # Non-SLA: Use full causal mask
+                mask = torch.triu(
+                    torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
+                    diagonal=1,
+                )
 
             # Scale v to [0,1] globally for genetic algorithm
             v_min = v.amin(dim=[1, 2, 3], keepdim=True)  # (B, 1, 1, 1)
             v_max = v.amax(dim=[1, 2, 3], keepdim=True)  # (B, 1, 1, 1)
             v_scaled = (v - v_min) / (v_max - v_min + 1e-8)  # (B, H, T, D_h)
 
-            # v_for_gemm = v_scaled  # (B, H, T, D_h)
-
             # Use single GEMM to compute local gene_fitness
-            m = (~combined_mask).float()  # mask with 1 for valid positions
-            out, gene_fitness, phi = single_gemm_masked_weighted_output(v_scaled, m)
+            m = (~mask).float()  # mask with 1 for valid positions
+            out, gene_fitness, phi = compute_genetic_fitness_scores(v_scaled, m)
 
             # gene_fitness: (B, H, T, D_h)
 
@@ -298,81 +390,19 @@ class AblationAttention(nn.Module):
 
             # Mask invalid positions to -inf
             org_fitness = org_fitness.masked_fill(
-                combined_mask.unsqueeze(0).unsqueeze(0), float("-inf")
+                mask.unsqueeze(0).unsqueeze(0), float("-inf")
             )
 
-            # 6. Apply softmax to org_fitness
+            # Apply softmax to org_fitness
             attn_weights = F.softmax(org_fitness, dim=-1)  # (B, H, T, T)
 
-            # 7. Apply attention to values
+            # Apply attention to values
             attn_output = torch.matmul(attn_weights, v)  # (B, H, T, D_h)
 
         else:
-            # Standard attention mechanisms (MHA, GQA, MLA, SLA)
-            # 1. Project inputs to Q, K, V
-            if self.use_mla:
-                # MLA: Compress inputs then project to Q, K, V
-                compressed = self.mla_down(x)
-                q = self.ln_q(self.mla_up_q(compressed))
-                k = self.ln_k(self.mla_up_k(compressed))
-                v = self.ln_v(self.mla_up_v(compressed))
-            else:
-                # Standard projections
-                q = self.w_q(x)
-                k = self.w_k(x)
-                v = self.w_v(x)
-
-            # 2. Reshape for multi-head attention
-            q = q.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(
-                1, 2
+            attn_output = self._compute_standard_attention(
+                x, batch_size, seq_len, attention_mask
             )
-            k = k.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
-                1, 2
-            )
-            v = v.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
-                1, 2
-            )
-
-            # 3. Apply QK normalization if enabled
-            if self.qk_norm:
-                q = self.q_norm(q)
-                k = self.k_norm(k)
-
-            # 4. Handle GQA: expand K and V to match number of query heads
-            if self.use_gqa:
-                k = k.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
-                k = k.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
-                v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
-                v = v.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
-
-            # 5. Compute attention scores
-            scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
-
-            # 6. Apply masking
-            if self.is_causal:
-                causal_mask = torch.triu(
-                    torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
-                    diagonal=1,
-                )
-                scores = scores.masked_fill(
-                    causal_mask.unsqueeze(0).unsqueeze(0), float("-inf")
-                )
-
-            # Apply sliding window mask
-            sliding_mask = self._create_sliding_window_mask(seq_len, device=x.device)
-            scores = scores.masked_fill(sliding_mask, float("-inf"))
-
-            # Apply attention mask if provided
-            if attention_mask is not None:
-                if attention_mask.dim() == 3:
-                    attention_mask = attention_mask.unsqueeze(1)
-                scores = scores.masked_fill(attention_mask, float("-inf"))
-
-            # 7. Compute attention weights
-            attn_weights = F.softmax(scores, dim=-1)
-
-            # 8. Apply attention to values
-            attn_output = torch.matmul(attn_weights, v)
 
         # 9. Reshape and project output
         # (B, H, T, D_h) -> (B, T, H, D_h) -> (B, T, D)

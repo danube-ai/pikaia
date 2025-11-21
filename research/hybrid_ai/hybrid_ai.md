@@ -311,48 +311,47 @@ Linear attention variants like Gated DeltaNet are used in models such as Qwen3-N
 
 ### 1.1.7. Multi-Head Genetic Attention (MGA)
 
-Multi-Head Genetic Attention (MGA) is a novel attention mechanism that follows the classical Multi-Head Attention (MHA) pipeline but applies genetic sorting to modulate attention weights based on evolutionary fitness principles.
+Multi-Head Genetic Attention (MGA) is a novel attention mechanism that applies genetic sorting principles to modulate attention weights. Unlike traditional attention mechanisms that compute similarities between queries and keys, MGA treats attention as an evolutionary process where token interactions are determined by genetic fitness scores.
 
-#### Genetic Fitness Scores
+#### Genetic Fitness Computation
 
-The genetic fitness scores \(\gamma_j^{*}\) are computed as:
-
-\[
-\gamma_j^{*} \;=\; \left( \sum_{s=1}^{m}
-\frac{\widetilde{\Phi}_j + \tfrac{1}{2}}{\widetilde{\Phi}_s + \tfrac{1}{2}}
-\right)^{-1}, \qquad \forall j\in\{1,\dots,m\}.
-\]
-
-where \(\gamma_j^{*}\) is the gene fitness score for gene \(j\), and \(\widetilde{\Phi}_j\) is the gene average across organisms for gene \(j\).
+The core innovation of MGA lies in its fitness computation, which uses a single-GEMM masked weighted aggregation to compute gene fitness scores across sequence positions.
 
 Given input embeddings $X \in \mathbb{R}^{(B \times T \times D)}$, where $B$ is batch size, $T$ is sequence length, $D$ is embedding dimension, and $h$ is the number of heads:
 
-The process follows a novel genetic attention formulation:
+The process follows:
 
 1. **Value Projection**: Project inputs to Values (V) only:
    - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$
    - Reshape to heads: $V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
+   - Where $d_{\text{head}} = \frac{D}{h}$
 
-2. **Genetic Attention Matrix Construction**: Construct attention matrices from V:
-   - For each head, create matrices of shape $(T \times T \times d_{\text{head}})$ where invalid positions (future tokens or outside sliding window) are masked to zeros
-   - This results in $V_{\text{masked}} \in \mathbb{R}^{(B \times h \times T \times T \times d_{\text{head}})}$
+2. **Normalization**: Scale V to [0,1] range globally:
+   - $V_{\text{min}} = \min(V)$, $V_{\text{max}} = \max(V)$
+   - $V_{\text{scaled}} = \frac{V - V_{\text{min}}}{V_{\text{max}} - V_{\text{min}} + \epsilon}$
 
-3. **Genetic Sorting**: Apply genetic sorting to each $(T \times d_{\text{head}})$ matrix:
-   - For each batch, head, and query position $i$, treat the $(T \times d_{\text{head}})$ matrix as a population of organisms (rows) and genes (columns)
-   - Compute organism fitness values $G_{ij} \in \mathbb{R}^{(B \times h \times T \times T)}$ using genetic sorting
+3. **Genetic Fitness Scores**: Compute fitness scores using masked weighted aggregation:
+   - Create attention mask $M \in \mathbb{R}^{(T \times T)}$ (causal or sliding window)
+   - Compute gene fitness $\gamma \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$ using single-GEMM:
+     - $\gamma = \text{compute\_genetic\_fitness\_scores}(V_{\text{scaled}}, M)$
+   - This involves masked matrix multiplication and weighted aggregation to compute evolutionary fitness
 
-4. **Normalization and Softmax**: Normalize and apply softmax to fitness scores:
-   - $\text{weights} = \text{softmax}(G) \in \mathbb{R}^{(B \times h \times T \times T)}$
+4. **Organism Fitness**: Compute pairwise fitness between all token pairs:
+   - $\phi_{ij} = V_{\text{scaled}}[j] \cdot \gamma[i] \in \mathbb{R}^{(B \times h \times T \times T)}$
+   - Apply masking to $\phi$ for invalid positions (future tokens)
 
-5. **Weighted Sum**: Compute final output by weighting values:
+5. **Attention Weights**: Apply softmax to organism fitness:
+   - $\text{weights} = \text{softmax}(\phi) \in \mathbb{R}^{(B \times h \times T \times T)}$
+
+6. **Weighted Sum**: Compute final output:
    - $\text{output} = \text{weights} \cdot V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
 
 #### Key Differences from Standard Attention
 
 - **Value-Only Projections**: Only computes Value projections, eliminating Query-Key interactions
-- **Genetic Matrix Construction**: Builds attention matrices directly from Value embeddings with masking
-- **Organism Fitness Computation**: Uses genetic sorting to compute fitness scores for each token pair
-- **Direct Fitness Weighting**: Attention weights are derived directly from genetic fitness scores
+- **Genetic Fitness Computation**: Uses evolutionary principles with GEMM-based fitness scoring
+- **Direct Fitness Weighting**: Attention weights are derived from genetic fitness rather than QK similarities
+- **Normalization**: Global min-max scaling ensures stable fitness computation
 
 #### Variants and Optimizations
 
@@ -360,7 +359,7 @@ MGA supports several advanced optimizations:
 
 - **Grouped-Query Attention (GQA)**: Uses fewer value heads ($h_v < h$) to reduce memory bandwidth
 - **Multi-Head Latent Attention (MLA)**: Compresses inputs into a low-rank latent space before projection
-- **Gated DeltaNet Integration**: Applies gating mechanism to the output
+- **Sliding Window Attention (SWA)**: Restricts attention to a fixed window for efficiency
 
 This mechanism offers a biologically inspired alternative to standard attention, potentially capturing different contextual relationships through evolutionary fitness evaluation.
 
