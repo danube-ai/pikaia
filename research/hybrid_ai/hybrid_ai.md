@@ -313,45 +313,49 @@ Linear attention variants like Gated DeltaNet are used in models such as Qwen3-N
 
 Multi-Head Genetic Attention (MGA) is a novel attention mechanism that applies genetic sorting principles to modulate attention weights. Unlike traditional attention mechanisms that compute similarities between queries and keys, MGA treats attention as an evolutionary process where token interactions are determined by genetic fitness scores.
 
-#### Genetic Fitness Computation
-
-The core innovation of MGA lies in its fitness computation, which uses a single-GEMM masked weighted aggregation to compute gene fitness scores across sequence positions.
-
 Given input embeddings $X \in \mathbb{R}^{(B \times T \times D)}$, where $B$ is batch size, $T$ is sequence length, $D$ is embedding dimension, and $h$ is the number of heads:
 
 The process follows:
 
-1. **Value Projection**: Project inputs to Values (V) only:
+1. **Multi-Head Projections**: Project inputs using the same Q/K projection infrastructure as standard attention:
+
+   - $O' = \text{RMSNorm}(XW^Q) \in \mathbb{R}^{(B \times T \times D)}$ (equivalent to Q)
+   - $G' = \text{RMSNorm}(XW^K) \in \mathbb{R}^{(B \times T \times D)}$ (equivalent to Q)
    - $V = XW^V \in \mathbb{R}^{(B \times T \times D)}$
-   - Reshape to heads: $V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
-   - Where $d_{\text{head}} = \frac{D}{h}$
 
-2. **Normalization**: Scale V to [0,1] range globally:
-   - $V_{\text{min}} = \min(V)$, $V_{\text{max}} = \max(V)$
-   - $V_{\text{scaled}} = \frac{V - V_{\text{min}}}{V_{\text{max}} - V_{\text{min}} + \epsilon}$
+   Where $W^Q, W^V \in \mathbb{R}^{(D \times D)}$ are learned projection matrices.
 
-3. **Genetic Fitness Scores**: Compute fitness scores using masked weighted aggregation:
-   - Create attention mask $M \in \mathbb{R}^{(T \times T)}$ (causal or sliding window)
-   - Compute gene fitness $\gamma \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$ using single-GEMM:
-     - $\gamma = \text{compute\_genetic\_fitness\_scores}(V_{\text{scaled}}, M)$
-   - This involves masked matrix multiplication and weighted aggregation to compute evolutionary fitness
+2. **Reshape for Heads**: Split projections across $h$ attention heads:
 
-4. **Organism Fitness**: Compute pairwise fitness between all token pairs:
-   - $\phi_{ij} = V_{\text{scaled}}[j] \cdot \gamma[i] \in \mathbb{R}^{(B \times h \times T \times T)}$
-   - Apply masking to $\phi$ for invalid positions (future tokens)
+   - $O', G', V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$ where $d_{\text{head}} = D/h$
 
-5. **Attention Weights**: Apply softmax to organism fitness:
-   - $\text{weights} = \text{softmax}(\phi) \in \mathbb{R}^{(B \times h \times T \times T)}$
+3. **Per-Head Genetic Matrix**: Compute pairwise genetic interactions for each head:
 
-6. **Weighted Sum**: Compute final output:
+   - $\text{genetic\_matrix} = \frac{O'G'^T}{\sqrt{d_{\text{head}}}} \in \mathbb{R}^{(B \times h \times T \times T)}$
+   - Apply causal attention mask per head
+
+4. **Gene Fitness Scores**: Compute evolutionary fitness for each token position and head:
+
+   - $\gamma = \sum_{j} \text{genetic\_matrix}[:, :, :, j] \in \mathbb{R}^{(B \times h \times T)}$
+   - Where the sum is over valid (unmasked) positions $j$
+
+5. **Fitness-Weighted Attention**: Apply fitness scores to modulate attention:
+
+   - $\text{modulated} = \gamma.unsqueeze(-1) \odot \text{genetic\_matrix} \in \mathbb{R}^{(B \times h \times T \times T)}$
+   - $\text{weights} = \text{softmax}(\text{modulated}) \in \mathbb{R}^{(B \times h \times T \times T)}$
    - $\text{output} = \text{weights} \cdot V \in \mathbb{R}^{(B \times h \times T \times d_{\text{head}})}$
+
+6. **Concatenation and Output Projection**:
+
+   - Concatenate head outputs: $\mathbb{R}^{(B \times T \times D)}$
+   - Apply final projection: $W^O \in \mathbb{R}^{(D \times D)}$
 
 #### Key Differences from Standard Attention
 
-- **Value-Only Projections**: Only computes Value projections, eliminating Query-Key interactions
-- **Genetic Fitness Computation**: Uses evolutionary principles with GEMM-based fitness scoring
-- **Direct Fitness Weighting**: Attention weights are derived from genetic fitness rather than QK similarities
-- **Normalization**: Global min-max scaling ensures stable fitness computation
+- **Genetic Projections**: Uses specialized $O'$ and $G'$ projections instead of $Q$ and $K$
+- **Fitness Modulation**: Attention weights are modulated by genetic fitness scores
+- **Simplified Computation**: Avoids complex GEMM operations for fitness computation
+- **Evolutionary Interpretation**: Token interactions modeled as genetic selection
 
 #### Variants and Optimizations
 

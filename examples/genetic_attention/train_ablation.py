@@ -5,13 +5,13 @@ This script trains small LLM models with 8 different attention mechanism combina
 for systematic ablation studies:
 
 1. Standard MHA (Multi-Head Attention)
-2. MHA + Genetic sorting
+2. MHA + Genetic Attention
 3. GQA (Grouped Query Attention)
-4. GQA + Genetic sorting
+4. GQA + Genetic Attention
 5. MLA (Multi-Head Latent Attention)
-6. MLA + Genetic sorting
+6. MLA + Genetic Attention
 7. SLA (Single-Head Latent Attention)
-8. SLA + Genetic sorting
+8. SLA + Genetic Attention
 
 Each combination is trained on the SmolLM corpus for a full epoch with increased batch size
 and data shards to maximize training tokens. Only metrics are saved (no model checkpoints).
@@ -19,7 +19,7 @@ and data shards to maximize training tokens. Only metrics are saved (no model ch
 Usage:
     Usage:
     python train_ablation.py                    # Train all 8 attention mechanism combinations
-    python train_ablation.py --only-genetic     # Train only the 4 variants with genetic sorting
+    python train_ablation.py --only-genetic     # Train only the 4 variants with genetic attention
     python train_ablation.py --max-steps 100    # Train for only 100 steps per model
     python train_ablation.py --quick-test       # Run 10 steps per model for quick validation
 """
@@ -297,7 +297,7 @@ def create_attention_variants(
     Create attention mechanism variants for ablation study.
 
     When only_genetic=False, creates all 8 ablation configurations using AblationAttention.
-    When only_genetic=True, creates only the 4 variants with genetic sorting enabled.
+    When only_genetic=True, creates only the 4 variants with genetic attention enabled.
 
     Args:
         embed_dim: Total dimension of the model
@@ -305,7 +305,7 @@ def create_attention_variants(
         window_size: Size of the sliding window for attention
         dropout: Dropout probability
         is_causal: Whether to use causal masking
-        only_genetic: If True, only create variants with genetic sorting enabled
+        only_genetic: If True, only create variants with genetic attention enabled
 
     Returns:
         Dictionary mapping variant names to attention modules

@@ -3,17 +3,18 @@
 This module provides a unified AblationAttention class that can toggle between
 different attention mechanisms for systematic ablation studies. It supports:
 
-1. Standard Multi-Head Attention (MHA)
+1. Standard MHA (Multi-Head Attention)
 2. Grouped Query Attention (GQA)
 3. Multi-Head Latent Attention (MLA)
 4. Single-Head Latent Attention (SLA)
-5. Genetic sorting on attention weights
+5. Genetic Attention (simplified genetic fitness-based attention)
 
 The class allows for 8 different ablation combinations by toggling 4 flags:
 - use_gqa: Enable Grouped Query Attention
 - use_mla: Enable Multi-Head Latent Attention
 - use_sla: Enable Single-Head Latent Attention (overrides MLA, uses windowed causal masking)
-- use_genetic: Enable genetic sorting on attention weights
+- use_genetic: Enable simplified genetic attention
+- qk_norm: Whether to apply RMS normalization to Q and K (only for non-genetic)
 
 Masking logic:
 - SLA variants: Windowed causal mask (attention limited to window_size past positions)
@@ -30,92 +31,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def compute_genetic_fitness_scores(
-    X: torch.Tensor,
-    mask: torch.Tensor,
-    empty: str = "nan",
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """
-    Compute genetic fitness scores using single-GEMM masked weighted output.
-
-    This function calculates fitness scores for genetic attention by performing
-    masked weighted aggregation across sequence positions.
-
-    Inputs
-    ------
-    X : (A, B, C, D)   - input data (batch, heads, seq_len, head_dim)
-    mask : (C, C)      - mask/weights (rows are target i, cols are source j)
-    empty : 'nan'|'0'|'leave' - behaviour for mask rows with zero sum
-
-    Returns
-    -------
-    out   : (A, B, C, D)   - final weighted output: out = weight * summed
-    weight: (A, B, C, D)   - computed weights per (a,b,i,d)
-    phi   : (A, B, C, D)   - per-target means used to compute weights
-    """
-    # --- shapes ---
-    A, B, C, D = X.shape
-    assert mask.shape == (C, C), "mask must be shape (C, C)"
-
-    # --- prepare mask on correct device/dtype ---
-    m = mask.to(X.dtype).to(X.device)  # m: (C, C)
-
-    # --- counts per-target-channel (row sums of mask) ---
-    counts = m.sum(dim=1, keepdim=True)  # counts: (C, 1)
-
-    # --- flatten (A,B,D) into L so we can do one GEMM ---
-    # move channel to front and flatten remaining dims:
-    # X_perm: (C, A, B, D)
-    X_perm = X.permute(2, 0, 1, 3).contiguous()  # X_perm: (C, A, B, D)
-    L = A * B * D
-    # X_flat: (C, L)
-    X_flat = X_perm.reshape(C, L)  # X_flat: (C, L)   <-- big matrix, memory-critical
-
-    # --- single GEMM: mask (C x C) @ X_flat (C x L) -> summed_flat (C x L) ---
-    # summed_flat: (C, L)
-    summed_flat = m @ X_flat  # summed_flat: (C, L)
-
-    # --- reshape back to (A, B, C, D) ---
-    # tmp: (C, A, B, D)
-    tmp = summed_flat.reshape(C, A, B, D)  # tmp: (C, A, B, D)
-    # summed: (A, B, C, D)
-    summed = tmp.permute(1, 2, 0, 3).contiguous()  # summed: (A, B, C, D)
-
-    # --- phi: mean across selected source channels (per-target) ---
-    # counts: (C,1) -> counts_safe: (C,1) -> counts_b: (1,1,C,1)
-    counts_safe = counts.clamp_min(1.0)  # counts_safe: (C, 1)
-    counts_b = counts_safe.view(1, 1, C, 1)  # counts_b: (1, 1, C, 1)
-    phi = summed / counts_b  # phi: (A, B, C, D)
-
-    # --- compute weights per your formulas ---
-    denom = phi + 0.5  # denom: (A, B, C, D)
-    inv_denom = 1.0 / denom  # inv_denom: (A, B, C, D)
-    sum_inv = inv_denom.sum(dim=-1, keepdim=True)  # sum_inv: (A, B, C, 1)  (sum over D)
-    weight = 1.0 / (denom * sum_inv)  # weight: (A, B, C, D)
-
-    # --- optional handling for mask rows that select nothing ---
-    zero_rows = counts.squeeze(1) == 0  # zero_rows: (C,)
-    if zero_rows.any():
-        idx = zero_rows.nonzero(as_tuple=True)[0]
-        if empty == "nan":
-            weight[:, :, idx, :] = float("nan")  # weight: (A,B,C,D)
-            phi[:, :, idx, :] = float("nan")  # phi: (A,B,C,D)
-            summed[:, :, idx, :] = float("nan")  # summed: (A,B,C,D)
-        elif empty == "0":
-            weight[:, :, idx, :] = 0.0
-            phi[:, :, idx, :] = 0.0
-            summed[:, :, idx, :] = 0.0
-        # 'leave' keeps whatever the current numerics are (counts were clamped)
-
-    # --- final output: multiply weight by the mask-weighted sum (original-input-based sum) ---
-    out = weight * summed  # out: (A, B, C, D)
-
-    # --- clean up temporary view references to help memory reclaiming in long-running contexts ---
-    # (no explicit del needed, but avoids holding extra references)
-    # return results
-    return out, weight, phi
-
-
 class AblationAttention(nn.Module):
     """
     Flexible attention mechanism for ablation studies.
@@ -125,7 +40,7 @@ class AblationAttention(nn.Module):
     - GQA (Grouped Query Attention)
     - MLA (Multi-Head Latent Attention)
     - SLA (Single-Head Latent Attention)
-    - Genetic sorting on attention weights
+    - Genetic Attention (simplified genetic fitness-based attention)
 
     Args:
         embed_dim: Total dimension of the model
@@ -138,8 +53,8 @@ class AblationAttention(nn.Module):
         use_mla: Enable Multi-Head Latent Attention (input compression)
         latent_dim: Dimension of latent space for MLA (ignored if use_mla=False)
         use_sla: Enable Single-Head Latent Attention (overrides MLA, sets num_heads=1)
-        use_genetic: Enable genetic sorting on attention weights
-        qk_norm: Whether to apply RMS normalization to Q and K
+        use_genetic: Enable simplified genetic attention (uses O', G', V projections with fitness modulation)
+        qk_norm: Whether to apply RMS normalization to Q and K (only for non-genetic)
         is_causal: Whether to use causal masking
     """
 
@@ -210,6 +125,10 @@ class AblationAttention(nn.Module):
                 self.mla_up_k = nn.Linear(
                     self.latent_dim, self.num_kv_heads * self.head_dim
                 )
+            else:
+                # Genetic: need both Q and K projections
+                self.mla_up_q = nn.Linear(self.latent_dim, embed_dim)
+                self.mla_up_k = nn.Linear(self.latent_dim, embed_dim)
             self.mla_up_v = nn.Linear(
                 self.latent_dim, self.num_kv_heads * self.head_dim
             )
@@ -218,6 +137,10 @@ class AblationAttention(nn.Module):
             if not use_genetic:
                 self.ln_q = nn.LayerNorm(embed_dim)
                 self.ln_k = nn.LayerNorm(self.num_kv_heads * self.head_dim)
+            else:
+                # Genetic: reuse Q and K norms
+                self.ln_q = nn.LayerNorm(embed_dim)
+                self.ln_k = nn.LayerNorm(embed_dim)
             self.ln_v = nn.LayerNorm(self.num_kv_heads * self.head_dim)
         else:
             # Standard projections
@@ -226,6 +149,10 @@ class AblationAttention(nn.Module):
                 self.w_k = nn.Linear(
                     embed_dim, self.num_kv_heads * self.head_dim, bias=bias
                 )
+            else:
+                # Genetic: need both Q and K projections at full dimension
+                self.w_q = nn.Linear(embed_dim, embed_dim, bias=bias)
+                self.w_k = nn.Linear(embed_dim, embed_dim, bias=bias)
             self.w_v = nn.Linear(
                 embed_dim, self.num_kv_heads * self.head_dim, bias=bias
             )
@@ -235,65 +162,69 @@ class AblationAttention(nn.Module):
             self.q_norm = nn.RMSNorm(self.head_dim)
             self.k_norm = nn.RMSNorm(self.head_dim)
 
+        # For genetic: Q and K norms (for both MLA and non-MLA)
+        if use_genetic and qk_norm:
+            self.q_norm = nn.RMSNorm(self.head_dim)
+            self.k_norm = nn.RMSNorm(self.head_dim)
+
         # Output projection
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.dropout_layer = nn.Dropout(dropout)
 
-    def _compute_standard_attention(
+        # For genetic attention: store fitness values
+        self._gene_fitness = None
+
+    def _compute_attention(
         self,
-        x: torch.Tensor,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
         batch_size: int,
         seq_len: int,
         attention_mask: Optional[torch.Tensor] = None,
+        use_genetic: bool = False,
     ) -> torch.Tensor:
-        """Compute standard attention mechanisms (MHA, GQA, MLA, SLA)."""
-        # 1. Project inputs to Q, K, V
-        if self.use_mla:
-            # MLA: Compress inputs then project to Q, K, V
-            compressed = self.mla_down(x)
-            q = self.ln_q(self.mla_up_q(compressed))
-            k = self.ln_k(self.mla_up_k(compressed))
-            v = self.ln_v(self.mla_up_v(compressed))
-        else:
-            # Standard projections
-            q = self.w_q(x)
-            k = self.w_k(x)
-            v = self.w_v(x)
+        """Compute attention with optional genetic fitness modulation."""
+        # For genetic attention, q and k have full embed_dim (num_heads projections)
+        # For standard attention, k and v may have fewer heads (GQA)
+        num_k_heads = self.num_heads if use_genetic else self.num_kv_heads
+        num_v_heads = self.num_kv_heads  # V always follows KV head pattern
 
-        # 2. Reshape for multi-head attention
+        # 1. Reshape for multi-head attention
         q = q.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-        k = k.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
-            1, 2
-        )
-        v = v.view(batch_size, seq_len, self.num_kv_heads, self.head_dim).transpose(
-            1, 2
-        )
+        k = k.view(batch_size, seq_len, num_k_heads, self.head_dim).transpose(1, 2)
+        v = v.view(batch_size, seq_len, num_v_heads, self.head_dim).transpose(1, 2)
 
-        # 3. Apply QK normalization if enabled
+        # 2. Apply QK normalization if enabled
         if self.qk_norm:
             q = self.q_norm(q)
             k = self.k_norm(k)
 
-        # 4. Handle GQA: expand K and V to match number of query heads
-        if self.use_gqa:
+        # 3. Handle GQA: expand K and V to match number of query heads
+        if self.use_gqa and not use_genetic:
+            # Only expand for standard attention with GQA
             k = k.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
             k = k.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
             v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
             v = v.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
+        elif use_genetic and self.use_gqa:
+            # For genetic GQA, we need to expand V but K is already full-size
+            v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
+            v = v.reshape(batch_size, self.num_heads, seq_len, self.head_dim)
 
-        # 5. Compute attention scores
+        # 4. Compute attention scores
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
 
-        # 6. Apply masking
+        # 5. Apply masking
         if self.use_sla:
             # SLA: Use windowed causal mask
-            sliding_mask = self._create_sliding_window_mask(seq_len, device=x.device)
+            sliding_mask = self._create_sliding_window_mask(seq_len, device=q.device)
             scores = scores.masked_fill(sliding_mask, float("-inf"))
         else:
             # Non-SLA: Use full causal mask
             if self.is_causal:
                 causal_mask = torch.triu(
-                    torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
+                    torch.ones(seq_len, seq_len, device=q.device, dtype=torch.bool),
                     diagonal=1,
                 )
                 scores = scores.masked_fill(
@@ -305,6 +236,30 @@ class AblationAttention(nn.Module):
             if attention_mask.dim() == 3:
                 attention_mask = attention_mask.unsqueeze(1)
             scores = scores.masked_fill(attention_mask, float("-inf"))
+
+        # 6. Genetic fitness modulation (if enabled)
+        if use_genetic:
+            # Compute gene fitness scores using PikaiaModel approach
+            # Apply sigmoid to get values in [0, 1] range - sigmoid(-inf) = 0 naturally
+            sigmoid_scores = torch.sigmoid(scores)  # (B, H, T, T)
+
+            # Compute gene means: average expression of each gene across all positions
+            gene_means = sigmoid_scores.mean(dim=-2)  # (B, H, T)
+
+            # Compute fitness
+            denom = gene_means + 0.5  # (B, H, T)
+            sum_inv_denom = torch.sum(1.0 / denom, dim=-1, keepdim=True)  # (B, H, 1)
+            gene_fitness = 1.0 / (denom * sum_inv_denom)  # (B, H, T)
+
+            # Clamp fitness values to prevent extreme modulation that causes NaN
+            gene_fitness = torch.clamp(gene_fitness, min=0.1, max=10.0)
+
+            # Store fitness for modulation before softmax
+            self._gene_fitness = gene_fitness
+
+            # Modulate attention scores by broadcasting fitness before softmax
+            # This biases attention towards positions with higher genetic fitness
+            scores = scores * self._gene_fitness.unsqueeze(-2)
 
         # 7. Compute attention weights
         attn_weights = F.softmax(scores, dim=-1)
@@ -333,75 +288,65 @@ class AblationAttention(nn.Module):
         batch_size, seq_len, embed_dim = x.shape
 
         if self.use_genetic:
-            # New genetic attention formulation: only use V
-            # 1. Project inputs to V only
+            # Simplified genetic attention: uses O' (Q) and G' (K) projections with fitness modulation
+            # 1. Project inputs to O', G', V (O' uses Q, G' uses K)
             if self.use_mla:
-                # MLA: Compress inputs then project to V
+                # MLA: Compress inputs then project (O' uses Q, G' uses K)
                 compressed = self.mla_down(x)
+                o_prime = self.ln_q(self.mla_up_q(compressed))  # O' = Q
+                g_prime = self.ln_k(self.mla_up_k(compressed))  # G' = K
                 v = self.ln_v(self.mla_up_v(compressed))
             else:
-                # Standard V projection
+                # Standard projections (O' uses Q, G' uses K)
+                o_prime = self.w_q(x)  # O' = Q
+                g_prime = self.w_k(x)  # G' = K
                 v = self.w_v(x)
 
-            # 2. Reshape V for multi-head
-            v = (
-                v.view(batch_size, seq_len, self.num_kv_heads, self.head_dim)
-                .transpose(1, 2)
-                .contiguous()
-            )  # (B, num_kv_heads, T, D_h)
-
-            # 3. Handle GQA: expand V to match number of heads
-            if self.use_gqa:
-                v = v.unsqueeze(2).expand(-1, -1, self.num_kv_groups, -1, -1)
-                v = v.reshape(
-                    batch_size, self.num_heads, seq_len, self.head_dim
-                ).contiguous()
-
-            # 4. Create mask based on SLA
-            if self.use_sla:
-                # SLA: Use windowed causal mask
-                mask = (
-                    self._create_sliding_window_mask(seq_len, device=x.device)
-                    .squeeze(0)
-                    .squeeze(0)
+            # 2. Apply RMS normalization to O' and G' if enabled
+            if self.qk_norm:
+                # Reshape for per-head normalization
+                o_prime_reshaped = o_prime.view(
+                    batch_size, seq_len, self.num_heads, self.head_dim
+                ).transpose(1, 2)
+                g_prime_reshaped = g_prime.view(
+                    batch_size, seq_len, self.num_heads, self.head_dim
+                ).transpose(1, 2)
+                o_prime_reshaped = self.q_norm(o_prime_reshaped)
+                g_prime_reshaped = self.k_norm(g_prime_reshaped)
+                # Reshape back
+                o_prime = o_prime_reshaped.transpose(1, 2).reshape(
+                    batch_size, seq_len, self.embed_dim
                 )
-            else:
-                # Non-SLA: Use full causal mask
-                mask = torch.triu(
-                    torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
-                    diagonal=1,
+                g_prime = g_prime_reshaped.transpose(1, 2).reshape(
+                    batch_size, seq_len, self.embed_dim
                 )
 
-            # Scale v to [0,1] globally for genetic algorithm
-            v_min = v.amin(dim=[1, 2, 3], keepdim=True)  # (B, 1, 1, 1)
-            v_max = v.amax(dim=[1, 2, 3], keepdim=True)  # (B, 1, 1, 1)
-            v_scaled = (v - v_min) / (v_max - v_min + 1e-8)  # (B, H, T, D_h)
-
-            # Use single GEMM to compute local gene_fitness
-            m = (~mask).float()  # mask with 1 for valid positions
-            out, gene_fitness, phi = compute_genetic_fitness_scores(v_scaled, m)
-
-            # gene_fitness: (B, H, T, D_h)
-
-            # Compute org_fitness: org_fitness[b,h,i,j] = v_scaled[b,h,j] @ gene_fitness[b,h,i]
-            org_fitness = torch.einsum(
-                "b h j d, b h i d -> b h i j", v_scaled, gene_fitness
+            attn_output = self._compute_attention(
+                o_prime,
+                g_prime,
+                v,
+                batch_size,
+                seq_len,
+                attention_mask,
+                use_genetic=True,
             )
-
-            # Mask invalid positions to -inf
-            org_fitness = org_fitness.masked_fill(
-                mask.unsqueeze(0).unsqueeze(0), float("-inf")
-            )
-
-            # Apply softmax to org_fitness
-            attn_weights = F.softmax(org_fitness, dim=-1)  # (B, H, T, T)
-
-            # Apply attention to values
-            attn_output = torch.matmul(attn_weights, v)  # (B, H, T, D_h)
 
         else:
-            attn_output = self._compute_standard_attention(
-                x, batch_size, seq_len, attention_mask
+            # Standard attention: compute Q, K, V projections
+            if self.use_mla:
+                # MLA: Compress inputs then project to Q, K, V
+                compressed = self.mla_down(x)
+                q = self.ln_q(self.mla_up_q(compressed))
+                k = self.ln_k(self.mla_up_k(compressed))
+                v = self.ln_v(self.mla_up_v(compressed))
+            else:
+                # Standard projections
+                q = self.w_q(x)
+                k = self.w_k(x)
+                v = self.w_v(x)
+
+            attn_output = self._compute_attention(
+                q, k, v, batch_size, seq_len, attention_mask, use_genetic=False
             )
 
         # 9. Reshape and project output
