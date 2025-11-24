@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..nn_modules.mga import MultiheadGeneticAttention
+
 
 class BertModel(nn.Module):
     """
@@ -21,6 +23,7 @@ class BertModel(nn.Module):
         type_vocab_size: int = 2,
         layer_norm_eps: float = 1e-12,
         dropout: float = 0.1,
+        use_genetic: bool = False,
     ):
         """
         Initialize the BERT model.
@@ -44,6 +47,8 @@ class BertModel(nn.Module):
                 Epsilon for layer normalization.
             dropout (float):
                 Dropout probability.
+            use_genetic (bool):
+                Whether to use genetic attention in the encoder.
         """
         super().__init__()
 
@@ -61,6 +66,7 @@ class BertModel(nn.Module):
             intermediate_size=intermediate_size,
             dropout=dropout,
             attention_dropout=dropout,
+            use_genetic=use_genetic,
         )
 
         # final projection (sentence-transformers/all-BERT-L6-v2 keeps embedding
@@ -148,6 +154,7 @@ class BertEncoder(nn.Module):
         intermediate_size: int = 1536,
         dropout: float = 0.1,
         attention_dropout: float = 0.1,
+        use_genetic: bool = False,
     ):
         """
         Initialize the BERT encoder.
@@ -165,6 +172,8 @@ class BertEncoder(nn.Module):
                 Dropout probability.
             attention_dropout (float):
                 Dropout probability for attention.
+            use_genetic (bool):
+                Whether to use genetic attention in encoder layers.
         """
         super().__init__()
         self.layers = nn.ModuleList(
@@ -175,6 +184,7 @@ class BertEncoder(nn.Module):
                     intermediate_size=intermediate_size,
                     dropout=dropout,
                     attention_dropout=attention_dropout,
+                    use_genetic=use_genetic,
                 )
                 for _ in range(num_layers)
             ]
@@ -214,6 +224,7 @@ class BertEncoderLayer(nn.Module):
         intermediate_size: int = 1536,  # usually 4 * hidden_size
         dropout: float = 0.1,
         attention_dropout: float = 0.1,
+        use_genetic: bool = False,
     ):
         """
         Initialize the BERT encoder layer.
@@ -229,14 +240,24 @@ class BertEncoderLayer(nn.Module):
                 Dropout probability for the feed-forward network.
             attention_dropout (float):
                 Dropout probability for attention.
+            use_genetic (bool):
+                Whether to use genetic attention instead of standard multi-head attention.
         """
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(
-            embed_dim=hidden_size,
-            num_heads=num_attention_heads,
-            batch_first=True,
-            dropout=attention_dropout,
-        )
+        if use_genetic:
+            self.self_attn = MultiheadGeneticAttention(
+                embed_dim=hidden_size,
+                n_heads=num_attention_heads,
+                dropout=attention_dropout,
+            )
+        else:
+            self.self_attn = nn.MultiheadAttention(
+                embed_dim=hidden_size,
+                num_heads=num_attention_heads,
+                batch_first=True,
+                dropout=attention_dropout,
+            )
+        self.use_genetic = use_genetic
         self.attn_layer_norm = nn.LayerNorm(hidden_size, eps=1e-12)
         self.ffn = nn.Sequential(
             nn.Linear(hidden_size, intermediate_size),
@@ -275,9 +296,14 @@ class BertEncoderLayer(nn.Module):
             key_padding_mask = None
 
         # Self-attention block (residual)
-        attn_out, _ = self.self_attn(
-            x, x, x, key_padding_mask=key_padding_mask, need_weights=False
-        )
+        if self.use_genetic:
+            # MGA expects attn_mask as (batch, seq_len) with True for valid tokens
+            mga_attn_mask = attn_mask.to(torch.bool) if attn_mask is not None else None
+            attn_out = self.self_attn(x, attn_mask=mga_attn_mask, disable_genetic=False)
+        else:
+            attn_out, _ = self.self_attn(
+                x, x, x, key_padding_mask=key_padding_mask, need_weights=False
+            )
         x = x + self.dropout(attn_out)
         x = self.attn_layer_norm(x)
 

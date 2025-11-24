@@ -155,14 +155,14 @@ class MultiheadGeneticAttention(nn.Module):
         q = self.q_norm(q)
         k = self.k_norm(k)
 
-        # 5. Get genetic organism fitness values or use standard values
+        # 5. Get genetic gene fitness values or use standard values
         if disable_genetic:
             v_genetic = v
         else:
-            # org_fitness -> (batch_size, n_heads, seq_len)
-            org_fitness = self._compute_organism_fitness(v, attn_mask)
+            # gene_fitness -> (batch_size, n_heads, head_dim)
+            gene_fitness = self._compute_gene_fitness(v, attn_mask)
             # v_genetic -> (batch_size, n_heads, seq_len, head_dim)
-            v_genetic = v * org_fitness.unsqueeze(-1)
+            v_genetic = v * gene_fitness.unsqueeze(-2)
 
         # 7. Attention computation
         # attn_weights -> (batch_size, n_heads, seq_len, seq_len)
@@ -194,11 +194,11 @@ class MultiheadGeneticAttention(nn.Module):
 
         return output
 
-    def _compute_organism_fitness(
+    def _compute_gene_fitness(
         self, v: torch.Tensor, attn_mask: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         """
-        Compute organism fitness scores using genetic algorithm formulation.
+        Compute gene fitness scores using genetic algorithm formulation.
 
         Args:
             v (torch.Tensor):
@@ -208,7 +208,7 @@ class MultiheadGeneticAttention(nn.Module):
 
         Returns:
             torch.Tensor:
-                Normalized organism fitness of shape (batch_size, n_heads, seq_len)
+                Gene fitness scores of shape (batch_size, n_heads, head_dim)
         """
         batch_size, n_heads, seq_len, head_dim = v.shape
 
@@ -242,22 +242,15 @@ class MultiheadGeneticAttention(nn.Module):
         else:
             gene_means = v_flat.mean(dim=1)  # (batch_size*n_heads, head_dim)
 
-        # Compute denom and fitness following the genetic formulation
+        # Compute gene fitness following the genetic formulation
+        # γ_j* = (∑_{s=1}^m (Φ̃_j + 1/2)/(Φ̃_s + 1/2) )^{-1}
         denom = gene_means + 0.5  # (batch_size*n_heads, head_dim)
-        sum_inv_denom = (1 / denom).sum(dim=1, keepdim=True)  # (batch_size*n_heads, 1)
-        gene_fitness = 1 / (denom * sum_inv_denom)  # (batch_size*n_heads, head_dim)
+        sum_ratios = (denom.unsqueeze(-1) / denom.unsqueeze(-2)).sum(
+            dim=-1
+        )  # (batch_size*n_heads, head_dim)
+        gene_fitness = 1.0 / sum_ratios  # (batch_size*n_heads, head_dim)
 
-        # Compute organism fitness: (batch_size*n_heads, seq_len)
-        org_fitness = torch.matmul(v_flat, gene_fitness.unsqueeze(-1)).squeeze(-1)
+        # Reshape back: (batch_size, n_heads, head_dim)
+        gene_fitness = gene_fitness.view(batch_size, n_heads, head_dim)
 
-        # Apply softmax normalization: (batch_size*n_heads, seq_len)
-        if attn_mask_flat is not None:
-            # Mask out invalid positions before softmax
-            org_fitness = org_fitness.masked_fill(~attn_mask_flat, float("-inf"))
-
-        org_fitness = F.softmax(org_fitness, dim=1)
-
-        # Reshape back: (batch_size, n_heads, seq_len)
-        org_fitness = org_fitness.view(batch_size, n_heads, seq_len)
-
-        return org_fitness
+        return gene_fitness

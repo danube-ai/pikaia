@@ -220,4 +220,4 @@ __marimo__/
 
 # data
 .data/
-.ablation_results
+.artefacts/

@@ -1,5 +1,4 @@
 import torch
-
 from pikaia.nn_components.genetic_layer import GeneticLayer
 
 

@@ -2,7 +2,6 @@ import math
 
 import torch
 import torch.nn as nn
-
 from pikaia.nn_components.genetic_layer import GeneticLayer
 
 
