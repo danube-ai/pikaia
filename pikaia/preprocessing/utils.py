@@ -9,7 +9,8 @@ def max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
     are scaled proportionally. Does not guarantee the minimum is 0 unless min is 0.
 
     Args:
-        arr (list | np.ndarray): Input 1D array or list of numeric values.
+        arr (list | np.ndarray):
+            Input 1D array or list of numeric values.
 
     Returns:
         np.ndarray: Scaled array with values in [0, 1] (if all values are non-negative).
@@ -38,7 +39,8 @@ def min_max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
     compatibility with genetic algorithms that expect normalized inputs.
 
     Args:
-        arr (list | np.ndarray): Input 1D array or list of numeric values.
+        arr (list | np.ndarray):
+            Input 1D array or list of numeric values.
 
     Returns:
         np.ndarray: Scaled array with values in [0, 1].
@@ -69,7 +71,8 @@ def robust_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
     compatibility with genetic algorithms.
 
     Args:
-        arr (list | np.ndarray): Input 1D array or list of numeric values.
+        arr (list | np.ndarray):
+            Input 1D array or list of numeric values.
 
     Returns:
         np.ndarray: Scaled array with values in [0, 1].
@@ -110,8 +113,10 @@ def power_transform(
     the data is scaled to the [0, 1] range.
 
     Args:
-        arr (list | np.ndarray): Input 1D array or list of positive numeric values.
-        power (float): Power to raise the values to. Default is 0.5 (square root).
+        arr (list | np.ndarray):
+            Input 1D array or list of positive numeric values.
+        power (float):
+            Power to raise the values to. Default is 0.5 (square root).
 
     Returns:
         np.ndarray: Transformed and scaled array with values in [0, 1].
@@ -146,7 +151,8 @@ def z_score_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
     to the [0, 1] range for genetic algorithm compatibility.
 
     Args:
-        arr (list | np.ndarray): Input 1D array or list of numeric values.
+        arr (list | np.ndarray):
+            Input 1D array or list of numeric values.
 
     Returns:
         np.ndarray: Normalized and scaled array with values in [0, 1].

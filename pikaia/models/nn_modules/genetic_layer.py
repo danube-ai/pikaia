@@ -2,10 +2,139 @@
 Genetic Layer Module
 """
 
-from typing import Optional
-
 import torch
 import torch.nn as nn
+
+
+class GeneticLayer(nn.Module):
+    """
+    A PyTorch nn.Module implementing a genetic-inspired layer for feed-forward
+    operations.
+
+    This layer computes an internal population matrix from the input, applies sigmoid
+    activation, and then uses a fixed-point formula (based on dominant gene and balanced
+    organism strategies) to compute organism fitness values, which serve as the output.
+
+    Parameters:
+        input_shape (int):
+            Number of features in the input.
+        orgs_shape (int):
+            Number of latent organisms.
+        genes_shape (int):
+            Number of latent genes.
+        strategy (str):
+            The strategy for computing fitness. Currently only 'fixed_point' is
+            supported.
+        hidden_dim (int):
+            Dimension to project the input to before the genetic computation.
+            Defaults to input_shape if not provided.
+        output_shape (int):
+            Dimension to project the output to after the genetic computation.
+            Defaults to orgs_shape if not provided.
+        activation_fn (nn.Module):
+            Activation function to use in projections. Defaults to SiLU.
+        dropout_rate (float):
+            Dropout rate to apply after activations. Defaults to 0.1.
+
+    Input:
+        x (torch.Tensor):
+            Input tensor of shape (..., input_shape), where the last dimension
+            is features.
+
+    Output:
+        torch.Tensor:
+            Output tensor of shape (..., output_shape) if output_shape is provided,
+            otherwise (..., orgs_shape) containing organism fitness values.
+    """
+
+    def __init__(
+        self,
+        input_shape: int,
+        hidden_dim: int = 512,
+        orgs_shape: int = 32,
+        genes_shape: int = 8,
+        strategy: str = "fixed_org_balanced_gene_dominant",
+        output_shape: int | None = None,
+        activation_fn: nn.Module | None = None,
+        dropout_rate: float = 0.1,
+    ):
+        super().__init__()
+        self.input_shape = input_shape
+        self.orgs_shape = orgs_shape
+        self.genes_shape = genes_shape
+        self.strategy = strategy
+        self.hidden_dim = hidden_dim
+        self.output_shape = output_shape if output_shape is not None else orgs_shape
+        self.activation_fn = activation_fn if activation_fn is not None else nn.SiLU()
+        self.dropout_rate = dropout_rate
+
+        # Create sub-modules
+        self.input_projection = InputProjection(
+            input_shape, hidden_dim, self.activation_fn, dropout_rate
+        )
+        self.genetic_projection = GeneticProjection(
+            hidden_dim, orgs_shape, genes_shape, self.activation_fn, dropout_rate
+        )
+        self.strategy_module = StrategyModule(strategy)
+        self.output_projection = OutputProjection(
+            orgs_shape, self.output_shape, self.activation_fn, dropout_rate
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the GeneticLayer.
+
+        Args:
+            x (torch.Tensor):
+                Input tensor of shape (..., input_shape), where the last dimension
+                is features.
+
+        Returns:
+            torch.Tensor:
+                Output tensor of shape (..., output_shape) if output_shape is provided,
+                otherwise (..., orgs_shape).
+        """
+        # 1. Validate input and extract shape information
+        original_shape = x.shape
+        if len(original_shape) < 2:
+            raise ValueError(
+                "Input tensor must have at least 2 dimensions (batch and features)."
+            )
+        batch_size = original_shape[0]
+        middle_shape = original_shape[1:-1]
+        flattened_middle = (
+            int(torch.prod(torch.tensor(middle_shape))) if middle_shape else 1
+        )
+        input_shape = original_shape[-1]
+
+        # 2. Reshape input to 3D
+        # Output shape: (batch_size, flattened_middle, input_shape)
+        x = x.view(batch_size, flattened_middle, input_shape)
+
+        # 3. Apply input projection:
+        # Output shape: (batch_size, flattened_middle, hidden_dim)
+        x = self.input_projection(x)
+
+        # 4. Apply genetic projection:
+        # Output shape: (batch_size, input_length, orgs_shape, genes_shape)
+        population_matrix = self.genetic_projection(
+            x, batch_size, flattened_middle, self.orgs_shape, self.genes_shape
+        )
+
+        # 5. Apply genetic strategy computation
+        # Output shape: (batch_size, input_length, orgs_shape)
+        org_fitness = self.strategy_module(population_matrix)
+
+        # 6. Apply output projection: LayerNorm → Linear → SiLU → Dropout
+        # Output shape: (batch_size, flattened_middle, output_shape)
+        org_fitness = self.output_projection(org_fitness)
+
+        # 7. Reshape output back to original shape format
+        # Output shape: (batch_size,) + middle_shape + (output_shape,)
+        output_shape_tuple = (batch_size,) + middle_shape + (self.output_shape,)
+        org_fitness = org_fitness.view(output_shape_tuple)
+
+        return org_fitness
 
 
 class InputProjection(nn.Module):
@@ -72,7 +201,8 @@ class InputProjection(nn.Module):
 
 class GeneticProjection(nn.Module):
     """
-    Genetic weight projection module that transforms hidden features to genetic population matrix.
+    Genetic weight projection module that transforms hidden features to genetic
+    population matrix.
 
     This module applies layer normalization, linear transformation, activation,
     and dropout, then reshapes and applies sigmoid activation to create the population
@@ -140,8 +270,8 @@ class GeneticProjection(nn.Module):
 
         Returns:
             torch.Tensor:
-                Population matrix of shape (batch_size, input_length, orgs_shape, genes_shape)
-                with values in [0, 1] after sigmoid activation.
+                Population matrix of shape (batch_size, input_length, orgs_shape,
+                genes_shape) with values in [0, 1] after sigmoid activation.
         """
         x = self.layer_norm(x)
         x = self.linear(x)
@@ -195,8 +325,8 @@ class StrategyModule(nn.Module):
 
         Args:
             population_matrix (torch.Tensor):
-                Population matrix of shape (batch_size, input_length, orgs_shape, genes_shape)
-                with values in [0, 1].
+                Population matrix of shape (batch_size, input_length, orgs_shape,
+                genes_shape) with values in [0, 1].
 
         Returns:
             torch.Tensor:
@@ -242,7 +372,8 @@ class StrategyModule(nn.Module):
 
 class OutputProjection(nn.Module):
     """
-    Output projection module that transforms organism fitness to final output dimensions.
+    Output projection module that transforms organism fitness to final output
+    dimensions.
 
     This module applies layer normalization, linear transformation, activation,
     and dropout to project the organism fitness values to the desired output shape.
@@ -287,7 +418,8 @@ class OutputProjection(nn.Module):
 
         Args:
             x (torch.Tensor):
-                Input tensor of shape (..., orgs_shape) containing organism fitness values.
+                Input tensor of shape (..., orgs_shape) containing organism
+                fitness values.
 
         Returns:
             torch.Tensor:
@@ -299,131 +431,3 @@ class OutputProjection(nn.Module):
         x = self.activation(x)
         x = self.dropout(x)
         return x
-
-
-class GeneticLayer(nn.Module):
-    """
-    A PyTorch nn.Module implementing a genetic-inspired layer for feed-forward operations.
-
-    This layer computes an internal population matrix from the input, applies sigmoid activation,
-    and then uses a fixed-point formula (based on dominant gene and balanced organism strategies)
-    to compute organism fitness values, which serve as the output.
-
-    Parameters:
-        input_shape (int):
-            Number of features in the input.
-        orgs_shape (int):
-            Number of latent organisms.
-        genes_shape (int):
-            Number of latent genes.
-        strategy (str):
-            The strategy for computing fitness. Currently only 'fixed_point' is
-            supported.
-        hidden_dim (int):
-            Dimension to project the input to before the genetic computation.
-            Defaults to input_shape if not provided.
-        output_shape (int):
-            Dimension to project the output to after the genetic computation.
-            Defaults to orgs_shape if not provided.
-        activation_fn (nn.Module):
-            Activation function to use in projections. Defaults to SiLU.
-        dropout_rate (float):
-            Dropout rate to apply after activations. Defaults to 0.1.
-
-    Input:
-        x (torch.Tensor):
-            Input tensor of shape (..., input_shape), where the last dimension is features.
-
-    Output:
-        torch.Tensor:
-            Output tensor of shape (..., output_shape) if output_shape is provided,
-            otherwise (..., orgs_shape) containing organism fitness values.
-    """
-
-    def __init__(
-        self,
-        input_shape: int,
-        hidden_dim: int = 512,
-        orgs_shape: int = 32,
-        genes_shape: int = 8,
-        strategy: str = "fixed_org_balanced_gene_dominant",
-        output_shape: Optional[int] = None,
-        activation_fn: Optional[nn.Module] = None,
-        dropout_rate: float = 0.1,
-    ):
-        super().__init__()
-        self.input_shape = input_shape
-        self.orgs_shape = orgs_shape
-        self.genes_shape = genes_shape
-        self.strategy = strategy
-        self.hidden_dim = hidden_dim
-        self.output_shape = output_shape if output_shape is not None else orgs_shape
-        self.activation_fn = activation_fn if activation_fn is not None else nn.SiLU()
-        self.dropout_rate = dropout_rate
-
-        # Create sub-modules
-        self.input_projection = InputProjection(
-            input_shape, hidden_dim, self.activation_fn, dropout_rate
-        )
-        self.genetic_projection = GeneticProjection(
-            hidden_dim, orgs_shape, genes_shape, self.activation_fn, dropout_rate
-        )
-        self.strategy_module = StrategyModule(strategy)
-        self.output_projection = OutputProjection(
-            orgs_shape, self.output_shape, self.activation_fn, dropout_rate
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass of the GeneticLayer.
-
-        Args:
-            x (torch.Tensor):
-                Input tensor of shape (..., input_shape), where the last dimension is features.
-
-        Returns:
-            torch.Tensor:
-                Output tensor of shape (..., output_shape) if output_shape is provided,
-                otherwise (..., orgs_shape).
-        """
-        # 1. Validate input and extract shape information
-        original_shape = x.shape
-        if len(original_shape) < 2:
-            raise ValueError(
-                "Input tensor must have at least 2 dimensions (batch and features)."
-            )
-        batch_size = original_shape[0]
-        middle_shape = original_shape[1:-1]
-        flattened_middle = (
-            int(torch.prod(torch.tensor(middle_shape))) if middle_shape else 1
-        )
-        input_shape = original_shape[-1]
-
-        # 2. Reshape input to 3D
-        # Output shape: (batch_size, flattened_middle, input_shape)
-        x = x.view(batch_size, flattened_middle, input_shape)
-
-        # 3. Apply input projection:
-        # Output shape: (batch_size, flattened_middle, hidden_dim)
-        x = self.input_projection(x)
-
-        # 4. Apply genetic projection:
-        # Output shape: (batch_size, input_length, orgs_shape, genes_shape)
-        population_matrix = self.genetic_projection(
-            x, batch_size, flattened_middle, self.orgs_shape, self.genes_shape
-        )
-
-        # 5. Apply genetic strategy computation
-        # Output shape: (batch_size, input_length, orgs_shape)
-        org_fitness = self.strategy_module(population_matrix)
-
-        # 6. Apply output projection: LayerNorm → Linear → SiLU → Dropout
-        # Output shape: (batch_size, flattened_middle, output_shape)
-        org_fitness = self.output_projection(org_fitness)
-
-        # 7. Reshape output back to original shape format
-        # Output shape: (batch_size,) + middle_shape + (output_shape,)
-        output_shape_tuple = (batch_size,) + middle_shape + (self.output_shape,)
-        org_fitness = org_fitness.view(output_shape_tuple)
-
-        return org_fitness
