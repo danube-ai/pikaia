@@ -511,7 +511,7 @@ def train_dual_encoder(
 
     # Create trainer
     trainer_kwargs = {
-        "max_steps": max_steps,
+        "max_steps": max_steps if max_steps is not None else 512,
         "accelerator": "auto",
         "devices": "auto",
         "logger": logger,
@@ -522,8 +522,9 @@ def train_dual_encoder(
 
     # Set validation to run every 8 steps (half of max_steps for 16)
     if len(val_dataset) > 0:
-        val_check_interval = min(8, max(max_steps // 2, 1)) if max_steps else 1.0
-        trainer_kwargs["val_check_interval"] = val_check_interval
+        trainer_kwargs["val_check_interval"] = (
+            min(128, max_steps) if max_steps is not None else 128
+        )
         # Limit validation batches to match training steps for fair comparison
         if max_steps is not None:
             trainer_kwargs["limit_val_batches"] = max_steps
@@ -550,55 +551,57 @@ def train_dual_encoder(
         "max_steps": max_steps,
         "total_steps": trainer.global_step,
         "epochs_completed": trainer.current_epoch + 1,
-        "final_train_loss": test_results[0].get("test_loss", None)
-        if test_results
-        else None,
-        "best_val_loss": checkpoint_callback.best_model_score.item()
-        if checkpoint_callback.best_model_score is not None
-        else None,
-        "final_test_loss": test_results[0].get("test_loss", None)
-        if test_results
-        else None,
-        "final_test_mrr": test_results[0].get("test_mrr", None)
-        if test_results
-        else None,
-        "final_test_precision@1": test_results[0].get("test_precision@1", None)
-        if test_results
-        else None,
-        "final_test_precision@5": test_results[0].get("test_precision@5", None)
-        if test_results
-        else None,
-        "final_test_recall@1": test_results[0].get("test_recall@1", None)
-        if test_results
-        else None,
-        "final_test_recall@5": test_results[0].get("test_recall@5", None)
-        if test_results
-        else None,
-        "final_test_map": test_results[0].get("test_map", None)
-        if test_results
-        else None,
-        "final_test_ndcg@5": test_results[0].get("test_ndcg@5", None)
-        if test_results
-        else None,
-        "final_test_hit_rate@5": test_results[0].get("test_hit_rate@5", None)
-        if test_results
-        else None,
-        "final_test_avg_positive_similarity": test_results[0].get(
-            "test_avg_positive_similarity", None
-        )
-        if test_results
-        else None,
-        "final_test_query_norm": test_results[0].get("test_query_norm", None)
-        if test_results
-        else None,
-        "final_test_passage_norm": test_results[0].get("test_passage_norm", None)
-        if test_results
-        else None,
-        "final_test_embedding_variance": test_results[0].get(
-            "test_embedding_variance", None
-        )
-        if test_results
-        else None,
+        "final_train_loss": (
+            test_results[0].get("test_loss", None) if test_results else None
+        ),
+        "best_val_loss": (
+            checkpoint_callback.best_model_score.item()
+            if checkpoint_callback.best_model_score is not None
+            else None
+        ),
+        "final_test_loss": (
+            test_results[0].get("test_loss", None) if test_results else None
+        ),
+        "final_test_mrr": (
+            test_results[0].get("test_mrr", None) if test_results else None
+        ),
+        "final_test_precision@1": (
+            test_results[0].get("test_precision@1", None) if test_results else None
+        ),
+        "final_test_precision@5": (
+            test_results[0].get("test_precision@5", None) if test_results else None
+        ),
+        "final_test_recall@1": (
+            test_results[0].get("test_recall@1", None) if test_results else None
+        ),
+        "final_test_recall@5": (
+            test_results[0].get("test_recall@5", None) if test_results else None
+        ),
+        "final_test_map": (
+            test_results[0].get("test_map", None) if test_results else None
+        ),
+        "final_test_ndcg@5": (
+            test_results[0].get("test_ndcg@5", None) if test_results else None
+        ),
+        "final_test_hit_rate@5": (
+            test_results[0].get("test_hit_rate@5", None) if test_results else None
+        ),
+        "final_test_avg_positive_similarity": (
+            test_results[0].get("test_avg_positive_similarity", None)
+            if test_results
+            else None
+        ),
+        "final_test_query_norm": (
+            test_results[0].get("test_query_norm", None) if test_results else None
+        ),
+        "final_test_passage_norm": (
+            test_results[0].get("test_passage_norm", None) if test_results else None
+        ),
+        "final_test_embedding_variance": (
+            test_results[0].get("test_embedding_variance", None)
+            if test_results
+            else None
+        ),
         "training_time": training_time,
         "train_samples": len(train_data),
         "val_samples": len(val_data),
@@ -619,7 +622,7 @@ def train_dual_encoder(
 @app.command()
 def run(
     max_steps: Optional[int] = typer.Option(
-        None,
+        512,
         "--max-steps",
         "-m",
         help="Maximum training steps per configuration (None = one full epoch)",
