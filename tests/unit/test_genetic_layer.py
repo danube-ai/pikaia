@@ -1,5 +1,6 @@
 import torch
-from pikaia.nn_components.genetic_layer import GeneticLayer
+
+from pikaia.models.nn_modules.genetic_layer import GeneticLayer
 
 
 class TestGeneticLayer:
