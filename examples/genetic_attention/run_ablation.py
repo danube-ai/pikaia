@@ -251,7 +251,9 @@ class DualEncoderModule(pl.LightningModule):
         self.log("train_map", map_score, prog_bar=False)
         self.log("train_ndcg@5", ndcg_at_5, prog_bar=False)
         self.log("train_hit_rate@5", hit_rate_at_5, prog_bar=False)
-        self.log("train_avg_positive_similarity", avg_positive_similarity, prog_bar=False)
+        self.log(
+            "train_avg_positive_similarity", avg_positive_similarity, prog_bar=False
+        )
         self.log("train_embedding_variance", embedding_variance, prog_bar=False)
         self.log("train_passage_norm", passage_norm, prog_bar=False)
         self.log("train_query_norm", query_norm, prog_bar=False)
@@ -876,9 +878,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
     plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(
-        plots_dir / "loss_comparison.png", dpi=300, bbox_inches="tight"
-    )
+    plt.savefig(plots_dir / "loss_comparison.png", dpi=300, bbox_inches="tight")
     plt.close()
 
     # Create individual plots for each metric with training and validation subplots
@@ -908,15 +908,39 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         if train_col in standard_df.columns and standard_df[train_col].notna().any():
             steps = standard_df["step"][standard_df[train_col].notna()]
             values = standard_df[train_col][standard_df[train_col].notna()]
-            plt.plot(steps, values, label="Training", color=sns.color_palette()[0], linewidth=2, alpha=0.8)
+            plt.plot(
+                steps,
+                values,
+                label="Training",
+                color=sns.color_palette()[0],
+                linewidth=2,
+                alpha=0.8,
+            )
 
         # Plot standard's val_col if exists, else test_col
-        right_col = val_col if val_col in standard_df.columns and standard_df[val_col].notna().any() else test_col
-        if right_col and right_col in standard_df.columns and standard_df[right_col].notna().any():
+        right_col = (
+            val_col
+            if val_col in standard_df.columns and standard_df[val_col].notna().any()
+            else test_col
+        )
+        if (
+            right_col
+            and right_col in standard_df.columns
+            and standard_df[right_col].notna().any()
+        ):
             steps = standard_df["step"][standard_df[right_col].notna()]
             values = standard_df[right_col][standard_df[right_col].notna()]
             label = "Validation" if "val" in right_col else "Test"
-            plt.plot(steps, values, label=label, color=sns.color_palette()[1], linewidth=2, alpha=0.8, marker="o" if "val" in right_col else "s", markersize=4)
+            plt.plot(
+                steps,
+                values,
+                label=label,
+                color=sns.color_palette()[1],
+                linewidth=2,
+                alpha=0.8,
+                marker="o" if "val" in right_col else "s",
+                markersize=4,
+            )
 
         plt.xlabel("Training Step", fontsize=12)
         plt.ylabel(title, fontsize=12)
@@ -931,15 +955,39 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         if train_col in genetic_df.columns and genetic_df[train_col].notna().any():
             steps = genetic_df["step"][genetic_df[train_col].notna()]
             values = genetic_df[train_col][genetic_df[train_col].notna()]
-            plt.plot(steps, values, label="Training", color=sns.color_palette()[0], linewidth=2, alpha=0.8)
+            plt.plot(
+                steps,
+                values,
+                label="Training",
+                color=sns.color_palette()[0],
+                linewidth=2,
+                alpha=0.8,
+            )
 
         # Plot genetic's val_col if exists, else test_col
-        right_col = val_col if val_col in genetic_df.columns and genetic_df[val_col].notna().any() else test_col
-        if right_col and right_col in genetic_df.columns and genetic_df[right_col].notna().any():
+        right_col = (
+            val_col
+            if val_col in genetic_df.columns and genetic_df[val_col].notna().any()
+            else test_col
+        )
+        if (
+            right_col
+            and right_col in genetic_df.columns
+            and genetic_df[right_col].notna().any()
+        ):
             steps = genetic_df["step"][genetic_df[right_col].notna()]
             values = genetic_df[right_col][genetic_df[right_col].notna()]
             label = "Validation" if "val" in right_col else "Test"
-            plt.plot(steps, values, label=label, color=sns.color_palette()[1], linewidth=2, alpha=0.8, marker="o" if "val" in right_col else "s", markersize=4)
+            plt.plot(
+                steps,
+                values,
+                label=label,
+                color=sns.color_palette()[1],
+                linewidth=2,
+                alpha=0.8,
+                marker="o" if "val" in right_col else "s",
+                markersize=4,
+            )
 
         plt.xlabel("Training Step", fontsize=12)
         plt.ylabel(title, fontsize=12)
@@ -947,7 +995,9 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         plt.grid(True, alpha=0.3)
 
         plt.tight_layout()
-        safe_filename = title.lower().replace(" ", "_").replace("@", "at") + "_comparison.png"
+        safe_filename = (
+            title.lower().replace(" ", "_").replace("@", "at") + "_comparison.png"
+        )
         plt.savefig(plots_dir / safe_filename, dpi=300, bbox_inches="tight")
         plt.close()
 

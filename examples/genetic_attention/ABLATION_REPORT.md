@@ -34,7 +34,7 @@ The model learns by maximizing similarity between query-positive pairs while min
 
 - **Configurations**: Two runs - one with genetic attention enabled, one disabled
 - **Reproducibility**: All random seeds set to 8080
-- **Training Steps**: Entire dataset.
+- **Training Steps**: 2048 steps (approximately 2 epochs over the dataset)
 - **Batch Size**: 512
 - **Learning Rate**: 2e-05
 - **Framework**: PyTorch Lightning with AdamW optimizer
@@ -293,35 +293,35 @@ These metrics assess the quality of learned embeddings.
 
 | Configuration | MRR   | MAP   | NDCG@5 | P@1   | P@5   | R@1   | R@5   | Hit@5 | Pos Sim | Variance |
 | ------------- | ----- | ----- | ------ | ----- | ----- | ----- | ----- | ----- | ------- | -------- |
-| Standard      | 0.373 | 0.373 | 0.376  | 0.299 | 0.444 | 0.299 | 0.444 | 0.444 | 0.242   | 0.002516 |
-| Genetic       | 0.397 | 0.397 | 0.401  | 0.322 | 0.471 | 0.322 | 0.471 | 0.471 | 0.229   | 0.002502 |
+| Standard      | 0.492 | 0.492 | 0.500  | 0.417 | 0.573 | 0.417 | 0.573 | 0.573 | 0.368   | 0.002552 |
+| Genetic       | 0.486 | 0.486 | 0.492  | 0.408 | 0.568 | 0.408 | 0.568 | 0.568 | 0.335   | 0.002490 |
 
 **Training Details**:
 
-- Both configurations trained for 128 steps (2 epochs)
-- Genetic: 883s training time, final loss 4.621
-- Standard: 688s training time, final loss 4.573
+- Both configurations trained for 2048 steps (2 epochs)
+- Genetic: 11947s training time, final loss 3.987
+- Standard: 7822s training time, final loss 3.689
 
 ### Results Interpretation
 
-**Performance Gains**: Genetic attention shows modest improvements across all retrieval metrics:
+**Performance Comparison**: After extended training (2048 steps vs 128 steps), standard attention now outperforms genetic attention across all retrieval metrics:
 
-- **6.4% higher MRR/MAP** (0.373 → 0.397)
-- **6.6% higher NDCG@5** (0.376 → 0.401)
-- **6.1% higher Hit Rate@5** (0.444 → 0.471)
-- **5.4% lower positive similarity** (0.242 → 0.229)
+- **Standard attention shows 1.2% higher MRR/MAP** (0.486 → 0.492)
+- **1.6% higher NDCG@5** (0.492 → 0.500)
+- **0.9% higher Hit Rate@5** (0.568 → 0.573)
+- **10.1% higher positive similarity** (0.335 → 0.368)
 
-**Embedding Quality**: Genetic attention produces more focused embeddings:
+**Embedding Quality**: Standard attention produces embeddings with higher positive pair similarity:
 
-- Slightly lower similarity for positive pairs but higher retrieval metrics suggests better discriminative power
-- Similar variance levels indicate comparable embedding diversity
+- Higher similarity for positive pairs suggests better alignment between queries and relevant passages
+- Slightly higher variance indicates marginally more diverse embeddings
 - Both maintain proper normalization (norms = 1.0)
 
 **Training Dynamics**:
 
-- Slightly higher loss for genetic attention (4.621 vs 4.573) but better generalization
-- Increased training time due to fitness computations (883s vs 688s)
+- Lower loss for standard attention (3.689 vs 3.987) with better generalization
+- Increased training time for genetic attention due to fitness computations (11947s vs 7822s)
 
-**Interpretation**: With proper training (128 steps vs 4 steps), genetic attention demonstrates consistent but modest improvements over standard attention. The evolutionary fitness modulation provides better retrieval performance, suggesting it captures more nuanced contextual relationships for passage ranking tasks.
+**Interpretation**: With extended training, standard attention demonstrates superior performance over genetic attention. The evolutionary fitness modulation does not provide benefits in this configuration, suggesting that traditional attention mechanisms may be more effective for passage ranking tasks when given sufficient training time.
 
 [Back to top](#genetic-attention-ablation-study-report)
