@@ -53,6 +53,7 @@ examples = [
     "pyarrow>=18.0.0",
     "typer>=0.20.0",
     "pytorch-lightning>=2.5.6",
+    "seaborn>=0.13.2",
 ]
 
 [tool.hatch.build.targets.sdist]

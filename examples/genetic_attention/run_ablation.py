@@ -7,6 +7,7 @@ Trains two configurations sequentially:
 
 Uses dual-encoder (bi-encoder) setup for retrieval tasks.
 Automatically selects the best available device (CUDA > MPS > CPU).
+Generates and saves training curve plots comparing both configurations using seaborn.
 
 Usage:
     python run_ablation.py                    # Train for one full epoch
@@ -20,7 +21,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import matplotlib.pyplot as plt
+import pandas as pd
 import pytorch_lightning as pl
+import seaborn as sns
 import torch
 import typer
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -189,7 +193,69 @@ class DualEncoderModule(pl.LightningModule):
             sim_matrix / TEMPERATURE, labels
         )  # temperature scaling
 
+        # Compute retrieval metrics within batch (on training data)
+        batch_size = sim_matrix.size(0)
+
+        # Get rankings for each query (higher similarity = better rank)
+        rankings = torch.argsort(sim_matrix, dim=1, descending=True)  # (batch, batch)
+
+        # Find rank of correct passage for each query
+        correct_ranks = []
+        for i in range(batch_size):
+            correct_ranks.append(
+                (rankings[i] == i).nonzero(as_tuple=True)[0].item() + 1
+            )  # 1-based rank
+
+        correct_ranks = torch.tensor(
+            correct_ranks, dtype=torch.float, device=sim_matrix.device
+        )
+
+        # Mean Reciprocal Rank (MRR)
+        mrr = torch.mean(1.0 / correct_ranks)
+
+        # Precision@1, @5
+        precision_at_1 = torch.mean((correct_ranks <= 1).float())
+        precision_at_5 = torch.mean((correct_ranks <= 5).float())
+
+        # Recall@1, @5 (since we have 1 positive per query in batch)
+        recall_at_1 = precision_at_1  # Only 1 positive, so recall = precision
+        recall_at_5 = precision_at_5
+
+        # Mean Average Precision (MAP) - simplified for single positive per query
+        map_score = mrr  # For single positive, MAP = MRR
+
+        # NDCG@5 (Normalized Discounted Cumulative Gain)
+        ndcg_at_5 = self._compute_ndcg(correct_ranks, k=5)
+
+        # Hit Rate@5 (whether correct passage is in top-5)
+        hit_rate_at_5 = torch.mean((correct_ranks <= 5).float())
+
+        # Embedding quality metrics
+        query_norm = torch.norm(query_emb, dim=1).mean()
+        passage_norm = torch.norm(passage_emb, dim=1).mean()
+        embedding_variance = (
+            torch.cat([query_emb, passage_emb], dim=0).var(dim=0).mean()
+        )
+
+        # Semantic similarity (average cosine similarity of positive pairs)
+        positive_similarities = torch.diag(sim_matrix)
+        avg_positive_similarity = positive_similarities.mean()
+
+        # Log all metrics
         self.log("train_loss", loss, prog_bar=True)
+        self.log("train_mrr", mrr, prog_bar=False)
+        self.log("train_precision@1", precision_at_1, prog_bar=False)
+        self.log("train_precision@5", precision_at_5, prog_bar=False)
+        self.log("train_recall@1", recall_at_1, prog_bar=False)
+        self.log("train_recall@5", recall_at_5, prog_bar=False)
+        self.log("train_map", map_score, prog_bar=False)
+        self.log("train_ndcg@5", ndcg_at_5, prog_bar=False)
+        self.log("train_hit_rate@5", hit_rate_at_5, prog_bar=False)
+        self.log("train_avg_positive_similarity", avg_positive_similarity, prog_bar=False)
+        self.log("train_embedding_variance", embedding_variance, prog_bar=False)
+        self.log("train_passage_norm", passage_norm, prog_bar=False)
+        self.log("train_query_norm", query_norm, prog_bar=False)
+
         return loss
 
     def validation_step(
@@ -197,7 +263,7 @@ class DualEncoderModule(pl.LightningModule):
         batch: Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]],
         batch_idx: int,
     ) -> torch.Tensor:
-        """Validation step.
+        """Validation step with comprehensive retrieval and embedding quality metrics.
 
         Args:
             batch: Tuple of (query_batch, passage_batch)
@@ -214,7 +280,69 @@ class DualEncoderModule(pl.LightningModule):
         labels = torch.arange(query_emb.size(0), device=sim_matrix.device)
         loss = torch.nn.functional.cross_entropy(sim_matrix / TEMPERATURE, labels)
 
+        # Compute retrieval metrics within batch
+        batch_size = sim_matrix.size(0)
+
+        # Get rankings for each query (higher similarity = better rank)
+        rankings = torch.argsort(sim_matrix, dim=1, descending=True)  # (batch, batch)
+
+        # Find rank of correct passage for each query
+        correct_ranks = []
+        for i in range(batch_size):
+            correct_ranks.append(
+                (rankings[i] == i).nonzero(as_tuple=True)[0].item() + 1
+            )  # 1-based rank
+
+        correct_ranks = torch.tensor(
+            correct_ranks, dtype=torch.float, device=sim_matrix.device
+        )
+
+        # Mean Reciprocal Rank (MRR)
+        mrr = torch.mean(1.0 / correct_ranks)
+
+        # Precision@1, @5
+        precision_at_1 = torch.mean((correct_ranks <= 1).float())
+        precision_at_5 = torch.mean((correct_ranks <= 5).float())
+
+        # Recall@1, @5 (since we have 1 positive per query in batch)
+        recall_at_1 = precision_at_1  # Only 1 positive, so recall = precision
+        recall_at_5 = precision_at_5
+
+        # Mean Average Precision (MAP) - simplified for single positive per query
+        map_score = mrr  # For single positive, MAP = MRR
+
+        # NDCG@5 (Normalized Discounted Cumulative Gain)
+        ndcg_at_5 = self._compute_ndcg(correct_ranks, k=5)
+
+        # Hit Rate@5 (whether correct passage is in top-5)
+        hit_rate_at_5 = torch.mean((correct_ranks <= 5).float())
+
+        # Embedding quality metrics
+        query_norm = torch.norm(query_emb, dim=1).mean()
+        passage_norm = torch.norm(passage_emb, dim=1).mean()
+        embedding_variance = (
+            torch.cat([query_emb, passage_emb], dim=0).var(dim=0).mean()
+        )
+
+        # Semantic similarity (average cosine similarity of positive pairs)
+        positive_similarities = torch.diag(sim_matrix)
+        avg_positive_similarity = positive_similarities.mean()
+
+        # Log all metrics
         self.log("val_loss", loss, prog_bar=True)
+        self.log("val_mrr", mrr, prog_bar=False)
+        self.log("val_precision@1", precision_at_1, prog_bar=False)
+        self.log("val_precision@5", precision_at_5, prog_bar=False)
+        self.log("val_recall@1", recall_at_1, prog_bar=False)
+        self.log("val_recall@5", recall_at_5, prog_bar=False)
+        self.log("val_map", map_score, prog_bar=False)
+        self.log("val_ndcg@5", ndcg_at_5, prog_bar=False)
+        self.log("val_hit_rate@5", hit_rate_at_5, prog_bar=False)
+        self.log("val_avg_positive_similarity", avg_positive_similarity, prog_bar=False)
+        self.log("val_embedding_variance", embedding_variance, prog_bar=False)
+        self.log("val_passage_norm", passage_norm, prog_bar=False)
+        self.log("val_query_norm", query_norm, prog_bar=False)
+
         return loss
 
     def test_step(
@@ -522,8 +650,8 @@ def train_dual_encoder(
 
     # Set validation to run every 8 steps (half of max_steps for 16)
     if len(val_dataset) > 0:
-        trainer_kwargs["val_check_interval"] = (
-            min(128, max_steps) if max_steps is not None else 128
+        trainer_kwargs["val_check_interval"] = max(
+            1, (max_steps if max_steps is not None else 128) // 8
         )
         # Limit validation batches to match training steps for fair comparison
         if max_steps is not None:
@@ -619,6 +747,213 @@ def train_dual_encoder(
     return results
 
 
+def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
+    """Generate and save training curve plots for both configurations.
+
+    Args:
+        checkpoint_dir: Directory containing the lightning logs
+        metrics_dir: Directory to save the plots
+    """
+
+    print("Generating training curve plots...")
+
+    # Set seaborn style for better aesthetics
+    sns.set_style("whitegrid")
+    sns.set_palette("husl")
+
+    # Find the latest log directories for both configurations
+    genetic_logs_dir = checkpoint_dir / "lightning_logs_genetic"
+    standard_logs_dir = checkpoint_dir / "lightning_logs_standard"
+
+    if not genetic_logs_dir.exists() or not standard_logs_dir.exists():
+        print("Warning: Log directories not found. Skipping plot generation.")
+        return
+
+    # Get the latest version for each configuration
+    genetic_versions = [d for d in genetic_logs_dir.iterdir() if d.is_dir()]
+    standard_versions = [d for d in standard_logs_dir.iterdir() if d.is_dir()]
+
+    if not genetic_versions or not standard_versions:
+        print("Warning: No log versions found. Skipping plot generation.")
+        return
+
+    # Sort by version number and get the latest
+    genetic_latest = max(genetic_versions, key=lambda x: int(x.name.split("_")[-1]))
+    standard_latest = max(standard_versions, key=lambda x: int(x.name.split("_")[-1]))
+
+    # Read CSV files
+    genetic_csv = genetic_latest / "metrics.csv"
+    standard_csv = standard_latest / "metrics.csv"
+
+    if not genetic_csv.exists() or not standard_csv.exists():
+        print("Warning: Metrics CSV files not found. Skipping plot generation.")
+        return
+
+    try:
+        genetic_df = pd.read_csv(genetic_csv)
+        standard_df = pd.read_csv(standard_csv)
+    except Exception as e:
+        print(f"Warning: Error reading CSV files: {e}. Skipping plot generation.")
+        return
+
+    # Create plots directory
+    plots_dir = metrics_dir
+    plots_dir.mkdir(exist_ok=True)
+
+    # Create a combined dataframe for easier plotting
+    genetic_df["model"] = "Genetic Attention"
+    standard_df["model"] = "Standard Attention"
+
+    # Combined plot: Training and Validation Loss
+    plt.figure(figsize=(16, 6))
+
+    # Plot 1: Training Loss
+    plt.subplot(1, 2, 1)
+    if "train_loss" in genetic_df.columns and genetic_df["train_loss"].notna().any():
+        genetic_steps = genetic_df["step"][genetic_df["train_loss"].notna()]
+        genetic_loss = genetic_df["train_loss"][genetic_df["train_loss"].notna()]
+        plt.plot(
+            genetic_steps,
+            genetic_loss,
+            label="Genetic Attention",
+            color=sns.color_palette()[0],
+            linewidth=2,
+            alpha=0.8,
+        )
+
+    if "train_loss" in standard_df.columns and standard_df["train_loss"].notna().any():
+        standard_steps = standard_df["step"][standard_df["train_loss"].notna()]
+        standard_loss = standard_df["train_loss"][standard_df["train_loss"].notna()]
+        plt.plot(
+            standard_steps,
+            standard_loss,
+            label="Standard Attention",
+            color=sns.color_palette()[1],
+            linewidth=2,
+            alpha=0.8,
+        )
+
+    plt.xlabel("Training Step", fontsize=12)
+    plt.ylabel("Training Loss", fontsize=12)
+    plt.title("Training Loss Curves", fontsize=14, fontweight="bold")
+    plt.legend(frameon=True, fancybox=True, shadow=True)
+    plt.grid(True, alpha=0.3)
+
+    # Plot 2: Validation Loss
+    plt.subplot(1, 2, 2)
+    if "val_loss" in genetic_df.columns and genetic_df["val_loss"].notna().any():
+        genetic_val_steps = genetic_df["step"][genetic_df["val_loss"].notna()]
+        genetic_val_loss = genetic_df["val_loss"][genetic_df["val_loss"].notna()]
+        plt.plot(
+            genetic_val_steps,
+            genetic_val_loss,
+            label="Genetic Attention",
+            color=sns.color_palette()[0],
+            linewidth=2,
+            alpha=0.8,
+            marker="o",
+            markersize=4,
+        )
+
+    if "val_loss" in standard_df.columns and standard_df["val_loss"].notna().any():
+        standard_val_steps = standard_df["step"][standard_df["val_loss"].notna()]
+        standard_val_loss = standard_df["val_loss"][standard_df["val_loss"].notna()]
+        plt.plot(
+            standard_val_steps,
+            standard_val_loss,
+            label="Standard Attention",
+            color=sns.color_palette()[1],
+            linewidth=2,
+            alpha=0.8,
+            marker="o",
+            markersize=4,
+        )
+
+    plt.xlabel("Training Step", fontsize=12)
+    plt.ylabel("Validation Loss", fontsize=12)
+    plt.title("Validation Loss Curves", fontsize=14, fontweight="bold")
+    plt.legend(frameon=True, fancybox=True, shadow=True)
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(
+        plots_dir / "loss_comparison.png", dpi=300, bbox_inches="tight"
+    )
+    plt.close()
+
+    # Create individual plots for each metric with training and validation subplots
+    metrics_to_plot = [
+        ("loss", "Loss"),
+        ("mrr", "MRR"),
+        ("precision@1", "Precision@1"),
+        ("precision@5", "Precision@5"),
+        ("recall@1", "Recall@1"),
+        ("recall@5", "Recall@5"),
+        ("ndcg@5", "NDCG@5"),
+        ("hit_rate@5", "Hit Rate@5"),
+    ]
+
+    for metric_base, title in metrics_to_plot:
+        train_col = f"train_{metric_base}"
+        val_col = f"val_{metric_base}"
+        test_col = f"test_{metric_base}"
+
+        plt.figure(figsize=(16, 6))
+
+        # Left subplot: Standard Attention
+        plt.subplot(1, 2, 1)
+        plt.title("Standard Attention", fontsize=14, fontweight="bold")
+
+        # Plot standard's train_col if exists
+        if train_col in standard_df.columns and standard_df[train_col].notna().any():
+            steps = standard_df["step"][standard_df[train_col].notna()]
+            values = standard_df[train_col][standard_df[train_col].notna()]
+            plt.plot(steps, values, label="Training", color=sns.color_palette()[0], linewidth=2, alpha=0.8)
+
+        # Plot standard's val_col if exists, else test_col
+        right_col = val_col if val_col in standard_df.columns and standard_df[val_col].notna().any() else test_col
+        if right_col and right_col in standard_df.columns and standard_df[right_col].notna().any():
+            steps = standard_df["step"][standard_df[right_col].notna()]
+            values = standard_df[right_col][standard_df[right_col].notna()]
+            label = "Validation" if "val" in right_col else "Test"
+            plt.plot(steps, values, label=label, color=sns.color_palette()[1], linewidth=2, alpha=0.8, marker="o" if "val" in right_col else "s", markersize=4)
+
+        plt.xlabel("Training Step", fontsize=12)
+        plt.ylabel(title, fontsize=12)
+        plt.legend(frameon=True, fancybox=True, shadow=True)
+        plt.grid(True, alpha=0.3)
+
+        # Right subplot: Genetic Attention
+        plt.subplot(1, 2, 2)
+        plt.title("Genetic Attention", fontsize=14, fontweight="bold")
+
+        # Plot genetic's train_col if exists
+        if train_col in genetic_df.columns and genetic_df[train_col].notna().any():
+            steps = genetic_df["step"][genetic_df[train_col].notna()]
+            values = genetic_df[train_col][genetic_df[train_col].notna()]
+            plt.plot(steps, values, label="Training", color=sns.color_palette()[0], linewidth=2, alpha=0.8)
+
+        # Plot genetic's val_col if exists, else test_col
+        right_col = val_col if val_col in genetic_df.columns and genetic_df[val_col].notna().any() else test_col
+        if right_col and right_col in genetic_df.columns and genetic_df[right_col].notna().any():
+            steps = genetic_df["step"][genetic_df[right_col].notna()]
+            values = genetic_df[right_col][genetic_df[right_col].notna()]
+            label = "Validation" if "val" in right_col else "Test"
+            plt.plot(steps, values, label=label, color=sns.color_palette()[1], linewidth=2, alpha=0.8, marker="o" if "val" in right_col else "s", markersize=4)
+
+        plt.xlabel("Training Step", fontsize=12)
+        plt.ylabel(title, fontsize=12)
+        plt.legend(frameon=True, fancybox=True, shadow=True)
+        plt.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        safe_filename = title.lower().replace(" ", "_").replace("@", "at") + "_comparison.png"
+        plt.savefig(plots_dir / safe_filename, dpi=300, bbox_inches="tight")
+        plt.close()
+
+    print(f"Training curve plots saved to {plots_dir}")
+
+
 @app.command()
 def run(
     max_steps: Optional[int] = typer.Option(
@@ -707,10 +1042,14 @@ def run(
             metrics_dir=metrics_path,
         )
 
+    # Generate training curve plots
+    plot_training_curves(checkpoint_path, metrics_path)
+
     typer.echo(f"\n{'=' * 50}")
     typer.echo("Training completed for both configurations!")
     typer.echo(f"Checkpoints and logs saved in {checkpoint_path}")
     typer.echo(f"Metrics and results saved in {metrics_path}")
+    typer.echo(f"Seaborn training curve plots saved in {metrics_path}")
     typer.echo(f"{'=' * 50}")
 
 
