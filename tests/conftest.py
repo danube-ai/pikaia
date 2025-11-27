@@ -6,7 +6,7 @@ from pikaia.preprocessing.pikaia_preprocessor import PikaiaPreprocessor
 from pikaia.preprocessing.utils import max_scaler, min_max_scaler
 from pikaia.schemas.preprocessing import FeatureType
 from pikaia.strategies.base_strategies import StrategyContext
-from realistic_fitness_values import REALISTIC_FITNESS_VALUES
+from tests.fixtures.realistic_fitness_values import REALISTIC_FITNESS_VALUES
 
 
 @pytest.fixture

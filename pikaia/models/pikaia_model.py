@@ -67,8 +67,8 @@ class PikaiaModel:
                 Initial fitness values for each gene.
                 Defaults to a uniform distribution.
             max_iter (int, optional):
-                The maximum number of iterations for the simulation. Defaults to 1.
-                When set to 1, strategies and initial gene fitness will be ignored and
+                The maximum number of iterations for the simulation. Defaults to None.
+                When not set, strategies and initial gene fitness will be ignored and
                 the optimal solution will be computed directly.
             epsilon (float, optional):
                 The convergence threshold. If the L2 norm of the
@@ -136,7 +136,7 @@ class PikaiaModel:
         if initial_gene_fitness is not None:
             if max_iter is None:
                 logger.warning(
-                    "initial_gene_fitness has no effect when max_iter is None (default); "
+                    "initial_gene_fitness has no effect when max_iter is None; "
                     "the algorithm will reach convergence independent of initial "
                     "gene preferences."
                 )
@@ -208,7 +208,8 @@ class PikaiaModel:
             list[float]: Validated and normalized coefficients that sum to 1.
 
         Raises:
-            ValueError: If the length doesn't match or all coefficients are zero/negative.
+            ValueError: If the length doesn't match or all coefficients
+                are zero/negative.
         """
         if not strategies:
             return []
@@ -228,7 +229,8 @@ class PikaiaModel:
         # Validate non-negativity
         if np.any(coeffs_array < 0):
             raise ValueError(
-                f"{param_name} contains negative values. All coefficients must be non-negative."
+                f"{param_name} contains negative values. All coefficients "
+                "must be non-negative."
             )
 
         # Validate non-zero sum
@@ -264,7 +266,8 @@ class PikaiaModel:
         Returns:
             np.ndarray: A square matrix where the element (i, j) is the similarity
                 between item i and item j. The shape is (N, N) for organisms or (M, M)
-                for genes, where N is the number of organisms and M is the number of genes.
+                for genes, where N is the number of organisms and M is the number
+                of genes.
 
         Raises:
             ValueError: If an unknown mode is provided or if all items are identical.
@@ -362,14 +365,15 @@ class PikaiaModel:
 
     @property
     def ESE_iter(self) -> int:
-        """The iteration number at which the simulation converged (ESE). -1 if not converged."""
+        """The iteration number at which the simulation converged (ESE).
+        -1 if not converged."""
         return self._ESE_iter
 
     def fit(self) -> None:
         """
         Fits the genetic model to the population data by running the simulation.
 
-        This method iteratively updates the gene and organism fitness values based on the
+        This method iteratively updates the gene and organism fitness values based\n        on the
         provided strategies. The simulation runs for a maximum number of iterations as
         defined by `max_iter`. If an `epsilon` value is provided, the simulation will
         stop early if the change in gene fitness between iterations falls below this
@@ -521,7 +525,8 @@ class PikaiaModel:
             current_gene_fitness (np.ndarray): The current gene fitness vector.
 
         Returns:
-            tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and delta_o matrices.
+            tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and
+            delta_o matrices.
         """
         delta_g = np.zeros(
             [self._population.N, self._population.M, len(self._gene_strategies)]

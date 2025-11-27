@@ -27,7 +27,10 @@ class PikaiaPlotter:
     A class for plotting results from a PikaiaModel.
 
     This class provides a set of methods to visualize the outputs of an evolutionary
-    simulation, including fitness histories, mixing coefficients, and similarity matrices.
+
+    simulation, including fitness histories, mixing coefficients, and
+
+    similarity matrices.
 
     """
 
@@ -36,7 +39,7 @@ class PikaiaPlotter:
         Initializes the PikaiaPlotter with a PikaiaModel instance.
 
         Args:
-            model (PikaiaModel):
+            model : PikaiaModel
                 The fitted PikaiaModel to be plotted.
 
         """
@@ -55,20 +58,19 @@ class PikaiaPlotter:
         Plots the specified data from the model.
 
         Args:
-            plot_type (PlotType):
+            plot_type : PlotType
                 The type of plot to generate.
-            show (bool):
+            show : bool
                 If True, the plot is displayed. Defaults to False.
-            save_path (Path | None):
+            save_path : Path | None
                 If provided, the plot is saved to this path. Defaults to None.
-            gene_labels (list[str] | None):
+            gene_labels : list[str] | None
                 Custom labels for genes.
-            org_labels (list[str] | None):
+            org_labels : list[str] | None
                 Custom labels for organisms.
 
         Returns:
-            tuple:
-                A tuple containing the matplotlib Figure and Axes objects.
+            tuple : A tuple containing the matplotlib Figure and Axes objects.
 
         """
         if gene_labels is None:
@@ -144,25 +146,6 @@ class PikaiaPlotter:
     ) -> tuple[Figure, Axes]:
         """
         Helper function to plot 2D history data.
-
-        Args:
-            data (np.ndarray):
-                The 2D data array to plot (iterations x variables).
-            title (str):
-                The title of the plot.
-            ylabel (str):
-                The label for the y-axis.
-            labels (list[str] | None, optional):
-                Labels for each line. Defaults to None.
-            show (bool):
-                Whether to display the plot. Defaults to False.
-            save_path (Path | None, optional):
-                Filename to save the plot. Defaults to None.
-
-        Returns:
-            tuple:
-                A tuple containing the matplotlib Figure and Axes objects.
-
         """
         fig, ax = plt.subplots(figsize=(10, 6))
         num_iterations, num_vars = data.shape
@@ -197,23 +180,6 @@ class PikaiaPlotter:
     ) -> tuple[Figure, Axes]:
         """
         Helper function to plot a similarity matrix as a heatmap.
-
-        Args:
-            data (np.ndarray):
-                The similarity matrix to plot.
-            title (str):
-                The title of the plot.
-            labels (list[str] | None, optional):
-                Labels for the ticks. Defaults to None.
-            show (bool):
-                Whether to display the plot. Defaults to False.
-            save_path (Path | None, optional):
-                Filename to save the plot. Defaults to None.
-
-        Returns:
-            tuple:
-                A tuple containing the matplotlib Figure and Axes objects.
-
         """
         fig, ax = plt.subplots(figsize=(10, 6))
         cax = ax.matshow(data, cmap="viridis")
