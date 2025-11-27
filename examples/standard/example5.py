@@ -20,7 +20,18 @@ print("=== Example 5: 3x3 Data - Single Point Prediction ===\n")
 
 # Data Processing
 print("Data Processing")
-data_3x3_raw = np.array([[300, 10, 2], [600, 5, 2], [1500, 4, 1]])
+data_3x3_raw = np.array(
+    [
+        [300, 10, 2],
+        [600, 5, 2],
+        [1500, 4, 1],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+)
 print("Raw data:")
 print(data_3x3_raw)
 

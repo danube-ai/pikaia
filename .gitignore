@@ -217,3 +217,7 @@ __marimo__/
 
 # VS Code
 *.vscode/*
+
+# data
+.data/
+.artefacts/

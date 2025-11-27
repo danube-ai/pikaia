@@ -39,12 +39,16 @@ class PikaiaPreprocessor:
         and the transformation functions to apply to each feature.
 
         Args:
-            num_features (int): The number of features in the dataset. This must match
+            num_features (int):
+                The number of features in the dataset. This must match
                 the number of columns in the input data arrays passed to fit() and
                 transform().
-            feature_types (list[FeatureType]): A list of FeatureType enums, one for each
-                feature. Each FeatureType indicates whether the feature represents a cost
-                (lower values better) or gain (higher values better), though this info is
+            feature_types (list[FeatureType]):
+                A list of FeatureType enums, one for each
+                feature. Each FeatureType indicates whether the feature represents
+                a cost
+                (lower values better) or gain (higher values better), though this
+                info is
                 stored for potential future use.
             feature_transforms (list[Callable[[NDArray], NDArray] | None]):
                 A list of the same length as num_features. Each element is either a
@@ -78,11 +82,13 @@ class PikaiaPreprocessor:
 
         This method validates that the input data X has the correct number of features
         and that all values are numeric compatible (int, float, or boolean) as specified
-        during initialization. No actual fitting (e.g., parameter estimation) is performed
+        during initialization. No actual fitting (e.g., parameter estimation)
+        is performed
         since transformations are predefined.
 
         Args:
-            X (np.ndarray): The input data array with shape (n_samples, n_features).
+            X (np.ndarray):
+                The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:
@@ -120,7 +126,8 @@ class PikaiaPreprocessor:
         suitable for the genetic algorithm.
 
         Args:
-            X (np.ndarray): The input data array with shape (n_samples, n_features).
+            X (np.ndarray):
+                The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:
@@ -174,7 +181,8 @@ class PikaiaPreprocessor:
         for scikit-learn compatibility.
 
         Args:
-            X (np.ndarray): The input data array with shape (n_samples, n_features).
+            X (np.ndarray):
+                The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:

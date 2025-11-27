@@ -27,10 +27,13 @@ class DominantGeneStrategy(GeneStrategy):
         fitness and expression.
 
         Args:
-            ctx (StrategyContext): Context object containing all required and optional fields.
+            ctx (StrategyContext):
+                Context object containing all required and optional fields.
 
         Returns:
-            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+            float:
+                The computed delta value `Delta_G(i,j)` for the specified gene
+                and organism.
         """
         return float(
             # constant factor and normalization by population size

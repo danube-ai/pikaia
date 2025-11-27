@@ -2,19 +2,18 @@
 Genetic Layer Module
 """
 
-from typing import Optional
-
 import torch
 import torch.nn as nn
 
 
 class GeneticLayer(nn.Module):
     """
-    A PyTorch nn.Module implementing a genetic-inspired layer for feed-forward operations.
+    A PyTorch nn.Module implementing a genetic-inspired layer for feed-forward
+    operations.
 
-    This layer computes an internal population matrix from the input, applies sigmoid activation,
-    and then uses a fixed-point formula (based on dominant gene and balanced organism strategies)
-    to compute organism fitness values, which serve as the output.
+    This layer computes an internal population matrix from the input, applies sigmoid
+    activation, and then uses a fixed-point formula (based on dominant gene and balanced
+    organism strategies) to compute organism fitness values, which serve as the output.
 
     Parameters:
         input_shape (int):
@@ -39,7 +38,8 @@ class GeneticLayer(nn.Module):
 
     Input:
         x (torch.Tensor):
-            Input tensor of shape (..., input_shape), where the last dimension is features.
+            Input tensor of shape (..., input_shape), where the last dimension
+            is features.
 
     Output:
         torch.Tensor:
@@ -54,8 +54,8 @@ class GeneticLayer(nn.Module):
         orgs_shape: int = 32,
         genes_shape: int = 8,
         strategy: str = "fixed_org_balanced_gene_dominant",
-        output_shape: Optional[int] = None,
-        activation_fn: Optional[nn.Module] = None,
+        output_shape: int | None = None,
+        activation_fn: nn.Module | None = None,
         dropout_rate: float = 0.1,
     ):
         super().__init__()
@@ -86,7 +86,8 @@ class GeneticLayer(nn.Module):
 
         Args:
             x (torch.Tensor):
-                Input tensor of shape (..., input_shape), where the last dimension is features.
+                Input tensor of shape (..., input_shape), where the last dimension
+                is features.
 
         Returns:
             torch.Tensor:
@@ -200,7 +201,8 @@ class InputProjection(nn.Module):
 
 class GeneticProjection(nn.Module):
     """
-    Genetic weight projection module that transforms hidden features to genetic population matrix.
+    Genetic weight projection module that transforms hidden features to genetic
+    population matrix.
 
     This module applies layer normalization, linear transformation, activation,
     and dropout, then reshapes and applies sigmoid activation to create the population
@@ -268,8 +270,8 @@ class GeneticProjection(nn.Module):
 
         Returns:
             torch.Tensor:
-                Population matrix of shape (batch_size, input_length, orgs_shape, genes_shape)
-                with values in [0, 1] after sigmoid activation.
+                Population matrix of shape (batch_size, input_length, orgs_shape,
+                genes_shape) with values in [0, 1] after sigmoid activation.
         """
         x = self.layer_norm(x)
         x = self.linear(x)
@@ -323,8 +325,8 @@ class StrategyModule(nn.Module):
 
         Args:
             population_matrix (torch.Tensor):
-                Population matrix of shape (batch_size, input_length, orgs_shape, genes_shape)
-                with values in [0, 1].
+                Population matrix of shape (batch_size, input_length, orgs_shape,
+                genes_shape) with values in [0, 1].
 
         Returns:
             torch.Tensor:
@@ -370,7 +372,8 @@ class StrategyModule(nn.Module):
 
 class OutputProjection(nn.Module):
     """
-    Output projection module that transforms organism fitness to final output dimensions.
+    Output projection module that transforms organism fitness to final output
+    dimensions.
 
     This module applies layer normalization, linear transformation, activation,
     and dropout to project the organism fitness values to the desired output shape.
@@ -415,7 +418,8 @@ class OutputProjection(nn.Module):
 
         Args:
             x (torch.Tensor):
-                Input tensor of shape (..., orgs_shape) containing organism fitness values.
+                Input tensor of shape (..., orgs_shape) containing organism
+                fitness values.
 
         Returns:
             torch.Tensor:

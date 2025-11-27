@@ -34,10 +34,12 @@ class KinSelfishOrgStrategy(OrgStrategy):
         Computes deltas for a kin-selfish organism strategy.
 
         Args:
-            ctx (StrategyContext): Context object containing all required and optional fields.
+            ctx (StrategyContext):
+                Context object containing all required and optional fields.
 
         Returns:
-            np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
+            np.ndarray:
+                A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
