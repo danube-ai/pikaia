@@ -31,13 +31,10 @@ class AltruisticGeneStrategy(GeneStrategy):
         interactions between the current gene and all other genes in the organism.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
         # Get all gene indices except the current gene
         indices = np.arange(ctx.population.M) != ctx.gene_id

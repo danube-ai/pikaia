@@ -39,16 +39,12 @@ class PikaiaPreprocessor:
         and the transformation functions to apply to each feature.
 
         Args:
-            num_features (int):
-                The number of features in the dataset. This must match
+            num_features (int): The number of features in the dataset. This must match
                 the number of columns in the input data arrays passed to fit() and
                 transform().
-            feature_types (list[FeatureType]):
-                A list of FeatureType enums, one for each
-                feature. Each FeatureType indicates whether the feature represents
-                a cost
-                (lower values better) or gain (higher values better), though this
-                info is
+            feature_types (list[FeatureType]): A list of FeatureType enums, one for each
+                feature. Each FeatureType indicates whether the feature represents a cost
+                (lower values better) or gain (higher values better), though this info is
                 stored for potential future use.
             feature_transforms (list[Callable[[NDArray], NDArray] | None]):
                 A list of the same length as num_features. Each element is either a
@@ -81,35 +77,24 @@ class PikaiaPreprocessor:
         Fit the preprocessor to the input data.
 
         This method validates that the input data X has the correct number of features
-        and that all values are numeric compatible (int, float, or boolean) as specified
-        during initialization. No actual fitting (e.g., parameter estimation)
-        is performed
-        since transformations are predefined.
+        as specified during initialization. No actual fitting (e.g., parameter
+        estimation) is performed since transformations are predefined.
 
         Args:
-            X (np.ndarray):
-                The input data array with shape (n_samples, n_features).
+            X (np.ndarray): The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:
             PikaiaPreprocessor: Returns self to allow method chaining.
 
         Raises:
-            ValueError: If the number of features in X does not match num_features, or
-                if any values in X are not numeric (int, float) or boolean, or if X
-                contains NaN values.
+            ValueError: If the number of features in X does not match num_features.
         """
         if X.shape[1] != self.num_features:
             raise ValueError(
                 f"Number of features in X ({X.shape[1]}) "
                 f"does not match num_features ({self.num_features})"
             )
-
-        if not (np.issubdtype(X.dtype, np.number) or X.dtype == np.bool_):
-            raise ValueError("All values in X must be numeric (int, float) or boolean.")
-
-        if np.any(np.isnan(X)):
-            raise ValueError("Input data contains NaN values.")
 
         return self
 
@@ -126,27 +111,18 @@ class PikaiaPreprocessor:
         suitable for the genetic algorithm.
 
         Args:
-            X (np.ndarray):
-                The input data array with shape (n_samples, n_features).
+            X (np.ndarray): The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:
             np.ndarray: The transformed data array with the same shape as X, where each
                 feature column has been processed according to the specified
-                transformation, COST features have been inverted, and boolean values
-                have been converted to int.
+                transformation and COST features have been inverted.
 
         Warns:
             Logs a warning if any values in the transformed data fall outside [0, 1].
         """
-        if np.any(np.isnan(X)):
-            raise ValueError("Input data contains NaN values.")
-
         X_transformed = X.copy()
-
-        # Convert boolean values to int before transformations
-        if X_transformed.dtype == np.bool_:
-            X_transformed = X_transformed.astype(int)
 
         for i in range(self.num_features):
             transform_func = self.feature_transforms[i]
@@ -167,10 +143,6 @@ class PikaiaPreprocessor:
                     "genetic algorithm."
                 )
 
-        # Check for NaN values in transformed data
-        if np.any(np.isnan(X_transformed)):
-            raise ValueError("Transformed data contains NaN values.")
-
         return X_transformed
 
     def fit_transform(self, X: np.ndarray) -> np.ndarray:
@@ -181,8 +153,7 @@ class PikaiaPreprocessor:
         for scikit-learn compatibility.
 
         Args:
-            X (np.ndarray):
-                The input data array with shape (n_samples, n_features).
+            X (np.ndarray): The input data array with shape (n_samples, n_features).
                 Must have exactly num_features columns.
 
         Returns:
