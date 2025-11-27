@@ -168,10 +168,10 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 
 ## 👥 Authors & Contact
 
-- Philipp Wissgott
-- Andreas Roschal
-- Martin Bär
-- Carlos U. Pérez Malla
+- Philipp Wissgott (<philipp@danube.ai>)
+- Andreas Roschal (<andreas@danube.ai>)
+- Martin Bär (<martin@danube.ai>)
+- Carlos U. Pérez Malla (<carlos@danube.ai>)
 
 For questions, suggestions, or contributions, please feel free to open an issue.
 
@@ -203,9 +203,6 @@ If you use Pikaia in your research, please cite our preprint:
 }
 ```
 
-**Preprints:**
-
-- [Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization (arXiv)](https://arxiv.org/abs/2501.19113)
-- [Feature weighting for data analysis via evolutionary simulation (arXiv)](https://arxiv.org/abs/2511.06454)
+**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
 
 <p align="right">(<a href="#top">back to top</a>)</p>

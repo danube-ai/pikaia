@@ -29,11 +29,9 @@ class NoneOrgStrategy(OrgStrategy):
         this organism.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            np.ndarray:
-                A zero vector of shape `(m,)`.
+            np.ndarray: A zero vector of shape `(m,)`.
         """
         return np.zeros(ctx.population.M)

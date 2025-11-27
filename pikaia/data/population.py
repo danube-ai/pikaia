@@ -38,32 +38,20 @@ class PikaiaPopulation:
         """
         Validates the population matrix.
 
-        Checks that all values are between 0 and 1, that all values are numeric,
-        and that there are no NaN values. Also checks for high linear correlation
-        between features (columns).
+        Checks that all values are between 0 and 1, and that for high linear
+        correlation between features (columns).
 
         Raises:
             ValueError: If validation fails.
 
         """
-        # 1. Check all values are numeric
-        if not (
-            np.issubdtype(self._matrix.dtype, np.number)
-            or self._matrix.dtype == np.bool_
-        ):
-            raise ValueError("All values in the population matrix must be numeric.")
-
-        # 2. Check for NaN values
-        if np.any(np.isnan(self._matrix)):
-            raise ValueError("Population matrix contains NaN values.")
-
-        # 3. Check all values are between 0 and 1
+        # 1. Check all values are between 0 and 1
         if not np.all((self._matrix >= 0) & (self._matrix <= 1)):
             raise ValueError(
                 "All values in the population matrix must be between 0 and 1."
             )
 
-        # 4. Check for linear correlation between features (columns)
+        # 2. Check for linear correlation between features (columns)
         if self._skip_correlation_validation:
             return
         if self._matrix.shape[1] > 1:

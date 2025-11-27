@@ -83,8 +83,7 @@ class GeneStrategy(ABC):
 
         Returns:
             float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+                The computed delta value `Delta_G(i,j)` for the specified gene and organism.
 
         """
         pass

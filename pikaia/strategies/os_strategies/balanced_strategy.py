@@ -30,12 +30,10 @@ class BalancedOrgStrategy(OrgStrategy):
         the ideal balanced state (`1/m`) and adjusts its fitness accordingly.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            np.ndarray:
-                A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
+            np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
         """
         current_org_fitness = ctx.org_fitness[ctx.org_id]
 
