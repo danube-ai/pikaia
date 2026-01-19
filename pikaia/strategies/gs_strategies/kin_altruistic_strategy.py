@@ -41,10 +41,19 @@ class KinAltruisticGeneStrategy(GeneStrategy):
                 The computed delta value `Delta_G(i,j)` for the specified gene
                 and organism.
         """
-        # Get all gene indices except the current gene
-        indices = np.arange(ctx.population.M) != ctx.gene_id
+        # Determine kin range
+        kin_range = self.options.get("kin_range", ctx.population.M)
 
-        # Vectorized computation for all genes except self
+        # Get indices of most similar genes, excluding self
+        indices = np.argsort(-ctx.gene_similarity[ctx.gene_id, :])
+        indices = indices[:kin_range]
+        indices = indices[indices != ctx.gene_id]
+
+        # Early exit if no kin
+        if len(indices) == 0:
+            return 0.0
+
+        # Vectorized computation for kin genes
         # 16 / N * (0.5 - similarity) * fitness_self * (pop_self - 0.5) *
         # fitness_others * (pop_others - pop_self)
         return float(

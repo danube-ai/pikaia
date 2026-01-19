@@ -73,7 +73,7 @@ model = PikaiaModel(
     org_strategies=org_strategies,
     gene_mix_strategy=gene_mix_strategy,
     org_mix_strategy=org_mix_strategy,
-    max_iter=32,
+    max_iter=None,
 )
 print("Fitting model...")
 model.fit()
