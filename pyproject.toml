@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pikaia"
-version = "0.1.3"
+version = "0.2.0"
 authors = [
   { name="Philipp Wissgott"},
   { name="Andreas Roschal"},
@@ -14,7 +14,7 @@ authors = [
 description = "Data analysis with evolutionary simulation"
 keywords = ["data analysis", "AI", "evolutionary simulation"]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -34,6 +34,8 @@ dependencies = [
 dev = [
   "ruff>=0.13.1",
   "pytest>=8.3.5",
+  "pytest-cov>=7.1.0",
+  "pyright>=1.1.409",
   "scikit-learn>=1.3.0",
 ]
 docs = [
@@ -66,3 +68,19 @@ Issues = "https://github.com/danube-ai/pikaia/issues"
 
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length = 88
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
+include = ["pikaia", "research", "examples", "tests"]
+exclude = ["**/__pycache__", "**/.venv"]
+reportMissingImports = true
+reportMissingModuleSource = false
+reportPrivateImportUsage = false
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "pytest-cov>=7.1.0",
+]
