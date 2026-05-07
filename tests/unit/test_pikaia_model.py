@@ -81,3 +81,72 @@ class TestPikaiaModel:
         assert model._population is population_paper_example
         assert model._population.N == 15
         assert model._population.M == 4
+
+    def test_fit_no_max_iter_runs_fix_point(self):
+        """fit() with no max_iter should call _run_fix_point and populate hist[1]."""
+        population = PikaiaPopulation(np.random.default_rng(0).random((3, 4)))
+        model = PikaiaModel(population=population)
+        model.fit()
+        # After fix-point, hist[1] should be non-zero
+        assert not np.all(model.gene_fitness_history[1, :] == 0)
+        assert not np.all(model.organism_fitness_history[1, :] == 0)
+
+    def test_fit_with_max_iter_runs_iterations(self):
+        """fit() with max_iter runs the iterative simulation."""
+        population = PikaiaPopulation(np.random.default_rng(1).random((3, 4)))
+        model = PikaiaModel(
+            population=population,
+            gene_strategies=[NoneGeneStrategy()],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=3,
+        )
+        model.fit()
+        # History beyond index 0 should be filled
+        assert not np.all(model.gene_fitness_history[1:, :] == 0)
+
+    def test_fit_with_epsilon_stops_early(self):
+        """fit() with epsilon should set ESE_iter when convergence is reached."""
+        population = PikaiaPopulation(np.random.default_rng(2).random((3, 4)))
+        # NoneStrategy produces zero deltas → gene_fitness unchanged → delta=0 < any epsilon
+        model = PikaiaModel(
+            population=population,
+            gene_strategies=[NoneGeneStrategy()],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=10,
+            epsilon=1.0,  # very large epsilon → converges immediately
+        )
+        model.fit()
+        assert model.ESE_iter == 1  # should converge on first iteration
+
+    def test_calculate_deltas_parallel(self):
+        """_calculate_deltas with n_jobs=2 runs the parallel multiprocessing path."""
+        population = PikaiaPopulation(np.random.default_rng(3).random((3, 4)))
+        model = PikaiaModel(
+            population=population,
+            gene_strategies=[NoneGeneStrategy()],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=2,
+            n_jobs=2,
+        )
+        model.fit()
+        # Just verify it ran without error and produced results
+        assert not np.all(model.gene_fitness_history[1:, :] == 0)
+
+    def test_predict_mismatched_M_raises(self):
+        """predict() should raise ValueError when new population has different M."""
+        population = PikaiaPopulation(np.random.default_rng(4).random((3, 4)))
+        model = PikaiaModel(population=population)
+        model.fit()
+
+        wrong_pop = PikaiaPopulation(np.random.default_rng(5).random((2, 5)))
+        with pytest.raises(ValueError, match="number of genes"):
+            model.predict(wrong_pop)
+
+    def test_predict_after_fit(self):
+        """predict() should return an array of shape (N,) for a compatible population."""
+        population = PikaiaPopulation(np.random.default_rng(6).random((3, 4)))
+        model = PikaiaModel(population=population)
+        model.fit()
+        new_pop = PikaiaPopulation(np.random.default_rng(7).random((5, 4)))
+        result = model.predict(new_pop)
+        assert result.shape == (5,)
