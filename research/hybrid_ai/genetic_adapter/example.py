@@ -1,3 +1,12 @@
+"""Bias-in-Bios multi-head BERT example with genetic adapter.
+
+Demonstrates multi-task learning with a shared BERT encoder and separate
+profession and gender classification heads on the Bias-in-Bios dataset.
+Includes counterfactual flip-rate evaluation via pronoun swapping.
+
+Requires: transformers, datasets, scikit-learn, torch, numpy
+    pip install transformers datasets scikit-learn torch
+"""
 # Requires: transformers, datasets, scikit-learn, torch, numpy
 # pip install transformers datasets scikit-learn torch
 
@@ -39,7 +48,18 @@ PROF_COL = "profession"  # change if different
 GEND_COL = "gender"  # change if different
 
 
-def build_label_maps(dataset, col):
+def build_label_maps(
+    dataset, col: str
+) -> tuple[dict[str, int], dict[int, str]]:
+    """Build label-to-id and id-to-label mappings from a dataset column.
+
+    Args:
+        dataset: HuggingFace dataset split to scan for labels.
+        col: Column name containing the categorical labels.
+
+    Returns:
+        Tuple of (label2id, id2label) dictionaries.
+    """
     labels = sorted(list({ex[col] for ex in dataset}))
     label2id = {label: i for i, label in enumerate(labels)}
     id2label = {i: label for label, i in label2id.items()}
@@ -59,7 +79,17 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 # 4) Preprocess: tokenize + map labels
-def preprocess(examples):
+def preprocess(examples: dict) -> dict:
+    """Tokenize text and map profession/gender labels to integer IDs.
+
+    Args:
+        examples: Batch dictionary from a HuggingFace dataset with TEXT_COL,
+            PROF_COL and GEND_COL keys.
+
+    Returns:
+        Dictionary with tokenized fields plus ``profession_label`` and
+        ``gender_label`` integer lists.
+    """
     toks = tokenizer(
         examples[TEXT_COL], truncation=True, padding="max_length", max_length=128
     )
@@ -78,7 +108,20 @@ val.set_format(type="torch")  # type: ignore
 
 
 class BertMultiHead(BertPreTrainedModel):
-    def __init__(self, config, num_prof, num_gender):
+    """BERT model with shared encoder and separate profession/gender heads.
+
+    Implements a multi-task classifier that shares a BERT backbone and adds
+    two independent classification heads for profession and gender prediction.
+    """
+
+    def __init__(self, config, num_prof: int, num_gender: int) -> None:
+        """Initialise the multi-head BERT model.
+
+        Args:
+            config: HuggingFace BERT config object.
+            num_prof: Number of profession classes.
+            num_gender: Number of gender classes.
+        """
         super().__init__(config)
         self.bert = BertModel(config)
         hidden_size = config.hidden_size
@@ -103,12 +146,25 @@ class BertMultiHead(BertPreTrainedModel):
 
     def forward(
         self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        profession_label=None,
-        gender_label=None,
-    ):
+        input_ids: torch.Tensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        token_type_ids: torch.Tensor | None = None,
+        profession_label: torch.Tensor | None = None,
+        gender_label: torch.Tensor | None = None,
+    ) -> tuple[SequenceClassifierOutput, dict[str, torch.Tensor]]:
+        """Forward pass returning losses and per-head logits.
+
+        Args:
+            input_ids: Token IDs of shape (batch, seq_len).
+            attention_mask: Attention mask of shape (batch, seq_len).
+            token_type_ids: Token type IDs of shape (batch, seq_len).
+            profession_label: Integer profession labels of shape (batch,).
+            gender_label: Integer gender labels of shape (batch,).
+
+        Returns:
+            Tuple of (SequenceClassifierOutput with combined loss,
+            dict with ``prof_logits`` and ``gender_logits`` tensors).
+        """
         outputs = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -162,20 +218,36 @@ epochs = 3
 batch_size = 16
 
 train_loader = DataLoader(
-    train,
+    train,  # type: ignore[arg-type]
     batch_size=batch_size,
     shuffle=True,
     collate_fn=default_data_collator,  # type: ignore
 )
 val_loader = DataLoader(
-    val,
+    val,  # type: ignore[arg-type]
     batch_size=batch_size,
     shuffle=False,
     collate_fn=default_data_collator,  # type: ignore
 )
 
 
-def evaluate(model, loader):
+def evaluate(
+    model: BertMultiHead, loader: DataLoader
+) -> dict[str, object]:
+    """Evaluate the multi-head model on a data loader.
+
+    Computes profession and gender accuracy, macro-F1, joint accuracy, and
+    per-gender profession accuracy gap.
+
+    Args:
+        model: Trained BertMultiHead model.
+        loader: DataLoader yielding tokenised batches with ``profession_label``
+            and ``gender_label`` keys.
+
+    Returns:
+        Dictionary with keys: ``prof_acc``, ``prof_f1``, ``gender_acc``,
+        ``gender_f1``, ``joint_acc``, ``per_gender_prof_acc``.
+    """
     model.eval()
     prof_preds = []
     prof_trues = []
@@ -262,7 +334,18 @@ for epoch in range(epochs):
 
 
 # 11) Counterfactual flip-rate measurement (pronoun swap)
-def swap_pronouns_text(text):
+def swap_pronouns_text(text: str) -> str:
+    """Naively swap he/she pronouns in text for counterfactual evaluation.
+
+    Replaces all occurrences of " he " ↔ " she " and " He " ↔ " She " using
+    a temporary placeholder to avoid double-swapping.
+
+    Args:
+        text: Input sentence to transform.
+
+    Returns:
+        Text with gendered pronouns swapped.
+    """
     # naive; adapt for edge cases
     t = text
     t = (
@@ -278,8 +361,26 @@ def swap_pronouns_text(text):
     return t
 
 
-# Build a small val-swapped dataset and evaluate flip rate for profession predictions
-def compute_flip_rate(model, dataset, max_examples=None):
+def compute_flip_rate(
+    model: BertMultiHead,
+    dataset,
+    max_examples: int | None = None,
+) -> float:
+    """Compute the profession prediction flip rate after pronoun swapping.
+
+    Measures what fraction of profession predictions change when gendered
+    pronouns in the input text are swapped (he ↔ she).
+
+    Args:
+        model: Trained BertMultiHead model to evaluate.
+        dataset: Tokenised HuggingFace dataset (torch format) to evaluate on.
+        max_examples: If given, evaluate only this many examples. Currently
+            unused (retained for API compatibility).
+
+    Returns:
+        Flip rate in [0, 1]: fraction of examples where the profession
+        prediction changed after pronoun swapping.
+    """
     model.eval()
     flips = 0
     total = 0
@@ -294,7 +395,7 @@ def compute_flip_rate(model, dataset, max_examples=None):
         orig_preds.extend(prof_pred)
     # create swapped texts and re-tokenize
     swapped_texts = [
-        swap_pronouns_text(x[TEXT_COL])
+        swap_pronouns_text(x[TEXT_COL])  # type: ignore[index]
         for x in val_ds  # type: ignore
     ]  # careful: val_ds original object
     toks = tokenizer(

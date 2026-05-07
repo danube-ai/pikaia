@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
-"""
-Script to compute summary statistics from genetic layer benchmark results.
-"""
+"""Script to compute summary statistics from genetic layer benchmark results."""
 
 import pandas as pd
 
 
-def compute_summary_stats(csv_path):
-    """Compute average statistics for each architecture/network type combination."""
+def compute_summary_stats(csv_path: str) -> pd.DataFrame:
+    """Compute average statistics for each architecture/network type combination.
+
+    Reads the benchmark CSV, groups by ``Architecture`` and ``Network_Type``,
+    and returns a formatted summary DataFrame with human-readable columns.
+
+    Args:
+        csv_path: Path to the CSV file containing the benchmark results.
+            Expected columns: ``Architecture``, ``Network_Type``,
+            ``Best_Bal_Acc``, ``Final_Bal_Acc``, ``Training_Time``,
+            ``Num_Params``.
+
+    Returns:
+        DataFrame with one row per (Architecture, Network_Type) combination and
+        columns: ``Architecture``, ``Network_Type``, ``Avg Best Bal Acc``,
+        ``Avg Final Bal Acc``, ``Avg Training Time``, ``Avg Params``.
+    """
     df = pd.read_csv(csv_path)
 
     # Group by Architecture and Network_Type, compute averages
@@ -34,7 +47,7 @@ def compute_summary_stats(csv_path):
     summary["Avg Params"] = summary["Num_Params"].apply(lambda x: f"{int(x):,}")
 
     # Reorder columns
-    summary = summary[
+    summary = summary[  # type: ignore[index]
         [
             "Architecture",
             "Network_Type",
@@ -45,7 +58,7 @@ def compute_summary_stats(csv_path):
         ]
     ]
 
-    return summary
+    return summary  # type: ignore[return-value]
 
 
 if __name__ == "__main__":

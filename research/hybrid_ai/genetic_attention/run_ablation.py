@@ -811,7 +811,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
 
     # Plot 1: Training Loss
     plt.subplot(1, 2, 1)
-    if "train_loss" in genetic_df.columns and genetic_df["train_loss"].notna().any():
+    if "train_loss" in genetic_df.columns and genetic_df["train_loss"].notna().any():  # type: ignore[reportGeneralTypeIssues]
         genetic_steps = genetic_df["step"][genetic_df["train_loss"].notna()]
         genetic_loss = genetic_df["train_loss"][genetic_df["train_loss"].notna()]
         plt.plot(
@@ -823,7 +823,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
             alpha=0.8,
         )
 
-    if "train_loss" in standard_df.columns and standard_df["train_loss"].notna().any():
+    if "train_loss" in standard_df.columns and standard_df["train_loss"].notna().any():  # type: ignore[reportGeneralTypeIssues]
         standard_steps = standard_df["step"][standard_df["train_loss"].notna()]
         standard_loss = standard_df["train_loss"][standard_df["train_loss"].notna()]
         plt.plot(
@@ -843,7 +843,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
 
     # Plot 2: Validation Loss
     plt.subplot(1, 2, 2)
-    if "val_loss" in genetic_df.columns and genetic_df["val_loss"].notna().any():
+    if "val_loss" in genetic_df.columns and genetic_df["val_loss"].notna().any():  # type: ignore[reportGeneralTypeIssues]
         genetic_val_steps = genetic_df["step"][genetic_df["val_loss"].notna()]
         genetic_val_loss = genetic_df["val_loss"][genetic_df["val_loss"].notna()]
         plt.plot(
@@ -857,7 +857,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
             markersize=4,
         )
 
-    if "val_loss" in standard_df.columns and standard_df["val_loss"].notna().any():
+    if "val_loss" in standard_df.columns and standard_df["val_loss"].notna().any():  # type: ignore[reportGeneralTypeIssues]
         standard_val_steps = standard_df["step"][standard_df["val_loss"].notna()]
         standard_val_loss = standard_df["val_loss"][standard_df["val_loss"].notna()]
         plt.plot(
@@ -905,7 +905,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         plt.title("Standard Attention", fontsize=14, fontweight="bold")
 
         # Plot standard's train_col if exists
-        if train_col in standard_df.columns and standard_df[train_col].notna().any():
+        if train_col in standard_df.columns and standard_df[train_col].notna().any():  # type: ignore[reportGeneralTypeIssues]
             steps = standard_df["step"][standard_df[train_col].notna()]
             values = standard_df[train_col][standard_df[train_col].notna()]
             plt.plot(
@@ -920,13 +920,13 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         # Plot standard's val_col if exists, else test_col
         right_col = (
             val_col
-            if val_col in standard_df.columns and standard_df[val_col].notna().any()
+            if val_col in standard_df.columns and standard_df[val_col].notna().any()  # type: ignore[reportGeneralTypeIssues]
             else test_col
         )
         if (
             right_col
             and right_col in standard_df.columns
-            and standard_df[right_col].notna().any()
+            and standard_df[right_col].notna().any()  # type: ignore[reportGeneralTypeIssues]
         ):
             steps = standard_df["step"][standard_df[right_col].notna()]
             values = standard_df[right_col][standard_df[right_col].notna()]
@@ -952,7 +952,7 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         plt.title("Genetic Attention", fontsize=14, fontweight="bold")
 
         # Plot genetic's train_col if exists
-        if train_col in genetic_df.columns and genetic_df[train_col].notna().any():
+        if train_col in genetic_df.columns and genetic_df[train_col].notna().any():  # type: ignore[reportGeneralTypeIssues]
             steps = genetic_df["step"][genetic_df[train_col].notna()]
             values = genetic_df[train_col][genetic_df[train_col].notna()]
             plt.plot(
@@ -967,13 +967,13 @@ def plot_training_curves(checkpoint_dir: Path, metrics_dir: Path) -> None:
         # Plot genetic's val_col if exists, else test_col
         right_col = (
             val_col
-            if val_col in genetic_df.columns and genetic_df[val_col].notna().any()
+            if val_col in genetic_df.columns and genetic_df[val_col].notna().any()  # type: ignore[reportGeneralTypeIssues]
             else test_col
         )
         if (
             right_col
             and right_col in genetic_df.columns
-            and genetic_df[right_col].notna().any()
+            and genetic_df[right_col].notna().any()  # type: ignore[reportGeneralTypeIssues]
         ):
             steps = genetic_df["step"][genetic_df[right_col].notna()]
             values = genetic_df[right_col][genetic_df[right_col].notna()]
