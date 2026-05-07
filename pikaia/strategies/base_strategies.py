@@ -70,7 +70,7 @@ class GeneStrategy(ABC):
     @abstractmethod
     def name(self) -> str:
         """The name of the strategy."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def __call__(self, ctx: StrategyContext) -> float:
@@ -87,7 +87,7 @@ class GeneStrategy(ABC):
                 and organism.
 
         """
-        pass
+        pass  # pragma: no cover
 
 
 class OrgStrategy(ABC):
@@ -116,7 +116,7 @@ class OrgStrategy(ABC):
     @abstractmethod
     def name(self) -> str:
         """The name of the strategy."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
@@ -133,7 +133,7 @@ class OrgStrategy(ABC):
                 delta values `Delta_O(i,j)` for the specified organism.
 
         """
-        pass
+        pass  # pragma: no cover
 
 
 class MixStrategy(ABC):
@@ -162,7 +162,7 @@ class MixStrategy(ABC):
     @abstractmethod
     def name(self) -> str:
         """The name of the strategy."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def __call__(
@@ -188,4 +188,4 @@ class MixStrategy(ABC):
                 np.ndarray: The updated mixing coefficients for the next iteration.
 
         """
-        pass
+        pass  # pragma: no cover
