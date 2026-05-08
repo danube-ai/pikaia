@@ -162,7 +162,7 @@
 \node[lbox]  (al1) at (2.3, -2.1) {Lin$+$SiLU};
 \node[lbox]  (al2) at (4.6, -2.1) {Lin$+$SiLU};
 \node[iobox] (ay)  at (6.6, -2.1) {$\hat{y}$};
-\draw[arr] (ax)--(al1); \draw[arr] (al1)--(al2); \draw[arr] (al2)--(ay);
+\draw[arr] (ax)--(al1); \draw[arr] (al1)--(al2) node[midway, above, font=\scriptsize, color=muted] {$\times N$}; \draw[arr] (al2)--(ay);
 \node[lbl] at (ax.south)  {$(B,d)$};
 \node[lbl] at (al1.south) {$(B,d_h)$};
 \node[lbl] at (al2.south) {$(B,d)$};
@@ -172,7 +172,7 @@
 \node[gbox]  (bg1) at (2.3, -4.2) {Genetic\\Layer};
 \node[gbox]  (bg2) at (4.6, -4.2) {Genetic\\Layer};
 \node[iobox] (by)  at (6.6, -4.2) {$\hat{y}$};
-\draw[arr] (bx)--(bg1); \draw[arr] (bg1)--(bg2); \draw[arr] (bg2)--(by);
+\draw[arr] (bx)--(bg1); \draw[arr] (bg1)--(bg2) node[midway, above, font=\scriptsize, color=muted] {$\times N$}; \draw[arr] (bg2)--(by);
 \node[lbl] at (bx.south)  {$(B,d)$};
 \node[lbl] at (bg1.south) {$(B,d)$};
 \node[lbl] at (bg2.south) {$(B,d)$};
@@ -183,18 +183,17 @@
 \node[font=\small\bfseries\color{primary}, anchor=west] at (8.5, -1.2) {(c)\enspace Classical Multi-Head};
 \node[iobox] (cx)   at (8.5,  -3.5) {$x$};
 \node[lbox]  (ch1)  at (11.0, -2.3) {Lin$+$SiLU};
-\node[lbox]  (ch2)  at (11.0, -3.5) {Lin$+$SiLU};
+\node[font=\normalsize, color=primary!60] (cvdots) at (11.0, -3.5) {$\vdots$};
 \node[lbox]  (ch3)  at (11.0, -4.7) {Lin$+$SiLU};
 \node[lbox]  (ccat) at (13.5, -3.5) {Concat\\$W_O$};
 \node[iobox] (cy)   at (15.8, -3.5) {$\hat{y}$};
 \coordinate (cfork) at ($(cx.east)+(0.4,0)$);
 \coordinate (cjoin) at ($(ccat.west)+(-0.4,0)$);
-\draw (cx.east)--(cfork); \draw (cfork)|-(ch1.west); \draw (cfork)--(ch2.west); \draw (cfork)|-(ch3.west);
-\draw (ch1.east)-|(cjoin); \draw (ch2.east)--(cjoin); \draw (ch3.east)-|(cjoin);
+\draw (cx.east)--(cfork); \draw (cfork)|-(ch1.west); \draw (cfork)|-(ch3.west);
+\draw (ch1.east)-|(cjoin); \draw (ch3.east)-|(cjoin);
 \draw[arr] (cjoin)--(ccat.west); \draw[arr] (ccat)--(cy);
 \node[lbl] at (cx.south)   {$(B,d)$};
 \node[lbl] at (ch1.south)  {$(B,d_h)$};
-\node[lbl] at (ch2.south)  {$(B,d_h)$};
 \node[lbl] at (ch3.south)  {$(B,d_h)$};
 \node[lbl] at (ccat.south) {$(B,d)$};
 %%--- (d) Genetic Multi-Head ---
@@ -203,18 +202,17 @@
 \node[font=\small\bfseries\color{primary}, anchor=west] at (8.5, -5.7) {(d)\enspace Genetic Multi-Head};
 \node[iobox] (dx)   at (8.5,  -7.6) {$x$};
 \node[gbox]  (dh1)  at (11.0, -6.5) {Genetic\\Layer};
-\node[gbox]  (dh2)  at (11.0, -7.6) {Genetic\\Layer};
+\node[font=\normalsize, color=primary!60] (dvdots) at (11.0, -7.6) {$\vdots$};
 \node[gbox]  (dh3)  at (11.0, -8.7) {Genetic\\Layer};
 \node[lbox]  (dcat) at (13.5, -7.6) {Concat\\$W_O$};
 \node[iobox] (dy)   at (15.8, -7.6) {$\hat{y}$};
 \coordinate (dfork) at ($(dx.east)+(0.4,0)$);
 \coordinate (djoin) at ($(dcat.west)+(-0.4,0)$);
-\draw (dx.east)--(dfork); \draw (dfork)|-(dh1.west); \draw (dfork)--(dh2.west); \draw (dfork)|-(dh3.west);
-\draw (dh1.east)-|(djoin); \draw (dh2.east)--(djoin); \draw (dh3.east)-|(djoin);
+\draw (dx.east)--(dfork); \draw (dfork)|-(dh1.west); \draw (dfork)|-(dh3.west);
+\draw (dh1.east)-|(djoin); \draw (dh3.east)-|(djoin);
 \draw[arr] (djoin)--(dcat.west); \draw[arr] (dcat)--(dy);
 \node[lbl] at (dx.south)   {$(B,d)$};
 \node[lbl] at (dh1.south)  {$(B,d_h)$};
-\node[lbl] at (dh2.south)  {$(B,d_h)$};
 \node[lbl] at (dh3.south)  {$(B,d_h)$};
 \node[lbl] at (dcat.south) {$(B,d)$};
 \end{tikzpicture}
