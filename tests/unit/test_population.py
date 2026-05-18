@@ -123,3 +123,16 @@ class TestPikaiaPopulation:
         assert np.all(population_paper_example.matrix >= 0) and np.all(
             population_paper_example.matrix <= 1
         )
+
+    def test_init_nan_values_raises(self):
+        """Test initialization with NaN values raises ValueError."""
+        matrix = np.array([[0.1, float("nan")], [0.9, 0.3]])
+        with pytest.raises(ValueError, match="NaN"):
+            PikaiaPopulation(matrix)
+
+    def test_init_non_numeric_raises(self):
+        """Test initialization with non-numeric dtype raises ValueError."""
+        # object dtype is non-numeric
+        matrix = np.array([["a", "b"], ["c", "d"]], dtype=object)
+        with pytest.raises(ValueError, match="numeric"):
+            PikaiaPopulation(matrix)
