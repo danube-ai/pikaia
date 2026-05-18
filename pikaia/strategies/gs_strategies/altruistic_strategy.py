@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -16,6 +17,12 @@ class AltruisticGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Altruistic gene strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -67,3 +74,25 @@ class AltruisticGeneStrategy(GeneStrategy):
             # normalization by number of genes
             / ctx.population.M
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Full (M, M) D matrix; diagonal zeroed.
+
+        D[j,k] = (16/M) * gene_similarity[j,k]
+                 * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]
+        """
+        X = population.matrix  # (N, M)
+        M = population.M
+        X_centered = X - 0.5  # (N, M)
+        # X_diff[i, j, k] = X[i,k] - X[i,j]
+        X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
+        kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
+        D = (16.0 / M) * gene_similarity * kernel
+        np.fill_diagonal(D, 0.0)
+        return D, None

@@ -11,36 +11,23 @@ from pikaia.data.population import PikaiaPopulation
 
 @dataclass(slots=True)
 class StrategyContext:
-    """
-    Holds the context for a strategy calculation.
+    """Holds the context for a strategy calculation."""
 
-    Attributes:
-        population (Population):
-            The population object.
-        org_id (int):
-            The index of the current organism being evaluated.
-        gene_id (int):
-            The index of the current gene being evaluated.
-        org_fitness (np.ndarray):
-            The fitness array for all organisms, shape `(n,)`.
-        gene_fitness (np.ndarray):
-            The fitness array for all genes, shape `(m,)`.
-        org_similarity (np.ndarray):
-            A similarity matrix for organisms, shape `(n, n)`.
-        gene_similarity (np.ndarray):
-            A similarity matrix for genes, shape `(m, m)`.
-        initial_org_fitness_range (float):
-            The initial range of organism fitness values.
-
-    """
-
+    #: The population object.
     population: PikaiaPopulation
+    #: The fitness array for all organisms, shape ``(n,)``.
     org_fitness: np.ndarray
+    #: The fitness array for all genes, shape ``(m,)``.
     gene_fitness: np.ndarray
+    #: A similarity matrix for organisms, shape ``(n, n)``.
     org_similarity: np.ndarray
+    #: A similarity matrix for genes, shape ``(m, m)``.
     gene_similarity: np.ndarray
+    #: The initial range of organism fitness values.
     initial_org_fitness_range: float
+    #: The index of the current organism being evaluated.
     org_id: Optional[int] = None
+    #: The index of the current gene being evaluated.
     gene_id: Optional[int] = None
 
 
@@ -89,6 +76,25 @@ class GeneStrategy(ABC):
         """
         pass  # pragma: no cover
 
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Return the D-matrix kernel contribution ``(D, d)`` for this strategy.
+
+        ``D`` is an ``(M, M)`` array for the bilinear term
+        ``gamma * (D @ gamma)``; ``d`` is an ``(M,)`` array for the linear
+        term.  Either may be ``None`` when the strategy has no contribution
+        of that type.
+
+        The default returns ``(None, None)`` (zero contribution).  Subclasses
+        that support the fast D-matrix path override this method.
+        """
+        return None, None
+
 
 class OrgStrategy(ABC):
     """
@@ -134,6 +140,20 @@ class OrgStrategy(ABC):
 
         """
         pass  # pragma: no cover
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Return the D-matrix kernel contribution ``(D, d)`` for this strategy.
+
+        The default returns ``(None, None)`` (zero contribution).  Subclasses
+        that support the fast D-matrix path override this method.
+        """
+        return None, None
 
 
 class MixStrategy(ABC):

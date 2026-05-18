@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -15,6 +16,12 @@ class BalancedOrgStrategy(OrgStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Balanced organism strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`OrgStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -53,3 +60,32 @@ class BalancedOrgStrategy(OrgStrategy):
             * current_org_fitness
         )
         return delta_o
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Rank-1 D matrix exploiting gamma normalization.
+
+        Because ``sum_j gamma_j = 1``, a row-constant matrix
+        ``D[j,k] = -2*x_bar_j`` satisfies ``(D@gamma)_j = -2*x_bar_j``
+        for *any* normalized ``gamma``.  Combined with the outer
+        ``gamma_j`` multiplier in the replicator step this gives:
+
+            step_j = gamma_j * (-2*x_bar_j)
+
+        which exactly reproduces the balanced-org contribution
+        ``delta_j ≈ -2*x_bar_j*gamma_j`` (the j-independent constant
+        ``2*w_bar/M`` cancels under normalisation).
+
+        Encoding as a ``D`` matrix (rather than a ``d`` vector) keeps the
+        step O(1/M) near the uniform point, ensuring numerical stability.
+        """
+        x_bar = population.matrix.mean(axis=0)  # (M,)
+        M = population.M
+        # D[j, k] = -2*x_bar_j  for all k
+        D = np.outer(-2.0 * x_bar, np.ones(M))
+        return D, None

@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -21,6 +22,12 @@ class SelfishGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Selfish gene strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -71,3 +78,20 @@ class SelfishGeneStrategy(GeneStrategy):
             )
             / ctx.population.M
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """D_sel = -D_alt: negated altruistic gene kernel."""
+        X = population.matrix  # (N, M)
+        M = population.M
+        X_centered = X - 0.5
+        X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
+        kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)
+        D = -(16.0 / M) * gene_similarity * kernel
+        np.fill_diagonal(D, 0.0)
+        return D, None

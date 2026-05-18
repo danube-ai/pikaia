@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from pikaia.strategies.base_strategies import MixStrategy
@@ -17,6 +19,12 @@ class SelfConsistentMixStrategy(MixStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the SelfConsistent mix strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`MixStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -48,15 +56,52 @@ class SelfConsistentMixStrategy(MixStrategy):
             absolute value of the mixed deltas, scaled by the number of columns in
             the delta array.
         """
+        # Compute per-strategy mean magnitude BEFORE mixing so that strategies with
+        # larger deltas genuinely grow their coefficients relative to others.
+        # Averaging over both the organism axis (0) and gene axis (1) gives a
+        # (k,) vector — one magnitude per strategy.
+        per_strategy_mean = np.mean(np.abs(delta), axis=(0, 1))  # (k,)
+
         # Weighted sum over the last axis (k) of delta using mix_coeffs,
         # resulting in shape (n, m)
         delta = np.einsum("ijk,k->ij", delta, mix_coeffs)
 
-        delta_g_mean = np.mean(np.abs(delta), axis=0)
-        total_delta_g_mean = np.mean(delta_g_mean, axis=0)
-
         # Applies delta in form of the central replicator equations
-        mix_coeffs = mix_coeffs * (1 + total_delta_g_mean * delta.shape[1])
+        mix_coeffs = mix_coeffs * (1 + per_strategy_mean * delta.shape[1])
         mix_coeffs /= np.sum(mix_coeffs)
 
         return delta, mix_coeffs
+
+    @staticmethod
+    def update_coeffs_d_matrix(
+        D_list: list[np.ndarray | None],
+        d_list: list[np.ndarray | None],
+        gamma: np.ndarray,
+        mix_coeffs: np.ndarray,
+    ) -> np.ndarray:
+        """Update mixing coefficients for the D-matrix iteration path.
+
+        Replaces the ``(N, M, K)`` tensor magnitude used in ``__call__`` with
+        per-strategy D-matrix magnitudes:
+
+        - Bilinear strategy ``s``: ``mean_j(|gamma_j * (D_s @ gamma)_j|)``
+        - Linear (balanced org) strategy: ``mean_j(|d_j|)`` — constant
+
+        Args:
+            D_list: Per-strategy ``(M, M)`` D matrices or ``None``.
+            d_list: Per-strategy ``(M,)`` d-vectors or ``None``.
+            gamma: Current gene fitness vector, shape ``(M,)``.
+            mix_coeffs: Current mixing coefficients, shape ``(K,)``.
+
+        Returns:
+            Updated and renormalized mixing coefficients, shape ``(K,)``.
+        """
+        M = len(gamma)
+        magnitudes = np.array([
+            np.mean(np.abs(gamma * (D_s @ gamma))) if D_s is not None
+            else (np.mean(np.abs(d_s)) if d_s is not None else 0.0)
+            for D_s, d_s in zip(D_list, d_list)
+        ])
+        mix_coeffs = mix_coeffs * (1 + M * magnitudes)
+        mix_coeffs /= mix_coeffs.sum()
+        return mix_coeffs

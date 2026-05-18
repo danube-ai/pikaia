@@ -1,3 +1,6 @@
+import numpy as np
+
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -12,6 +15,12 @@ class DominantGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Dominant gene strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -43,3 +52,14 @@ class DominantGeneStrategy(GeneStrategy):
             # gene variant fitness minus 0.5
             * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Diagonal D: D[j,j] = 4 * (x_bar_j - 0.5)."""
+        D = np.diag(4.0 * (population.matrix.mean(axis=0) - 0.5))
+        return D, None
