@@ -298,6 +298,68 @@ class GeneticModel(ABC):
         """The organism strategies used in the model."""
         return self._org_strategies
 
+    def _compute_d_matrix(self) -> None:
+        """Precompute the combined D matrix and d-vector for the D-matrix path.
+
+        Calls ``strategy.kernel(...)`` on each active strategy and accumulates
+        the weighted contributions.
+
+        Populates:
+
+        - ``self._D_matrix``: combined ``(M, M)`` bilinear matrix, or ``None``.
+        - ``self._d_vector``: combined ``(M,)`` linear vector, or ``None``.
+        - ``self._D_per_strategy``: per-strategy D matrices (unweighted).
+        - ``self._d_per_strategy``: per-strategy d-vectors (unweighted).
+
+        The per-strategy lists have length
+        ``len(gene_strategies) + len(org_strategies)`` with gene entries first.
+        """
+        M = self._population.M
+        D_total = np.zeros((M, M))
+        d_total = np.zeros(M)
+        has_D = False
+        has_d = False
+
+        D_per: list[np.ndarray | None] = []
+        d_per: list[np.ndarray | None] = []
+
+        all_pairs = list(
+            zip(self._gene_strategies, self._initial_gene_mixing_coeffs)
+        ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
+
+        for strat, coeff in all_pairs:
+            D_s, d_s = strat.kernel(
+                self._population,
+                self._gene_similarity,
+                self._org_similarity,
+                self._initial_org_fitness_range,
+            )
+            D_per.append(D_s)
+            d_per.append(d_s)
+            if D_s is not None:
+                D_total += coeff * D_s
+                has_D = True
+            if d_s is not None:
+                d_total += coeff * d_s
+                has_d = True
+
+        if not has_D and not has_d:
+            strategy_names = [
+                type(s).__name__
+                for s, _ in all_pairs
+            ]
+            raise ValueError(
+                "use_d_matrix=True requires at least one strategy to implement "
+                "kernel(). None of the selected strategies contribute a D-matrix "
+                f"or d-vector kernel: {strategy_names}. "
+                "Use use_d_matrix=False for strategies without kernel support."
+            )
+
+        self._D_matrix = D_total if has_D else None
+        self._d_vector = d_total if has_d else None
+        self._D_per_strategy = D_per
+        self._d_per_strategy = d_per
+
     @property
     def gene_mixing(self) -> Iterable[float]:
         """The initial gene mixing proportions."""
