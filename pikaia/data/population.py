@@ -7,10 +7,8 @@ class PikaiaPopulation:
     """
     Represents a population matrix for genetic algorithms.
 
-    Attributes:
-        _matrix (np.ndarray): The population matrix of shape (N, M),
-            where N is the number of organisms and M is the number of genes.
-
+    The matrix shape is ``(N, M)`` where ``N`` is the number of organisms and
+    ``M`` is the number of genes (features). All values must lie in ``[0, 1]``.
     """
 
     def __init__(self, matrix: np.ndarray, skip_correlation_validation: bool = True):
