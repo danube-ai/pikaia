@@ -17,13 +17,6 @@ class PikaiaPreprocessor:
 
     The class follows the scikit-learn transformer interface, providing fit(),
     transform(), and fit_transform() methods for compatibility with ML pipelines.
-
-    Attributes:
-        num_features (int): The number of features expected in the input data.
-    feature_types (Sequence[FeatureType]): A sequence of feature types for each feature.
-    feature_transforms (Sequence[Callable[[np.ndarray], np.ndarray] | None]):
-            A list where each element is either a transformation function to apply to
-            the corresponding feature or None if no transformation is needed.
     """
 
     def __init__(

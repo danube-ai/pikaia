@@ -155,15 +155,6 @@ class InputProjection(nn.Module):
         dropout_rate (float):
             Dropout probability. If 0, no dropout is applied.
 
-    Attributes:
-        layer_norm (nn.LayerNorm):
-            Layer normalization applied to input features.
-        linear (nn.Linear):
-            Linear layer for input projection.
-        activation (nn.Module):
-            Activation function module.
-        dropout (nn.Module):
-            Dropout module (nn.Dropout or nn.Identity).
     """
 
     def __init__(
@@ -220,15 +211,6 @@ class GeneticProjection(nn.Module):
         dropout_rate (float):
             Dropout probability. If 0, no dropout is applied.
 
-    Attributes:
-        layer_norm (nn.LayerNorm):
-            Layer normalization applied to hidden features.
-        linear (nn.Linear):
-            Linear layer that outputs orgs_shape * genes_shape features.
-        activation (nn.Module):
-            Activation function module.
-        dropout (nn.Module):
-            Dropout module (nn.Dropout or nn.Identity).
     """
 
     def __init__(
@@ -295,12 +277,6 @@ class StrategyModule(nn.Module):
         strategy (str):
             The strategy to use for fitness computation. Currently only
             'fixed_org_balanced_gene_dominant' is supported.
-
-    Attributes:
-        strategy (str):
-            The selected strategy name.
-        _run_strategy (callable):
-            Internal method that implements the selected strategy.
 
     Raises:
         ValueError:
@@ -388,15 +364,6 @@ class OutputProjection(nn.Module):
         dropout_rate (float):
             Dropout probability. If 0, no dropout is applied.
 
-    Attributes:
-        layer_norm (nn.LayerNorm):
-            Layer normalization applied to organism fitness values.
-        linear (nn.Linear):
-            Linear layer for output projection.
-        activation (nn.Module):
-            Activation function module.
-        dropout (nn.Module):
-            Dropout module (nn.Dropout or nn.Identity).
     """
 
     def __init__(
