@@ -6,6 +6,8 @@ This script demonstrates the core concepts of the Genetic AI algorithm using a r
 It runs the same analysis as the paper_example.ipynb notebook, printing results and saving plots.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -120,6 +122,9 @@ print(
     f"\nFinal Organism Fitness:\n\t{org_fitness_analytical}"
 )
 
+OUT_DIR = Path("artefacts/paper_example")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 # Difference plot
 print("\nSaving difference plot...")
 diff = gene_fitness_analytical - gene_fitness_iterative
@@ -127,8 +132,8 @@ plt.figure(figsize=(10, 6))
 plt.bar(gene_labels, diff)
 plt.ylabel("Analytical - Iterative Gene Fitness")
 plt.title("Difference in Gene Fitness (Analytical vs Iterative)")
-plt.savefig("artefacts/paper_example_difference.png", dpi=300)
-print("Plot saved to artefacts/paper_example_difference.png")
+plt.savefig(OUT_DIR / "difference.png", dpi=300)
+print(f"Plot saved to {OUT_DIR}/difference.png")
 
 # 5. Results and Visualization
 print("\n5. Results and Visualization")
@@ -140,8 +145,8 @@ plotter_iterative.plot(
     show=False,
     gene_labels=gene_labels,
 )
-plt.savefig("artefacts/paper_example_iterative_fitness.png", dpi=300)
-print("Iterative model plot saved to artefacts/paper_example_iterative_fitness.png")
+plt.savefig(OUT_DIR / "iterative_fitness.png", dpi=300)
+print(f"Iterative model plot saved to {OUT_DIR}/iterative_fitness.png")
 
 plotter_analytical = PikaiaPlotter(model_analytical)
 plotter_analytical.plot(
@@ -149,8 +154,8 @@ plotter_analytical.plot(
     show=False,
     gene_labels=gene_labels,
 )
-plt.savefig("artefacts/paper_example_analytical_fitness.png", dpi=300)
-print("Analytical model plot saved to artefacts/paper_example_analytical_fitness.png")
+plt.savefig(OUT_DIR / "analytical_fitness.png", dpi=300)
+print(f"Analytical model plot saved to {OUT_DIR}/analytical_fitness.png")
 
 # 7. Impact Norms
 print("\n7. Impact Norms")

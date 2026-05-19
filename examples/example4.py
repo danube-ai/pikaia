@@ -96,6 +96,9 @@ print("Final org fitness:", model.organism_fitness_history[-1][:5], "...")
 print()
 
 # Plotting and Results
+OUT_DIR = Path("artefacts/example4")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 print("Plotting and Results")
 print("Saving plots...")
 
@@ -103,18 +106,18 @@ plotter = PikaiaPlotter(model)
 plotter.plot(
     plot_type=PlotType.GENE_FITNESS_HISTORY,
     show=False,
-    save_path=Path("artefacts/example4_gene_fitness.png"),
+    save_path=OUT_DIR / "gene_fitness.png",
     gene_labels=gene_labels,
 )
-print("Gene fitness history plot saved to artefacts/example4_gene_fitness.png")
+print(f"Gene fitness history plot saved to {OUT_DIR}/gene_fitness.png")
 
 plotter.plot(
     plot_type=PlotType.ORGANISM_FITNESS_HISTORY,
     show=False,
-    save_path=Path("artefacts/example4_org_fitness.png"),
+    save_path=OUT_DIR / "org_fitness.png",
     org_labels=org_labels,
 )
-print("Org fitness history plot saved to artefacts/example4_org_fitness.png")
+print(f"Org fitness history plot saved to {OUT_DIR}/org_fitness.png")
 
 sorted_indices = np.argsort(model.organism_fitness_history[-1, :])[::-1]
 
