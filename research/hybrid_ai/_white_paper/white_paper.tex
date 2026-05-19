@@ -24,13 +24,13 @@
 \usepackage{fontawesome5}
 \usepackage{tcolorbox}
 \usepackage{parskip}
-\usepackage[fleqn]{amsmath}
-\setlength{\mathindent}{1.5em}
+\usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{setspace}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta, calc}
+\usetikzlibrary{arrows.meta, calc, positioning}
 \usepackage[labelfont=bf, font=small, skip=4pt]{caption}
+\usepackage{float}
 \usepackage{stfloats}
 \usepackage{acro}
 
@@ -130,6 +130,75 @@
   \vspace{10pt}
 }]
 
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+Genetic AI can be embedded in neural networks as a parameter-free structural prior that \emph{augments} gradient-based learning rather than replacing it. Its core computation maps a population matrix $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$ — derived from neural activations via a sigmoid projection — to per-gene and per-organism fitness scores using a fixed formula. The fitness step has no learnable parameters; the surrounding projection weights are trained normally with standard optimisers.
+
+This document reports the findings of two hybridisation experiments and proposes two further directions, ordered by the architectural component targeted:
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=1pt, topsep=2pt]
+  \item \textbf{Genetic Layers} (\S\ref{sec:layers}): replacing feed-forward and multi-head linear transformations with \textsf{GeneticLayer} modules across seven tabular classification benchmarks.
+  \item \textbf{Genetic Attention} (\S\ref{sec:attention}): modulating value projections in \acs{bert} attention with genetic fitness for dense passage retrieval.
+  \item \textbf{Genetic Adapter} (\S\ref{sec:future}): proposed multi-task classification on a frozen encoder.
+  \item \textbf{Genetic \acs{moe}} (\S\ref{sec:future}): proposed fitness-based expert routing in \acs{moe} architectures.
+\end{enumerate}
+
+% ============================================================
+\section{Background: Genetic Fitness as a Structural Prior}
+% ============================================================
+
+\subsection*{Population Matrix and Fitness Computation}
+
+The genetic prior is expressed through a \emph{population matrix} $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$, obtained from activations $\mathbf{x}\in\mathbb{R}^d$ via a sigmoid projection $\sigma(W\mathbf{x}+\mathbf{b})$ reshaped to $(n_\mathrm{org}, n_\mathrm{gene})$. Each sample in a batch produces a separate matrix: rows are organisms (latent feature groups within that sample) and columns are genes (latent dimensions). Gene fitness is then computed as:
+%
+\begin{align}
+  \tilde{\phi}_g
+    &= \frac{1}{n_\mathrm{org}}\sum_{i=1}^{n_\mathrm{org}} \mathbf{P}_{ig},
+  \label{eq:genemean} \\[2pt]
+  \gamma_g^*
+    &= \left(\,\sum_{s=1}^{n_\mathrm{gene}}
+        \frac{\,\tilde{\phi}_g + \tfrac{1}{2}\,}
+             {\tilde{\phi}_s + \tfrac{1}{2}}
+       \,\right)^{\!-1}\!\!.
+  \label{eq:genefitness}
+\end{align}
+%
+Organism fitness follows as:
+%
+\begin{equation}
+  \boldsymbol{\phi}_\mathrm{org} = \mathbf{P}\,\boldsymbol{\gamma}^*.
+  \label{eq:orgfitness}
+\end{equation}
+%
+The fitness computation is parameter-free: no weights are learned beyond the projection matrices that produce $\mathbf{P}$. The $+\tfrac{1}{2}$ offset prevents division by zero and moderates competition when genes are similarly expressed. The surrounding gradient-trained layers determine what goes into $\mathbf{P}$. Figure~\ref{fig:genetic_concept} illustrates the full pipeline.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  databox/.style  = {draw=primary, fill=primary!10, rounded corners=2pt, minimum width=1.8cm, minimum height=0.6cm, align=center, font=\scriptsize},
+  popbox/.style   = {draw=accent, fill=accentlight, rounded corners=2pt, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\scriptsize},
+  fitbox/.style   = {draw=learned, fill=learnedlight, rounded corners=2pt, minimum width=1.8cm, minimum height=0.6cm, align=center, font=\scriptsize},
+  arr/.style      = {-{Stealth[length=3pt,width=2.5pt]}, semithick, color=primary!80},
+  lbl/.style      = {font=\tiny, color=muted},
+]
+\node[databox] (data) at (0, 0) {Neural\\Activations};
+\node[lbl] at (0, -0.5) {$(B, d)$};
+\node[popbox] (pop) at (3.5, 0) {Population Matrix\\$\mathbf{P}$\\\vspace{2pt}\tiny organisms $\times$ genes};
+\node[lbl] at (3.5, -0.9) {$(B, n_\mathrm{org}, n_\mathrm{gene})$};
+\node[fitbox] (gfit) at (7.0, 0.7) {Gene Fitness\\$\boldsymbol{\gamma}^*$};
+\node[lbl] at (7.0, 0.05) {$(B, n_\mathrm{gene})$};
+\node[fitbox] (ofit) at (7.0, -0.7) {Organism Fitness\\$\boldsymbol{\phi}_\mathrm{org}$};
+\node[lbl] at (7.0, -1.35) {$(B, n_\mathrm{org})$};
+\draw[arr] (data) -- node[above, font=\tiny, color=muted, align=center] {$\sigma$-proj\\[-1pt]\tiny reshape} (pop);
+\draw[arr] (pop) -- node[above, font=\tiny, color=muted] {gene comp} (gfit);
+\draw[arr] (pop) -- node[below, font=\tiny, color=muted] {$\mathbf{P}\boldsymbol{\gamma}^*$} (ofit);
+\end{tikzpicture}
+\caption{Genetic AI transforms neural activations into a population matrix where rows represent organisms (latent feature groups within each sample) and columns represent genes (latent dimensions). For each sample in the batch, a separate population matrix is created. Fixed-formula fitness computations yield gene fitness through relative competition and organism fitness through weighted gene expression.}
+\label{fig:genetic_concept}
+\end{figure}
+
 \begin{figure*}[!t]
 \centering
 \begin{tikzpicture}[
@@ -148,7 +217,7 @@
 \node[pbox]                       (gf)  at (10.0, 0) {Fitness\\{\tiny (param-free)}};
 \node[lbox, minimum width=2.0cm]  (gop) at (13.5, 0) {Output Proj\\{\tiny LN$\to$Lin$\to$SiLU}};
 \node[iobox] (gy)  at (15.8, 0) {$y$};
-\draw[arr] (gx)--(gip); \draw[arr] (gip)--(ggp); \draw[arr] (ggp)--(gf); \draw[arr] (gf)--(gop); \draw[arr] (gop)--(gy);
+\draw[arr] (gx)--(gip); \draw[arr] (gip)-- node[above, font=\tiny, color=muted] {reshape} (ggp); \draw[arr] (ggp)--(gf); \draw[arr] (gf)--(gop); \draw[arr] (gop)--(gy);
 \node[lbl] at (gx.south)  {$(B,d)$};
 \node[lbl] at (gip.south) {$(B,d_h)$};
 \node[lbl] at (ggp.south) {$(B,n_o,n_g)$};
@@ -216,53 +285,9 @@
 \node[lbl] at (dh3.south)  {$(B,d_h)$};
 \node[lbl] at (dcat.south) {$(B,d)$};
 \end{tikzpicture}
-\caption{\emph{Top}: internal structure of a Genetic Layer (Section~\ref{sec:layers}). Amber boxes are learned projections (LayerNorm $\to$ Linear $\to$ SiLU); dashed grey box is the parameter-free fitness computation. \emph{Bottom}: the four topology variants evaluated in Experiment~I. Amber boxes are all learned blocks (linear layers and output projections); blue boxes are Genetic Layer modules (each expands $(B,d)\!\to\!(B,n_o,n_g)\!\to\!(B,n_o)$ then projects back to $(B,d)$). Labels show output tensor shape ($B$ = batch, $d$ = feature dim, $d_h$ = head/hidden dim, $n_o$ = organisms, $n_g$ = genes).}
+\caption{\emph{Top}: internal structure of a Genetic Layer (Section~\ref{sec:layers}). Amber boxes are learned projections (LayerNorm $\to$ Linear $\to$ SiLU); dashed grey box is the parameter-free fitness computation. The Genetic Projection outputs a flat vector that is reshaped into the population matrix structure. \emph{Bottom}: the four topology variants evaluated in Experiment~I. Amber boxes are all learned blocks (linear layers and output projections); blue boxes are Genetic Layer modules (each expands $(B,d)\!\to\!(B,n_o,n_g)\!\to\!(B,n_o)$ then projects back to $(B,d)$). Labels show output tensor shape ($B$ = batch, $d$ = feature dim, $d_h$ = head/hidden dim, $n_o$ = organisms, $n_g$ = genes).}
 \label{fig:arch_exp1}
 \end{figure*}
-
-% ============================================================
-\section{Introduction}
-% ============================================================
-
-Genetic AI derives its computational structure from biological evolution: populations of candidate solutions (organisms) and their features (genes) compete via a fitness function. When rendered as a differentiable fixed-point computation, mapping a population matrix $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$ to per-gene and per-organism fitness scores, this mechanism becomes a \emph{structural prior} that can be inserted into neural network architectures at specific points. Unlike purely evolutionary approaches that compete with gradient descent, the hybridisation approach explored here \emph{augments} learned transformations: the genetic computation is fixed-formula and parameter-free, while the surrounding projections are trained normally with standard optimisers.
-
-This document reports the findings of two hybridisation experiments and proposes two further directions, ordered by the architectural component targeted:
-
-\begin{enumerate}[leftmargin=1.5em, itemsep=1pt, topsep=2pt]
-  \item \textbf{Genetic Layers} (\S\ref{sec:layers}): replacing feed-forward and multi-head linear transformations with \textsf{GeneticLayer} modules across seven tabular classification benchmarks.
-  \item \textbf{Genetic Attention} (\S\ref{sec:attention}): modulating value projections in \acs{bert} attention with genetic fitness for dense passage retrieval.
-  \item \textbf{Genetic Adapter} (\S\ref{sec:future}): proposed multi-task classification on a frozen encoder.
-  \item \textbf{Genetic \acs{moe}} (\S\ref{sec:future}): proposed fitness-based expert routing in \acs{moe} architectures.
-\end{enumerate}
-
-% ============================================================
-\section{Background: Genetic Fitness as a Structural Prior}
-% ============================================================
-
-\subsection*{Population Matrix and Fitness Computation}
-
-The genetic prior is expressed through a \emph{population matrix} $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$, obtained from a neural network's intermediate activations via a sigmoid projection. Each row represents an organism (a candidate solution or feature group) and each column a gene (a latent dimension). Gene fitness is then computed as:
-%
-\begin{align}
-  \tilde{\phi}_g
-    &= \frac{1}{n_\mathrm{org}}\sum_{i=1}^{n_\mathrm{org}} \mathbf{P}_{ig},
-  \label{eq:genemean} \\[2pt]
-  \gamma_g^*
-    &= \left(\,\sum_{s=1}^{n_\mathrm{gene}}
-        \frac{\,\tilde{\phi}_g + \tfrac{1}{2}\,}
-             {\tilde{\phi}_s + \tfrac{1}{2}}
-       \,\right)^{\!-1}\!\!.
-  \label{eq:genefitness}
-\end{align}
-%
-Organism fitness follows as:
-%
-\begin{equation}
-  \boldsymbol{\phi}_\mathrm{org} = \mathbf{P}\,\boldsymbol{\gamma}^*.
-  \label{eq:orgfitness}
-\end{equation}
-%
-The $+\tfrac{1}{2}$ offset prevents division by zero and moderates competition when genes are similarly expressed. Eq.~\eqref{eq:genefitness} is a \emph{fixed-formula} computation: no additional parameters are learned beyond the projection matrices that produce $\mathbf{P}$. This is the core property that makes Genetic AI suitable as a structural prior, it introduces biologically-motivated inductive bias (relative gene competition) without adding learnable capacity, relying instead on the surrounding gradient-trained layers to shape the population matrix from which fitness emerges.
 
 % ============================================================
 \section{Experiment I: Genetic Layers}
@@ -283,11 +308,11 @@ A multi-head network runs $K$ independent heads in parallel and concatenates the
   \mathrm{MH}(\mathbf{x}) = \bigl[\mathbf{h}_1(\mathbf{x})\;\|\;\cdots\;\|\;\mathbf{h}_K(\mathbf{x})\bigr]W_O.
 \end{equation*}
 %
-Both topologies are fully parametric: all weight matrices are learned by gradient descent. This experiment replaces the core non-linear transformation with the genetic fitness computation (Eqs.~\eqref{eq:genemean}--\eqref{eq:orgfitness}). Concretely, a genetic layer wraps the fixed-formula fitness computation between two learned linear projections: an input projection (LayerNorm $\to$ Linear $\to$ SiLU) maps the input to a hidden dimension, a genetic projection (LayerNorm $\to$ Linear $\to$ SiLU $\to$ sigmoid) maps that to the population matrix $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$, the fitness computation then produces organism fitness scores, and a final output projection maps those to the target dimension. The learned weights are in the projections; the fitness computation itself has no parameters. Figure~\ref{fig:arch_exp1} shows the internal structure of a Genetic Layer and the four topology variants.
+This experiment replaces classical linear transformations with \textsf{GeneticLayer} modules that sandwich the parameter-free fitness computation between learned projections. An input projection (LayerNorm $\to$ Linear $\to$ SiLU) maps the input to a hidden dimension. A genetic projection (LayerNorm $\to$ Linear $\to$ SiLU $\to\sigma$) maps that to the population matrix $\mathbf{P}\in[0,1]^{n_\mathrm{org}\times n_\mathrm{gene}}$. Fitness is then computed via Eqs.~\eqref{eq:genemean}--\eqref{eq:orgfitness}, and an output projection maps organism fitness scores to the target dimension. Figure~\ref{fig:arch_exp1} shows the internal structure and the four topology variants.
 
 \subsection*{Setup}
 
-The first hybridisation experiment asks whether the genetic fitness prior can substitute for fully learned linear transformations in a feed-forward classification network. We replace the linear layers in two standard network topologies with hybrid \emph{genetic layers}: each layer projects its input to a population matrix via a sigmoid, applies the fitness computation of Eqs.~(1)--(3), and returns the organism fitness vector. The surrounding projection weights are trained with Adam; the fitness computation itself is parameter-free. Seven tabular classification datasets are used, spanning 4 to 4,096 input features (Iris, Wine, Breast Cancer, Digits, Synthetic, CovType, Olivetti Faces). Two topologies are evaluated: \emph{feedforward} stacks (depths 2, 4, 6) and \emph{parallel heads} (1, 2, 3 heads concatenated). All configurations: 128 epochs, Adam optimiser, batch size 16,384, early stopping. The evaluation metric is balanced accuracy.
+This experiment evaluates genetic layers as substitutes for learned linear transformations on seven tabular classification benchmarks. We replace the linear layers in two standard network topologies with hybrid \emph{genetic layers}: each layer projects its input to a population matrix via a sigmoid, applies the fitness computation of Eqs.~(1)--(3), and returns the organism fitness vector. The surrounding projection weights are trained with Adam; the fitness computation itself is parameter-free. Seven tabular datasets are used (Iris, Wine, Breast Cancer, Digits, Synthetic, CovType, Olivetti Faces), spanning 4 to 4,096 features. For CovType, a 10,000-sample subset of the full 581K-sample dataset was used. Two topologies are evaluated: \emph{feedforward} stacks (depths 2, 4, 6) and \emph{parallel heads} (1, 2, 3 heads concatenated). All configurations: 128 epochs, Adam optimiser, batch size 16,384. The evaluation metric is balanced accuracy.
 
 \subsection*{Results}
 
@@ -309,9 +334,9 @@ The first hybridisation experiment asks whether the genetic fitness prior can su
   \end{tabularx}
 \end{table}
 
-The topological split is stark and consistent. Genetic feedforward networks underperform their classical counterparts by 39.6 percentage points on average and, crucially, \emph{degrade with depth}: on the Digits dataset a genetic feedforward achieves 53.0\% balanced accuracy at depth~2, but only 29.4\% at depth~4 and 18.8\% at depth~6, the inverse of the monotone improvement seen for classical networks (94.8\%, 97.2\%, 97.5\%). The same pattern holds on every high-dimensional dataset. Because Eq.~\eqref{eq:genefitness} is a fixed-formula transformation, stacking multiple such layers does not build abstraction; it compounds information loss at each stage.
+The topological split is stark and consistent. Genetic feedforward networks underperform by 39.6 percentage points on average and, crucially, \emph{degrade with depth}. On Digits, accuracy falls from 53.0\% at depth~2 to 29.4\% at depth~4 and 18.8\% at depth~6 --- the inverse of the classical trend (94.8\%, 97.2\%, 97.5\%). The same pattern holds on every high-dimensional dataset. Because Eq.~\eqref{eq:genefitness} is a fixed-formula transformation, stacking multiple such layers does not build abstraction; it compounds information loss at each stage.
 
-Multi-head topologies tell a different story. Genetic heads outperform classical heads on average (80.8\% vs.\ 79.5\%) and exhibit a \emph{stronger benefit from increasing head count}: classical head networks show only moderate improvement as heads increase from 1 to 3, whereas genetic head networks improve substantially. Table~\ref{tab:layer_wins} shows the three datasets with the largest genetic advantage.
+Genetic multi-head networks outperform classical heads on average (80.8\% vs.\ 79.5\%) and scale better with head count. Classical networks show only moderate improvement from 1 to 3 heads; genetic networks improve substantially. Table~\ref{tab:layer_wins} shows the three datasets with the largest genetic advantage.
 
 \begin{table}[ht]
   \small
@@ -323,20 +348,20 @@ Multi-head topologies tell a different story. Genetic heads outperform classical
     \toprule
     \textbf{Dataset} & \textbf{Genetic} & \textbf{Classical} & $\Delta$ \\
     \midrule
-    Synthetic (50 feat.) & 59.6\% & 46.8\% & +12.8pp \\
+    Synthetic (50 feat.) & 59.6\% & 47.6\% & +12.0pp \\
     CovType   (54 feat.) & 75.0\% & 66.6\% & \phantom{0}+8.4pp \\
     Digits    (64 feat.) & 97.6\% & 94.8\% & \phantom{0}+2.8pp \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-These three datasets share medium feature dimensionality (50--64) and multi-class output structure (7, 7, and 10 classes). We speculate that parallel genetic heads learn complementary fitness landscapes: because each head maintains its own Input and Genetic Projection weights, the same input $x$ is mapped to a distinct population matrix $\mathbf{P}$ per head, and the fixed-formula fitness (Eq.~\eqref{eq:genefitness}) is then applied to each of these independently learned representations. This induces an ensemble effect across diverse population views, whereas a single deep stack repeatedly applies the same transformation and collapses toward an uninformative fixed-point.
+We speculate that parallel genetic heads succeed because each head maps the input to a distinct population matrix $\mathbf{P}$, inducing an ensemble of complementary fitness landscapes. The three top-performing datasets share medium feature dimensionality (50--64) and multi-class output structure (7, 7, and 10 classes). By contrast, a single deep stack repeatedly applies the same fixed-formula transformation and compounds information loss toward a fixed-point.
 
-Parameter efficiency is competitive in the multi-head setting: genetic heads use only 7\% more parameters than classical on average, compared to 48\% \emph{fewer} for genetic feedforward (which achieves far less accuracy). Training overhead is notable: 17\% slower for genetic heads and 27\% slower for genetic feedforward; a meaningful cost that warrants consideration in compute-constrained settings.
+Parameter efficiency is competitive in the multi-head setting: genetic heads use only 7\% more parameters than classical on average, compared to 48\% \emph{fewer} for genetic feedforward (which achieves far less accuracy). Training overhead is notable: 17\% slower for genetic heads and 27\% slower for genetic feedforward.
 
 \subsection*{Limitations}
 
-These are preliminary results. Each configuration was evaluated on a single fixed train/test split (80/20, \texttt{random\_state=8080}) with no cross-validation, and each model was trained once with no repeated runs. For small datasets such as Iris ($n{=}150$) and Wine ($n{=}178$), a single split can produce estimates with high variance, and reported differences may not survive a change of seed. The depth-degradation finding (Section~\ref{sec:layers}) is consistent enough across all seven datasets to be robust, but the per-dataset multi-head advantage figures in Table~\ref{tab:layer_wins} should be treated as indicative rather than conclusive.
+These are preliminary results. Each configuration used a single fixed train/test split (80/20, \texttt{random\_state=8080}), with no cross-validation or repeated runs. For small datasets such as Iris ($n{=}150$) and Wine ($n{=}178$), a single split can yield high-variance estimates, and reported differences may not survive a change of seed. The depth-degradation finding is consistent across all seven datasets and likely robust. The per-dataset multi-head figures in Table~\ref{tab:layer_wins} are indicative only.
 
 \subsection*{Key Takeaway}
 
@@ -367,7 +392,7 @@ All projection matrices are fully learned. The parallel-head success in Experime
 
 \subsection*{Design}
 
-The design was developed iteratively: if genetic competition across heads improves classification (Experiment~I), can analogous competition improve retrieval when applied inside the attention mechanism? Initial attempts targeted a GPT-style decoder-only (autoregressive) architecture with causal masking, exploring two ways to inject genetic fitness:
+Initial decoder designs explored two strategies for injecting genetic fitness into attention:
 
 \begin{itemize}[leftmargin=1.5em, itemsep=2pt, topsep=2pt]
   \item \textbf{Value-only}: Q and K are eliminated. The value matrix $V\in\mathbb{R}^{B\times h\times T\times d_k}$, scaled to $[0,1]$, is used directly as the population matrix $\mathbf{P}$ (organisms $=$ tokens, genes $=$ $d_k$ head features). Eqs.~\eqref{eq:genemean}--\eqref{eq:genefitness} yield gene fitness $\boldsymbol{\gamma}^*\in\mathbb{R}^{d_k}$; the score $\phi_{ij}=V_j\cdot\boldsymbol{\gamma}^*_i$ replaces the usual $Q_i\cdot K_j$ similarity.
@@ -382,7 +407,7 @@ Neither approach converged reliably in the decoder setting. Two compounding fail
 
 \subsection*{Final Design}
 
-Both failure modes trace back to a fundamental structural mismatch: the gene-mean computation requires a stable average over \emph{all} visible positions, but causal masking makes that set grow with each token, rendering the mean noisy and position-dependent. The genetic prior is therefore a natural fit for \emph{non-causal} (bidirectional) attention, where every position sees the full sequence and a single, stable $\tilde{\Phi}_g$ can be computed per forward pass. We therefore applied the design to a \acs{bert}-style encoder, keeping the standard Q--K path intact and applying the genetic prior only to $V$. We call the resulting mechanism \ac{mga}:
+Both failure modes trace back to a fundamental structural mismatch: the gene-mean computation requires a stable average over \emph{all} visible positions, but causal masking makes that set grow with each token, rendering the mean noisy and position-dependent. The genetic prior is therefore better suited to \emph{non-causal} (bidirectional) attention, where every position sees the full sequence and $\tilde{\Phi}_g$ is stable. We therefore applied the design to a \acs{bert}-style encoder, keeping the standard Q--K path intact and applying the genetic prior only to $V$. Unlike the Genetic Layer (Figure~\ref{fig:arch_exp1}), which adds dedicated projections around the fitness computation, this approach applies fitness directly to the value matrix $V$ produced by standard attention, without introducing new parameters. We call the resulting mechanism \ac{mga}:
 %
 \begin{align}
   V_\mathrm{norm} &= \sigma(V), \\[2pt]
@@ -391,16 +416,20 @@ Both failure modes trace back to a fundamental structural mismatch: the gene-mea
   \gamma_g^*      &= \left(\sum_{s=1}^{d}
                      \frac{\tilde{\Phi}_g + \tfrac{1}{2}}
                           {\tilde{\Phi}_s + \tfrac{1}{2}}\right)^{-1}\!\!, \\[2pt]
-  V_\mathrm{gen}  &= V \odot \boldsymbol{\gamma}^*, \\[4pt]
-  \mathrm{MGA}(Q,K,V)
-    &= \mathrm{softmax}\!\left(\tfrac{QK^\top}{\sqrt{d}}\right)V_\mathrm{gen}.
+  V_\mathrm{gen}  &= V \odot \boldsymbol{\gamma}^*,
 \end{align}
+%
+\begin{equation}
+  \mathrm{MGA}(Q,K,V)
+    = \mathrm{softmax}\!\left(\tfrac{QK^\top}{\sqrt{d}}\right)V_\mathrm{gen}.
+  \label{eq:mga}
+\end{equation}
 %
 This modulates \emph{which features} the attention output emphasises, without altering \emph{which positions} it weights. The fitness $\boldsymbol{\gamma}^*$ is computed fresh for each forward pass from the value activations of the current batch, making it input-dependent and parameter-free beyond the existing value projection weights.
 
 \subsection*{Setup}
 
-A six-layer \acs{bert}~\cite{devlin2019bert} (hidden size 384, 12 attention heads, $d_\mathrm{head}=32$, intermediate size 1,536) is trained as a dual encoder~\cite{karpukhin2020dpr} for passage retrieval on MS-MARCO~\cite{bajaj2016msmarco} (503K training pairs, 102K test pairs). Query and passage encoders share the same backbone. Sentence representations are obtained by mean pooling over valid tokens and L2-normalising. Training uses InfoNCE loss with in-batch negatives (batch size 512), AdamW with linear warmup, fixed seed 8080, for 2048 steps.
+A six-layer \acs{bert}~\cite{devlin2019bert} (hidden size 384, 12 attention heads, $d_\mathrm{head}=32$, intermediate size 1,536) is trained as a dual encoder~\cite{karpukhin2020dpr} for passage retrieval on MS-MARCO~\cite{bajaj2016msmarco} (503K training pairs, 101K test pairs). Query and passage encoders share the same backbone. Sentence representations are obtained by mean pooling over valid tokens and L2-normalising. Training uses InfoNCE loss with in-batch negatives (batch size 512), AdamW with linear warmup, fixed seed 8080, for 2048 steps.
 
 \begin{figure*}[tp]
   \centering
@@ -431,17 +460,17 @@ A six-layer \acs{bert}~\cite{devlin2019bert} (hidden size 384, 12 attention head
   \end{tabularx}
 \end{table}
 
-At 2,048 steps, standard attention outperforms genetic attention across all retrieval metrics, and achieves a substantially lower best validation loss (2.42 vs.\ 2.98). However, the training curves (Figure~\ref{fig:mrr}) tell a more nuanced story: during the first several hundred steps, genetic attention \emph{leads on retrieval metrics}, after which the standard baseline overtakes it and continues to improve while genetic attention plateaus. This early advantage is consistent with the hypothesis that $\boldsymbol{\gamma}^*$ provides a structured initialisation prior that front-loads useful feature selection, but once the value projections are sufficiently trained, the unconstrained attention has greater capacity to specialise. At convergence the genetic constraint acts as a ceiling rather than a scaffold.
+At 2,048 steps, standard attention outperforms genetic attention across all retrieval metrics. The training curves (Figure~\ref{fig:mrr}) show an early-training reversal: genetic attention \emph{leads} during the first several hundred steps before the standard baseline overtakes it and continues to improve. This is consistent with $\boldsymbol{\gamma}^*$ acting as an initialisation prior. Once the value projections are sufficiently trained, unconstrained attention has greater capacity and the fixed modulation becomes a ceiling.
 
 
-The 52.8\% training overhead arises because $\boldsymbol{\gamma}^*$ is not a fixed parameter: it is derived from the value activations of the current batch on every forward pass. This means the full fitness computation (Eqs.~\eqref{eq:genemean}--\eqref{eq:genefitness}) runs as an extra sequential step after the value projection, on top of the standard attention computation, for every training step.
+The 52.8\% training overhead arises because $\boldsymbol{\gamma}^*$ is not a fixed parameter: it is derived from the value activations of the current batch on every forward pass. Concretely, Eqs.~\eqref{eq:genemean}--\eqref{eq:genefitness} run as an extra sequential step after every value projection.
 
 \subsection*{Limitations}
 
-This experiment was a single exploratory run per configuration (one fixed seed, 8080; one fixed train/val/test split of MS-MARCO). No repeated runs, hyperparameter sweeps, or significance testing were performed. The 2,048-step budget is intentionally short, sufficient to observe the early-training dynamic but not to characterise convergence behaviour fully. A rigorous comparison would require multiple seeds, runs to full convergence (tens of thousands of steps), and paired statistical tests. The reported metric differences ($\leq$1.6 percentage points) are within a range that could plausibly be explained by seed variance alone.
+These results should be treated as preliminary: one seed, one run per configuration, and a 2,048-step budget. No repeated runs, hyperparameter sweeps, or significance testing were performed. A rigorous comparison would require multiple seeds, runs to full convergence, and paired statistical tests. The reported metric differences ($\leq$1.6 percentage points) are within a range explainable by seed variance alone.
 
 \begin{tcolorbox}[resultbox]
-  \small Hybridising attention with a genetic value prior provides an \textbf{early-training advantage} in retrieval metrics but is overtaken at convergence. Fully-learned attention achieves lower validation loss and better test metrics with 53\% less training time.
+  \small Hybridising attention with a genetic value prior provides an \textbf{early-training advantage} in retrieval metrics but is overtaken at convergence. Fully-learned attention achieves lower validation loss and better test metrics with 35\% less training time.
 \end{tcolorbox}
 
 % ============================================================
@@ -449,23 +478,85 @@ This experiment was a single exploratory run per configuration (one fixed seed, 
 \label{sec:future}
 % ============================================================
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  encbox/.style = {draw=muted, fill=highlight, rounded corners=2pt, minimum width=2.5cm, minimum height=2.0cm, align=center, font=\scriptsize},
+  ghead/.style  = {draw=accent, fill=accentlight, rounded corners=2pt, minimum width=1.4cm, minimum height=0.75cm, align=center, font=\scriptsize},
+  outbox/.style = {draw=learned, fill=learnedlight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.6cm, align=center, font=\scriptsize},
+  inpbox/.style = {draw=primary, fill=primary!10, rounded corners=2pt, minimum width=1.8cm, minimum height=0.6cm, align=center, font=\scriptsize},
+  arr/.style    = {-{Stealth[length=3pt,width=2.5pt]}, semithick, color=primary!80},
+  lbl/.style    = {font=\tiny, color=muted},
+]
+\node[inpbox] (inp) at (0, 2.0) {Input Text};
+\node[encbox] (bert) at (0, 0) {Frozen\\BERT\\Encoder};
+\node[inpbox] (cls) at (3.0, 0) {Sequence\\Embedding};
+\node[ghead] (h1) at (5.2, 1.0) {Genetic\\Head 1};
+\node[ghead] (h2) at (5.2, 0) {Genetic\\Head 2};
+\node[ghead] (h3) at (5.2, -1.0) {Genetic\\Head 3};
+\node[outbox] (out1) at (7.2, 1.0) {Profession};
+\node[outbox] (out2) at (7.2, 0) {Gender};
+\node[outbox] (out3) at (7.2, -1.0) {Task 3};
+\draw[arr] (inp.south) -- (bert.north);
+\draw[arr] (bert.east) -- (cls.west);
+\draw[arr] (cls.east) -- (h1.west);
+\draw[arr] (cls.east) -- (h2.west);
+\draw[arr] (cls.east) -- (h3.west);
+\draw[arr] (h1.east) -- (out1.west);
+\draw[arr] (h2.east) -- (out2.west);
+\draw[arr] (h3.east) -- (out3.west);
+\end{tikzpicture}
+\caption{Proposed Genetic Adapter architecture: independent genetic heads on a frozen encoder partition fitness landscapes by task.}
+\label{fig:genetic_adapter}
+\end{figure}
+
 \subsection*{Experiment III: Genetic Adapter}
 
-The multi-head success in Experiment~I motivates using genetic population heads as \emph{classification adapters} on top of a frozen pre-trained encoder, rather than as a replacement for its internal components. We propose attaching a genetic multi-head module to a frozen \acs{bert} backbone and evaluating on the Bias-in-Bios dataset~\cite{biasinbios} (biography text, profession and gender labels). The multi-task structure provides a natural test of whether independent genetic heads partition fitness landscapes by task. Counterfactual evaluation via pronoun swapping would measure whether the organism-competition dynamic incidentally suppresses spurious gender correlations, a potentially valuable fairness property beyond raw accuracy.
+We propose attaching a genetic multi-head module to a frozen \acs{bert} encoder as a lightweight classification adapter, motivated by the multi-head gains in Experiment~I. The evaluation target is the Bias-in-Bios dataset~\cite{biasinbios} (biography text, profession and gender labels). The multi-task structure tests whether independent genetic heads partition fitness landscapes by task. Counterfactual pronoun-swapping would additionally test whether genetic competition incidentally reduces gender bias. Figure~\ref{fig:genetic_adapter} shows the proposed architecture.
 
 \subsection*{Experiment IV: Genetic Expert Routing in \acs{moe}}
 
-\Acs{moe} architectures~\cite{shazeer2017moe} route each input token to a subset of expert feed-forward blocks via a learned router. We propose replacing this router with a genetic fitness computation: each expert is treated as an organism, and each token's feature dimensions as genes. The top-$k$ experts are then selected by organism fitness~\eqref{eq:orgfitness}. This would yield a parameter-free, biologically-motivated routing mechanism. The hypothesis is that genetic competition naturally implements diversity-preserving selection, analogous to the multi-head gains in Experiment~I, without the load-balancing instabilities associated with learned routers. Validating this requires fine-tuning a model with at least $\sim$1B parameters and is deferred to higher-compute settings.
+We propose replacing the learned router in \acs{moe} architectures~\cite{shazeer2017moe} with a genetic fitness computation: each expert is treated as an organism, each token's feature dimensions as genes, and the top-$k$ experts are selected by organism fitness~\eqref{eq:orgfitness}. This yields a parameter-free routing mechanism analogous to the multi-head ensemble effect in Experiment~I, and may avoid the load-balancing instabilities of learned routers. Validating this requires at least $\sim$1B parameter models and is deferred to higher-compute settings. Figure~\ref{fig:genetic_moe} illustrates the proposed routing mechanism.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  tokbox/.style = {draw=primary, fill=primary!10, rounded corners=2pt, minimum width=1.8cm, minimum height=0.7cm, align=center, font=\scriptsize},
+  routbox/.style = {draw=accent, fill=accentlight, rounded corners=2pt, minimum width=2.4cm, minimum height=1.2cm, align=center, font=\scriptsize},
+  expbox/.style = {draw=learned, fill=learnedlight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.7cm, align=center, font=\scriptsize},
+  arr/.style = {-{Stealth[length=3pt,width=2.5pt]}, semithick, color=primary!80},
+  arrdash/.style = {-{Stealth[length=3pt,width=2.5pt]}, semithick, color=muted!50, dashed},
+  lbl/.style = {font=\tiny, color=muted},
+]
+\node[tokbox] (tok) at (0, 0) {Token\\Embedding};
+\node[lbl] at (1.8, 0.5) {$(B,T,d)$};
+\node[routbox] (rout) at (3.6, 0) {Genetic Fitness\\Router};
+\node[lbl, align=center] at (3.6, -1.0) {experts=organisms\\dims=genes};
+\node[expbox] (e1) at (6.8, 1.8) {Expert 1};
+\node[expbox] (e2) at (6.8, 0.9) {Expert 2};
+\node[expbox] (e3) at (6.8, 0) {Expert 3};
+\node[font=\normalsize, color=primary!60] at (6.8, -0.9) {$\vdots$};
+\node[expbox] (en) at (6.8, -1.8) {Expert $N$};
+\node[lbl] at (5.2, 1.1) {top-$k$};
+\draw[arr] (tok.east) -- (rout.west);
+\draw[arr] (rout.east) -- (e1.west);
+\draw[arr] (rout.east) -- (e2.west);
+\draw[arrdash] (rout.east) -- (e3.west);
+\draw[arrdash] (rout.east) -- (en.west);
+\end{tikzpicture}
+\caption{Proposed Genetic \acs{moe} architecture: organism fitness scores replace learned routing. Top-$k$ selection by fitness provides parameter-free, diversity-preserving routing.}
+\label{fig:genetic_moe}
+\end{figure}
 
 % ============================================================
 \section{Conclusion}
 % ============================================================
 
-The two completed experiments establish a clear boundary condition for Genetic AI hybridisation with machine learning. First, hybridisation is \emph{topology-sensitive}: inserting the genetic prior into sequential depth stacks compounds information loss at each fixed-formula stage, causing performance to degrade monotonically with depth. By contrast, parallel multi-head architectures benefit from the genetic prior because each head converges to a distinct fitness equilibrium, producing a complementary ensemble. Second, genetic priors \emph{accelerate early training but saturate}: in the attention hybridisation experiment, genetic value modulation leads on retrieval metrics during the first several hundred steps before the unconstrained baseline catches up at convergence.
+The two completed experiments establish a clear boundary condition for Genetic AI hybridisation with machine learning. First, hybridisation is \emph{topology-sensitive}: inserting the genetic prior into sequential depth stacks compounds information loss at each fixed-formula stage, causing performance to degrade monotonically with depth. By contrast, parallel multi-head architectures benefit from the genetic prior because each head converges to a distinct fitness equilibrium, producing a complementary ensemble. Second, genetic priors \emph{accelerate early training but saturate}: genetic value modulation leads retrieval metrics early before the unconstrained baseline catches up at convergence.
 
-Together, these findings show potential advantages for Genetic AI hybridisation: the prior is most valuable when \emph{diversity is incentivised} (e.g. parallel independent heads) and \emph{training is short or cold-start-critical} (e.g. warm-up settings). They also show potential limitations: sequential depth and long fine-tuning, where the fixed-formula constraint becomes a ceiling rather than a scaffold. The proposed Genetic Adapter and Genetic \acs{moe} experiments are designed to test these findings at larger scale and with more complex task structure, with the goal of establishing whether genetic hybridisation can deliver reproducible gains beyond the early-training window.
+The genetic prior is most useful when \emph{diversity is incentivised} (parallel independent heads) and \emph{training is short} (warm-up or cold-start settings). It becomes a constraint in sequential stacks and long fine-tuning runs, where the fixed formula limits capacity. The proposed Genetic Adapter and Genetic \acs{moe} experiments target larger scale and more complex task structure, to test whether gains extend beyond the early-training window.
 
-All code and extended results with accompanying analysis documents are available at danube.ai's open-source repository for Genetic AI: \url{https://github.com/danube-ai/pikaia}.
+Code and results are available in danube.ai's open-source repository: \url{https://github.com/danube-ai/pikaia}.
 
 % ============================================================
 \clearpage
