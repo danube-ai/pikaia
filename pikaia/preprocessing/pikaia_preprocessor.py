@@ -83,6 +83,14 @@ class PikaiaPreprocessor:
         Raises:
             ValueError: If the number of features in X does not match num_features.
         """
+        if not np.issubdtype(X.dtype, np.number):
+            raise ValueError(
+                "Input data must be numeric."
+            )
+        if np.any(np.isnan(X.astype(float))):
+            raise ValueError(
+                "Input data must not contain NaN values."
+            )
         if X.shape[1] != self.num_features:
             raise ValueError(
                 f"Number of features in X ({X.shape[1]}) "
@@ -115,12 +123,22 @@ class PikaiaPreprocessor:
         Warns:
             Logs a warning if any values in the transformed data fall outside [0, 1].
         """
-        X_transformed = X.copy()
+        if np.any(np.isnan(X.astype(float))):
+            raise ValueError(
+                "Input data must not contain NaN values."
+            )
+
+        X_transformed = X.astype(float)
 
         for i in range(self.num_features):
             transform_func = self.feature_transforms[i]
             if transform_func is not None:
                 X_transformed[:, i] = transform_func(X_transformed[:, i])
+                if np.any(np.isnan(X_transformed[:, i])):
+                    raise ValueError(
+                        "Transform function produced NaN values in feature column "
+                        f"{i}."
+                    )
 
             # Invert COST features
             if self.feature_types[i] == FeatureType.COST:

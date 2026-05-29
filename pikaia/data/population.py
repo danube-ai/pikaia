@@ -43,7 +43,19 @@ class PikaiaPopulation:
             ValueError: If validation fails.
 
         """
-        # 1. Check all values are between 0 and 1
+        # 0. Check for non-numeric types
+        if not np.issubdtype(self._matrix.dtype, np.number):
+            raise ValueError(
+                "Population matrix must contain numeric values."
+            )
+
+        # 1. Check for NaN values
+        if np.any(np.isnan(self._matrix)):
+            raise ValueError(
+                "Population matrix must not contain NaN values."
+            )
+
+        # 2. Check all values are between 0 and 1
         if not np.all((self._matrix >= 0) & (self._matrix <= 1)):
             raise ValueError(
                 "All values in the population matrix must be between 0 and 1."
