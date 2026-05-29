@@ -123,7 +123,6 @@ See `examples/README.md` for a full index, or open
 
 ## D-Matrix Accelerated Mode (v0.2.1)
 
-
 For compatible strategy combinations, pikaia supports a **D-matrix accelerated** iteration mode that is typically **30–80× faster** than the standard iterative mode.
 
 Instead of recomputing the full O(N·M²) replicator update each iteration, the D-matrix path precomputes a compact kernel from the strategy interactions and then runs O(M²) updates per step.
