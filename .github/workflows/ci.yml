@@ -6,6 +6,9 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Unit Tests
@@ -13,19 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --extra dev --frozen
 
       - name: Run unit tests
-        run: uv run pytest tests/unit/
+        run: uv run pytest tests/unit/ --cov=pikaia --cov-report=term-missing --cov-fail-under=95
 
   version-check:
     name: Version Check
@@ -35,16 +36,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
-
-      - name: Install packaging
-        run: uv pip install packaging
+        with:
+          python-version: "3.14"
 
       - name: Fetch base branch
         run: git fetch origin ${{ github.base_ref }}
@@ -53,4 +48,4 @@ jobs:
         run: git show origin/${{ github.base_ref }}:pyproject.toml > /tmp/base_pyproject.toml
 
       - name: Check version bump
-        run: python .github/scripts/check_version.py pyproject.toml /tmp/base_pyproject.toml
+        run: uv run --no-project --with packaging .github/scripts/check_version.py pyproject.toml /tmp/base_pyproject.toml

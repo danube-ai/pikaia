@@ -6,6 +6,9 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Unit Tests
@@ -13,19 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --extra dev --frozen
 
       - name: Run unit tests
-        run: uv run pytest tests/unit/
+        run: uv run pytest tests/unit/ --cov=pikaia --cov-report=term-missing --cov-fail-under=95
 
   publish:
     name: Build & Publish
@@ -34,13 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
 
       - name: Build package
         run: uv build
@@ -51,6 +49,7 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          skip_existing: true
 
       - name: Publish to PyPI
         if: github.ref == 'refs/heads/main'

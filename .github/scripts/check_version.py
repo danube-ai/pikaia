@@ -5,10 +5,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-try:
-    from packaging.version import Version
-except ImportError:
-    from pip._vendor.packaging.version import Version  # type: ignore[no-redef]
+from packaging.version import Version
 
 
 def load_version(toml_path: str) -> Version:
