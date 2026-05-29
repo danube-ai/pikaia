@@ -1,6 +1,6 @@
 <p align="center">
-    <img src="https://img.shields.io/pypi/v/pikaia?color=blue" alt="PyPI version">
-    <img src="https://img.shields.io/pypi/pyversions/pikaia" alt="Python version">
+    <img src="https://img.shields.io/badge/pypi-0.2.2-blue?logo=pypi" alt="PyPI version">
+    <img src="https://img.shields.io/badge/python-3.14%2B-blue?logo=python" alt="Python 3.14+">
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
     <img src="https://github.com/danube-ai/pikaia/actions/workflows/ci.yml/badge.svg" alt="CI">
