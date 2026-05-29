@@ -1,38 +1,26 @@
 # Multi-Head Latent Attention (MLA)
 
-This bonus material illustrates the memory savings when using Multi-Head Latent Attention (MLA) over regular Multi-Head Attention (MHA).
-
-&nbsp;
+> Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
 ## Introduction
 
-In [../04_gqa](../04_gqa), we discussed Grouped-Query Attention (GQA) as a computational-efficiency workaround for MHA. And ablation studies (such as those in the[original GQA paper](https://arxiv.org/abs/2305.13245) and the [Llama 2 paper](https://arxiv.org/abs/2307.09288)) show it performs comparably to standard MHA in terms of LLM modeling performance.
+Grouped-Query Attention (GQA) offers a computational-efficiency workaround for MHA, and ablation studies (such as those in the [original GQA paper](https://arxiv.org/abs/2305.13245) and the [Llama 2 paper](https://arxiv.org/abs/2307.09288)) show it performs comparably to standard MHA in terms of LLM modeling performance.
 
 Now, Multi-Head Latent Attention (MLA), which is used in [DeepSeek V2, V3, and R1](https://arxiv.org/abs/2412.19437), offers a different memory-saving strategy that also pairs particularly well with KV caching. Instead of sharing key and value heads like GQA, MLA compresses the key and value tensors into a lower-dimensional space before storing them in the KV cache.
 
 At inference time, these compressed tensors are projected back to their original size before being used, as shown in the figure below. This adds an extra matrix multiplication but reduces memory usage.
 
-&nbsp;
-
 ![MLA](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/mla-memory/1.webp)
-
-&nbsp;
 
 (As a side note, the queries are also compressed, but only during training, not inference.)
 
 By the way, as mentioned earlier, MLA is not new in DeepSeek V3, as its [DeepSeek V2 predecessor](https://arxiv.org/abs/2405.04434) also used (and even introduced) it. Also, the V2 paper contains a few interesting ablation studies that may explain why the DeepSeek team chose MLA over GQA (see the figure below).
 
-&nbsp;
-
 ![MLA](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/mla-memory/2.webp)
-
-&nbsp;
 
 As shown in the figure above, GQA appears to perform worse than MHA, whereas MLA offers better modeling performance than MHA, which is likely why the DeepSeek team chose MLA over GQA. (It would have been interesting to see the "KV Cache per Token" savings comparison between MLA and GQA as well!)
 
 To summarize this section, before we move on to the next architecture component, MLA is a clever trick to reduce KV cache memory use while even slightly outperforming MHA in terms of modeling performance.
-
-&nbsp;
 
 ## MLA Memory Savings
 
@@ -84,15 +72,9 @@ Note that the compression above (`--emb_dim 2048 -> latent_dim 1024`) to achieve
 
 The savings when using MLA over MHA are further shown in the plot below for different `latent_dim` values as a function of the context length:
 
-&nbsp;
-
 ![MLA](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/mla-memory/3.webp?2)
 
-&nbsp;
-
 You can reproduce the plot via `uv run plot_memory_estimates_mla.py`.
-
-&nbsp;
 
 ## MLA Code Examples
 
@@ -100,11 +82,11 @@ The [gpt_with_kv_mha.py](gpt_with_kv_mha.py) and [gpt_with_kv_mla.py](gpt_with_k
 
 Here, the MLA code is inspired by the [https://huggingface.co/bird-of-paradise/deepseek-mla](https://huggingface.co/bird-of-paradise/deepseek-mla) implementation.
 
-Note that MLA can also be used in combination with [GQA](../04_gqa), but for simplicity, I this is not done here. (Currently, I am also not aware of a prominent LLM doing this.)
+Note that MLA can also be used in combination with GQA, but for simplicity, this is not demonstrated here.
 
 Also note that the model is not trained and thus generates nonsensical text. However, you can use it as a drop-in replacement for the standard GPT model in chapters 5-7 and train it.
 
-Lastly, this implementation uses the KV cache explained in [another bonus section](../03_kv-cache) so the memory savings are more pronounced.
+Lastly, this implementation uses a KV cache, so the memory savings are more pronounced.
 
 ```bash
 uv run gpt_with_kv_mha.py \

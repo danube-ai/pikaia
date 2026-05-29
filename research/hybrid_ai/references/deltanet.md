@@ -1,12 +1,12 @@
 # Gated DeltaNet for Linear Attention
 
+> Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
+
 Recently, [Qwen3-Next](https://qwen.ai/blog?id=4074cca80393150c248e508aa62983f9cb7d27cd&from=research.latest-advancements-list) and [Kimi Linear](https://arxiv.org/abs/2510.26692) proposed hybrid transformers that implement alternatives to the attention mechanism that scale linearly instead of quadratically with respect to the context length.
 
-Both Qwen3-Next and Kimi Linear use a 3:1 ratio, meaning for every three transformer blocks employing the linear Gated DeltaNet variant, there’s one block that uses full attention, as shown in the figure below.
+Both Qwen3-Next and Kimi Linear use a 3:1 ratio, meaning for every three transformer blocks employing the linear Gated DeltaNet variant, there's one block that uses full attention, as shown in the figure below.
 
 ![Qwen3-Next versus Kimi Linear](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/gated_deltanet/01.webp)
-
-&nbsp;
 
 ## Introduction and Overview
 
@@ -18,9 +18,7 @@ In addition, for the full attention layers, Kimi Linear replaces Qwen3-Next’s 
 
 The MLA in Kimi Linear does not use the gate, which was intentional so that the authors could compare the architecture more directly to standard MLA, however, they [stated](https://x.com/yzhang_cs/status/1984631714464088563) that they plan to add it in the future.
 
-Since we already implemented MLA in [../05_mla](../05_mla), this bonus material focuses on the Gated DeltaNet aspect.
-
-&nbsp;
+Since we already covered MLA in `mla.md`, this section focuses on the Gated DeltaNet aspect.
 
 ## Gated Attention
 
@@ -104,8 +102,6 @@ class GatedMultiHeadAttention(nn.Module):
 As we can see, after computing attention as usual, the model uses a separate gating signal from the same input, applies a sigmoid to keep it between 0 and 1, and multiplies it with the attention output. This allows the model to scale up or down certain features dynamically. The Qwen3-Next developers [state](https://qwen.ai/blog?id=4074cca80393150c248e508aa62983f9cb7d27cd&from=research.latest-advancements-list) that this helps with training stability:
 
 > [...] the attention output gating mechanism helps eliminate issues like Attention Sink and Massive Activation, ensuring numerical stability across the model.
-
-&nbsp;
 
 ## Gated DeltaNet
 
@@ -303,13 +299,11 @@ Gated DeltaNet, can, to some extend, still capture context, but it has to go thr
 
 That's why the Qwen3-Next and Kimi Linear architectures don't replace all attention layers with DeltaNet layers but use the 3:1 ratio mentioned earlier.
 
-&nbsp;
-
 ## DeltaNet Memory Savings
 
 In the previous section, we discussed the advantage of the DeltaNet over full attention in terms of linear instead of quadratic compute complexity with respect to the context length.
 
-Next to the linear compute complexity, another big advantage of DeltaNet is the memory savings, as DeltaNet modules don't grow the KV cache. (For more information about KV caching, see [../03_kv-cache](../03_kv-cache)). Instead, as mentioned earlier, they keep a fixed-size recurrent state, so memory stays constant with context length.
+Next to the linear compute complexity, another big advantage of DeltaNet is the memory savings, as DeltaNet modules don't grow the KV cache. Instead, as mentioned earlier, they keep a fixed-size recurrent state, so memory stays constant with context length.
 
 For a regular multi-head attention (MHA) layer, we can compute the KV cache size as follows:
 

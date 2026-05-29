@@ -1,14 +1,10 @@
 # Mixture of Experts (MoE)
 
-This bonus material illustrates the memory savings (per token) when using Mixture-of-Experts (MoE) layers instead of regular feed-forward (FFN) layers.
-
-&nbsp;
+> Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
 ## Introduction
 
 The core idea in MoE is to replace each feed-forward module in a transformer block with multiple expert layers, where each of these expert layers is also a feed-forward module. This means we replace a single feed-forward block with multiple feed-forward blocks, as illustrated in the figure below.
-
-&nbsp;
 
 ![FFN vs MoE](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/moe-memory/1.webp)
 
@@ -22,17 +18,11 @@ For example, DeepSeek-V3 has 256 experts per MoE module and a total of 671 billi
 
 One notable feature of DeepSeek-V3's MoE design is the use of a shared expert. This is an expert that is always active for every token. This idea is not new and was already introduced in the [2022 DeepSpeed-MoE](https://arxiv.org/abs/2201.05596) and the [2024 DeepSeek MoE](https://arxiv.org/abs/2401.06066) papers.
 
-&nbsp;
-
 ![MoE shared expert](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/moe-memory/3.webp?1)
 
-(An annotated figure from the [DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066) paper.)
-
-&nbsp;
+*(An annotated figure from the [DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066) paper.)*
 
 The benefit of having a shared expert was first noted in the [DeepSpeed-MoE paper](https://arxiv.org/abs/2201.05596), where they found that it boosts overall modeling performance compared to no shared experts. This is likely because common or repeated patterns don't have to be learned by multiple individual experts, which leaves them with more room for learning more specialized patterns.
-
-&nbsp;
 
 ## Mixture of Experts (MoE) Memory Savings
 
@@ -71,13 +61,7 @@ Now, if we use an MoE layer with roughly the same number of total parameters (~3
 
 Moreover, at a constant number of experts, the more experts we have, the lower the number of active parameters becomes, and the greater the "savings":
 
-&nbsp;
-
-&nbsp;
-
 ![Memory comparison](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/moe-memory/2.webp)
-
-&nbsp;
 
 You can reproduce this plot via:
 
@@ -89,13 +73,11 @@ uv run plot_memory_estimates_moe.py \
     --top_k 8
 ```
 
-&nbsp;
-
 ## MoE Code Examples
 
 The [gpt_with_kv_ffn.py](gpt_with_kv_ffn.py) and [gpt_with_kv_moe.py](gpt_with_kv_moe.py) scripts in this folder provide hands-on examples for comparing the regular FFN and MoE memory usage in the context of a GPT model implementation. Note that both scripts use [SwiGLU](https://arxiv.org/abs/2002.05202) feed-forward modules as shown in the first figure of this page (GPT-2 traditionally uses GELU).
 
-**Note: The model is not trained and thus generates nonsensical text. You can find a trained MoE in the bonus materials at [../../ch05/11_qwen3/standalone-qwen3-moe-plus-kvcache.ipynb](../../ch05/11_qwen3/standalone-qwen3-moe-plus-kvcache.ipynb).**
+**Note: The model is not trained and thus generates nonsensical text.**
 
 First, let's run the model with a regular FFN:
 

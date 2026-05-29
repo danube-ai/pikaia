@@ -1,8 +1,6 @@
 # Sliding Window Attention (SWA)
 
-This bonus material illustrates the memory savings when using Sliding Window Attention (SWA) over regular Multi-Head Attention (MHA).
-
-&nbsp;
+> Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
 ## Introduction
 
@@ -12,7 +10,7 @@ What is sliding window attention (SWA)? If we think of regular self-attention as
 
 As shown in the figure above, instead of attending to all previous tokens, each token only attends to a fixed-size local window around its position. This localized attention lowers the size of the KV cache substantially.
 
-In the remainder of this introduction, we will discuss SWA in the context of [Gemma 3](https://arxiv.org/abs/2503.19786), which is implemented from scratch in [../../ch05/12_gemma3](../../ch05/12_gemma3).
+In the remainder of this introduction, we will discuss SWA in the context of [Gemma 3](https://arxiv.org/abs/2503.19786).
 
 Sliding window attention was originally introduced in the [LongFormer paper in 2020](https://arxiv.org/abs/2004.05150), but the reason we focus on Google's Gemma models is that they are very good open-weight models showing that sliding window attention is indeed a feasible approach in recent, capable models.
 
@@ -21,8 +19,6 @@ Sliding window attention was originally introduced in the [LongFormer paper in 2
 [Gemma 3](https://arxiv.org/abs/2503.19786) then took the design further toward efficiency. It used a 5:1 ratio between sliding window and full attention layers, which means that for every five local attention layers, there is one global layer. In addition, the sliding window size was reduced from 4096 tokens in Gemma 2 to 1024 tokens in Gemma 3.
 
 Interestingly, the ablation studies in the Gemma 3 technical report indicate that these changes have only a minor effect on overall model quality. In other words, the substantial memory and compute savings achieved through sliding window attention come with minimal loss in modeling performance.
-
-&nbsp;
 
 ## Sliding Window Attention (SWA) Memory Savings
 
@@ -66,13 +62,9 @@ Note that Gemma 3 uses SWA in combination with GQA.
 
 The savings when using SWA over MHA are further shown in the plot below for different context lengths:
 
-&nbsp;
-
 ![SWA](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/swa-memory/4.webp?2)
 
-&nbsp;
-
-You can reproduce thi plots via:
+You can reproduce this plot via:
 
 ```bash
 uv run plot_memory_estimates_swa.py \
@@ -80,8 +72,6 @@ uv run plot_memory_estimates_swa.py \
   --batch_size 1 --dtype bf16 \
   --sliding_window_size 2048 --swa_ratio "5:1"
 ```
-
-&nbsp;
 
 ## SWA Code Examples
 
@@ -91,7 +81,7 @@ Note that SWA can also be used in combination with MLA and GQA (as mentioned ear
 
 Note that the model is not trained and thus generates nonsensical text. However, you can use it as a drop-in replacement for the standard GPT model in chapters 5-7 and train it.
 
-Also, this implementation uses the KV cache explained in [another bonus section](../03_kv-cache), so the memory savings are more pronounced.
+Also, this implementation uses a KV cache, so the memory savings are more pronounced.
 
 ```bash
 uv run gpt_with_kv_mha.py \
