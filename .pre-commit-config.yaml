@@ -1,0 +1,47 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: ruff-check-fix
+        name: ruff check and fix
+        entry: ruff check . --fix
+        language: system
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format .
+        language: system
+        pass_filenames: false
+      - id: ruff-check-imports
+        name: ruff check imports
+        entry: ruff check --fix --select I --unsafe-fixes
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.1.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - pydantic
+          - pydantic-settings
+          - typer
+          - click
+        args: [--strict, --ignore-missing-imports, src/cherrypot_client/]
+        pass_filenames: false
+        files: ^src/

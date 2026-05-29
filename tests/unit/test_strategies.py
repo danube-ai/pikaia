@@ -6,11 +6,15 @@ from pikaia.schemas.strategies import GeneStrategyEnum, MixStrategyEnum, OrgStra
 from pikaia.strategies.base_strategies import StrategyContext
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
-from pikaia.strategies.gs_strategies.kin_altruistic_strategy import KinAltruisticGeneStrategy
+from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
+    KinAltruisticGeneStrategy,
+)
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
-from pikaia.strategies.mix_strategies.self_consistent_strategy import SelfConsistentMixStrategy
+from pikaia.strategies.mix_strategies.self_consistent_strategy import (
+    SelfConsistentMixStrategy,
+)
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
@@ -467,6 +471,7 @@ class TestAltruisticOrgStrategy:
     def test_call_large_kin_range_warns(self, caplog):
         """kin_range > 32 should emit a warning."""
         import logging
+
         ctx = _make_org_context(n_orgs=40)
         with caplog.at_level(logging.WARNING):
             AltruisticOrgStrategy(kin_range=33)(ctx)
@@ -560,4 +565,3 @@ class TestSelfishOrgStrategy:
         ctx = _make_org_context(n_orgs=5)
         result = SelfishOrgStrategy(kin_range=3)(ctx)
         assert result.shape == (ctx.population.M,)
-

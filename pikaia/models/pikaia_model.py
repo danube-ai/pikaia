@@ -78,7 +78,9 @@ class PikaiaModel(GeneticModel):
                 )
             logger.info("D-matrix path selected. Precomputing D matrix...")
             self._compute_d_matrix()
-            logger.info(f"Running D-matrix simulation for up to {self._max_iter} iterations.")
+            logger.info(
+                f"Running D-matrix simulation for up to {self._max_iter} iterations."
+            )
             self._run_d_matrix_iterations()
         elif self._max_iter is None:
             logger.info("No max iterations set, solving for optimal solution directly.")
@@ -321,7 +323,9 @@ class PikaiaModel(GeneticModel):
     # D-matrix fast paths
     # ------------------------------------------------------------------
 
-    def _run_d_matrix_iterations(self, *, epsilon_override: float | None = None) -> None:
+    def _run_d_matrix_iterations(
+        self, *, epsilon_override: float | None = None
+    ) -> None:
         """Run the D-matrix fast iteration loop.
 
         Uses the precomputed ``self._D_matrix`` (bilinear term) and
@@ -335,8 +339,8 @@ class PikaiaModel(GeneticModel):
         """
         import time
 
-        D = self._D_matrix   # (M, M) or None
-        d = self._d_vector   # (M,)  or None
+        D = self._D_matrix  # (M, M) or None
+        d = self._d_vector  # (M,)  or None
         epsilon = epsilon_override if epsilon_override is not None else self._epsilon
 
         is_sc_gene = isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)

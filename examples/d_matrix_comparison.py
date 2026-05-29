@@ -42,7 +42,9 @@ from pikaia.preprocessing import PikaiaPreprocessor, max_scaler
 from pikaia.schemas import FeatureType
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
-from pikaia.strategies.gs_strategies.kin_altruistic_strategy import KinAltruisticGeneStrategy
+from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
+    KinAltruisticGeneStrategy,
+)
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
@@ -108,21 +110,21 @@ for lbl, val in zip(gene_labels, x_bar):
 # 2. Strategy grid (5 gene x 5 org = 25 combinations)
 # ---------------------------------------------------------------------------
 GENE_STRATEGIES = [
-    ("Dominant",     DominantGeneStrategy),
-    ("Altruistic",   AltruisticGeneStrategy),
-    ("Selfish",      SelfishGeneStrategy),
-    ("KinAltruistic",KinAltruisticGeneStrategy),
-    ("None",         NoneGeneStrategy),
+    ("Dominant", DominantGeneStrategy),
+    ("Altruistic", AltruisticGeneStrategy),
+    ("Selfish", SelfishGeneStrategy),
+    ("KinAltruistic", KinAltruisticGeneStrategy),
+    ("None", NoneGeneStrategy),
 ]
 ORG_STRATEGIES = [
-    ("Balanced",    BalancedOrgStrategy),
-    ("Altruistic",  AltruisticOrgStrategy),
-    ("KinSelfish",  KinSelfishOrgStrategy),
-    ("Selfish",     SelfishOrgStrategy),
-    ("None",        NoneOrgStrategy),
+    ("Balanced", BalancedOrgStrategy),
+    ("Altruistic", AltruisticOrgStrategy),
+    ("KinSelfish", KinSelfishOrgStrategy),
+    ("Selfish", SelfishOrgStrategy),
+    ("None", NoneOrgStrategy),
 ]
 GENE_NAMES = [g for g, _ in GENE_STRATEGIES]
-ORG_NAMES  = [o for o, _ in ORG_STRATEGIES]
+ORG_NAMES = [o for o, _ in ORG_STRATEGIES]
 
 # ---------------------------------------------------------------------------
 # 3. Helpers
@@ -183,30 +185,38 @@ print("SECTION A -- DominantGeneStrategy + BalancedOrgStrategy (all 3 modes)")
 print("=" * 75)
 
 m_fix, t_fix = run_fix_point_timed(phi)
-m_iter_A, t_iter_A = run_iterative_timed(phi, [DominantGeneStrategy()], [BalancedOrgStrategy()])
-m_dm_A,   t_dm_A   = run_d_matrix_timed(phi, [DominantGeneStrategy()], [BalancedOrgStrategy()])
+m_iter_A, t_iter_A = run_iterative_timed(
+    phi, [DominantGeneStrategy()], [BalancedOrgStrategy()]
+)
+m_dm_A, t_dm_A = run_d_matrix_timed(
+    phi, [DominantGeneStrategy()], [BalancedOrgStrategy()]
+)
 
-gf_fix    = m_fix.gene_fitness_history[1, :]
+gf_fix = m_fix.gene_fitness_history[1, :]
 gf_iter_A = last_gamma(m_iter_A)
-gf_dm_A   = last_gamma(m_dm_A)
+gf_dm_A = last_gamma(m_dm_A)
 
 print(f"\n  {'Feature':<22} {'Fix-point':>12} {'Std iter':>12} {'D-matrix':>12}")
 print("  " + "-" * 62)
 for j, lbl in enumerate(gene_labels):
     print(f"  {lbl:<22} {gf_fix[j]:>12.6f} {gf_iter_A[j]:>12.6f} {gf_dm_A[j]:>12.6f}")
 
-cos_fix_iter  = cosine(gf_fix, gf_iter_A)
-cos_fix_dm    = cosine(gf_fix, gf_dm_A)
+cos_fix_iter = cosine(gf_fix, gf_iter_A)
+cos_fix_dm = cosine(gf_fix, gf_dm_A)
 cos_iter_dm_A = cosine(gf_iter_A, gf_dm_A)
 
 print(f"\n  Cosine  fix-point vs std-iter : {cos_fix_iter:.6f}")
 print(f"  Cosine  fix-point vs d-matrix : {cos_fix_dm:.6f}")
 print(f"  Cosine  std-iter  vs d-matrix : {cos_iter_dm_A:.6f}")
-print(f"\n  Runtime  fix-point : {t_fix*1000:>8.4f} ms  (baseline)")
-print(f"  Runtime  std-iter  : {t_iter_A*1000:>8.4f} ms  "
-      f"(x{t_iter_A/t_fix:>6.1f} fix-point)")
-print(f"  Runtime  D-matrix  : {t_dm_A*1000:>8.4f} ms  "
-      f"(x{t_dm_A/t_fix:>6.1f} fix-point, x{t_dm_A/t_iter_A:.2f} std-iter)")
+print(f"\n  Runtime  fix-point : {t_fix * 1000:>8.4f} ms  (baseline)")
+print(
+    f"  Runtime  std-iter  : {t_iter_A * 1000:>8.4f} ms  "
+    f"(x{t_iter_A / t_fix:>6.1f} fix-point)"
+)
+print(
+    f"  Runtime  D-matrix  : {t_dm_A * 1000:>8.4f} ms  "
+    f"(x{t_dm_A / t_fix:>6.1f} fix-point, x{t_dm_A / t_iter_A:.2f} std-iter)"
+)
 print(f"  ESE  std-iter={m_iter_A.ESE_iter}  D-matrix={m_dm_A.ESE_iter}")
 
 # ---------------------------------------------------------------------------
@@ -218,10 +228,10 @@ print("             (D-matrix skipped for NoneGene+NoneOrg -- no kernel)")
 print("=" * 75)
 
 # 5x5 result arrays (rows=gene, cols=org)
-iter_times  = np.full((5, 5), np.nan)
-dm_times    = np.full((5, 5), np.nan)
-cosines     = np.full((5, 5), np.nan)
-speedups    = np.full((5, 5), np.nan)   # t_iter / t_dm
+iter_times = np.full((5, 5), np.nan)
+dm_times = np.full((5, 5), np.nan)
+cosines = np.full((5, 5), np.nan)
+speedups = np.full((5, 5), np.nan)  # t_iter / t_dm
 
 combo_results = {}  # (gi, oi) -> dict
 
@@ -237,31 +247,45 @@ for gi, (gname, GCls) in enumerate(GENE_STRATEGIES):
                 m_dm, t_dm = run_d_matrix_timed(phi, [GCls()], [OCls()])
                 gf_d = last_gamma(m_dm)
                 cos_val = cosine(gf_i, gf_d)
-                dm_times[gi, oi]  = t_dm
-                cosines[gi, oi]   = cos_val
-                speedups[gi, oi]  = t_iter / t_dm
+                dm_times[gi, oi] = t_dm
+                cosines[gi, oi] = cos_val
+                speedups[gi, oi] = t_iter / t_dm
                 combo_results[(gi, oi)] = {
-                    "gf_iter": gf_i, "gf_dm": gf_d, "cosine": cos_val,
-                    "t_iter": t_iter, "t_dm": t_dm,
-                    "ese_iter": m_iter.ESE_iter, "ese_dm": m_dm.ESE_iter,
+                    "gf_iter": gf_i,
+                    "gf_dm": gf_d,
+                    "cosine": cos_val,
+                    "t_iter": t_iter,
+                    "t_dm": t_dm,
+                    "ese_iter": m_iter.ESE_iter,
+                    "ese_dm": m_dm.ESE_iter,
                 }
             except ValueError as e:
                 combo_results[(gi, oi)] = {
-                    "gf_iter": gf_i, "gf_dm": None, "cosine": None,
-                    "t_iter": t_iter, "t_dm": None,
-                    "ese_iter": m_iter.ESE_iter, "ese_dm": None,
+                    "gf_iter": gf_i,
+                    "gf_dm": None,
+                    "cosine": None,
+                    "t_iter": t_iter,
+                    "t_dm": None,
+                    "ese_iter": m_iter.ESE_iter,
+                    "ese_dm": None,
                     "error": str(e),
                 }
         else:
             combo_results[(gi, oi)] = {
-                "gf_iter": gf_i, "gf_dm": None, "cosine": None,
-                "t_iter": t_iter, "t_dm": None,
-                "ese_iter": m_iter.ESE_iter, "ese_dm": None,
+                "gf_iter": gf_i,
+                "gf_dm": None,
+                "cosine": None,
+                "t_iter": t_iter,
+                "t_dm": None,
+                "ese_iter": m_iter.ESE_iter,
+                "ese_dm": None,
             }
 
 # Print timing table
-print(f"\n  {'Combination':<32} {'t_iter(ms)':>10} {'t_dm(ms)':>10} "
-      f"{'speedup':>8} {'cosine':>9} {'ESE_i':>6} {'ESE_d':>6}")
+print(
+    f"\n  {'Combination':<32} {'t_iter(ms)':>10} {'t_dm(ms)':>10} "
+    f"{'speedup':>8} {'cosine':>9} {'ESE_i':>6} {'ESE_d':>6}"
+)
 print("  " + "-" * 85)
 for gi, (gname, _) in enumerate(GENE_STRATEGIES):
     for oi, (oname, _) in enumerate(ORG_STRATEGIES):
@@ -274,12 +298,14 @@ for gi, (gname, _) in enumerate(GENE_STRATEGIES):
         ese_i = r["ese_iter"]
         ese_d = r["ese_dm"]
 
-        t_d_str  = f"{t_d_ms:>10.3f}" if not np.isnan(t_d_ms) else "       n/a"
-        sp_str   = f"{sp:>8.1f}"       if not np.isnan(sp)     else "     n/a"
-        cos_str  = f"{cos_v:>9.6f}"    if cos_v is not None     else "      n/a"
-        ese_d_str= f"{ese_d:>6}"       if ese_d is not None     else "   n/a"
+        t_d_str = f"{t_d_ms:>10.3f}" if not np.isnan(t_d_ms) else "       n/a"
+        sp_str = f"{sp:>8.1f}" if not np.isnan(sp) else "     n/a"
+        cos_str = f"{cos_v:>9.6f}" if cos_v is not None else "      n/a"
+        ese_d_str = f"{ese_d:>6}" if ese_d is not None else "   n/a"
 
-        print(f"  {name:<32} {t_i_ms:>10.3f}{t_d_str}{sp_str}{cos_str}{ese_i:>6}{ese_d_str}")
+        print(
+            f"  {name:<32} {t_i_ms:>10.3f}{t_d_str}{sp_str}{cos_str}{ese_i:>6}{ese_d_str}"
+        )
 
 # ---------------------------------------------------------------------------
 # 6. Runtime summary across all combos
@@ -288,20 +314,30 @@ print("\n" + "=" * 75)
 print("Runtime Summary")
 print("=" * 75)
 valid_sp = speedups[~np.isnan(speedups)]
-print(f"\n  Fix-point baseline       : {t_fix*1000:.4f} ms")
-print(f"  Std iterative  -- mean   : {np.nanmean(iter_times)*1000:.3f} ms  "
-      f"min={np.nanmin(iter_times)*1000:.3f}  max={np.nanmax(iter_times)*1000:.3f}")
-print(f"  D-matrix iter  -- mean   : {np.nanmean(dm_times)*1000:.3f} ms  "
-      f"min={np.nanmin(dm_times)*1000:.3f}  max={np.nanmax(dm_times)*1000:.3f}")
+print(f"\n  Fix-point baseline       : {t_fix * 1000:.4f} ms")
+print(
+    f"  Std iterative  -- mean   : {np.nanmean(iter_times) * 1000:.3f} ms  "
+    f"min={np.nanmin(iter_times) * 1000:.3f}  max={np.nanmax(iter_times) * 1000:.3f}"
+)
+print(
+    f"  D-matrix iter  -- mean   : {np.nanmean(dm_times) * 1000:.3f} ms  "
+    f"min={np.nanmin(dm_times) * 1000:.3f}  max={np.nanmax(dm_times) * 1000:.3f}"
+)
 print("\n  D-matrix speedup vs std-iter:")
-print(f"    mean={np.mean(valid_sp):.1f}x   median={np.median(valid_sp):.1f}x   "
-      f"min={np.min(valid_sp):.1f}x   max={np.max(valid_sp):.1f}x")
+print(
+    f"    mean={np.mean(valid_sp):.1f}x   median={np.median(valid_sp):.1f}x   "
+    f"min={np.min(valid_sp):.1f}x   max={np.max(valid_sp):.1f}x"
+)
 print(f"\n  D-matrix vs fix-point (Dom+Bal only, N={N}, M={M}):")
-print(f"    fix-point={t_fix*1000:.4f} ms  D-mat={t_dm_A*1000:.4f} ms  "
-      f"(D-mat is {t_dm_A/t_fix:.1f}x slower than fix-point)")
+print(
+    f"    fix-point={t_fix * 1000:.4f} ms  D-mat={t_dm_A * 1000:.4f} ms  "
+    f"(D-mat is {t_dm_A / t_fix:.1f}x slower than fix-point)"
+)
 print("  => Fix-point wins when Dominant+Balanced is sufficient;")
-print(f"     D-matrix is O(M^2)/iter vs O(N*M^2)/iter for std -- "
-      f"speedup grows with N (here N={N}).")
+print(
+    f"     D-matrix is O(M^2)/iter vs O(N*M^2)/iter for std -- "
+    f"speedup grows with N (here N={N})."
+)
 
 # ---------------------------------------------------------------------------
 # 7. Consistency check
@@ -337,9 +373,15 @@ w = 0.6
 for ax, (gf, title) in zip(
     axes,
     [
-        (gf_fix,    f"Fix-point\n({t_fix*1000:.3f} ms)"),
-        (gf_iter_A, f"Std iterative\n({t_iter_A*1000:.3f} ms, ESE={m_iter_A.ESE_iter})"),
-        (gf_dm_A,   f"D-matrix iterative\n({t_dm_A*1000:.3f} ms, ESE={m_dm_A.ESE_iter})"),
+        (gf_fix, f"Fix-point\n({t_fix * 1000:.3f} ms)"),
+        (
+            gf_iter_A,
+            f"Std iterative\n({t_iter_A * 1000:.3f} ms, ESE={m_iter_A.ESE_iter})",
+        ),
+        (
+            gf_dm_A,
+            f"D-matrix iterative\n({t_dm_A * 1000:.3f} ms, ESE={m_dm_A.ESE_iter})",
+        ),
     ],
 ):
     bars = ax.bar(x, gf, w, color=bar_colors, alpha=0.85)
@@ -349,8 +391,14 @@ for ax, (gf, title) in zip(
     ax.set_ylabel("Gene fitness weight")
     ax.set_ylim(0, max(gf) * 1.35)
     for bar, val in zip(bars, gf):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.004,
-                f"{val:.3f}", ha="center", va="bottom", fontsize=8)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.004,
+            f"{val:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
 fig.suptitle(
     f"Section A: Dominant+Balanced -- all three fit modes\n"
     f"cosine: fp/iter={cos_fix_iter:.4f}  fp/dm={cos_fix_dm:.4f}  iter/dm={cos_iter_dm_A:.4f}",
@@ -365,16 +413,16 @@ print(f"\nSection A chart saved to {out1}")
 # -- Plot 2: 5×5 Heatmaps (cosine, speedup, iter time, dm time) --
 fig, axes = plt.subplots(2, 2, figsize=(14, 11))
 
-cosine_masked   = np.where(np.isnan(cosines),   0.0, cosines)
-speedup_masked  = np.where(np.isnan(speedups),  0.0, speedups)
-iter_ms         = iter_times * 1000
-dm_ms           = np.where(np.isnan(dm_times), 0.0, dm_times * 1000)
+cosine_masked = np.where(np.isnan(cosines), 0.0, cosines)
+speedup_masked = np.where(np.isnan(speedups), 0.0, speedups)
+iter_ms = iter_times * 1000
+dm_ms = np.where(np.isnan(dm_times), 0.0, dm_times * 1000)
 
 hmap_data = [
-    (axes[0, 0], cosine_masked,  "Cosine (iter vs D-mat)",  "RdYlGn", 0.998, 1.0),
-    (axes[0, 1], speedup_masked, "Speedup (t_iter / t_dm)", "YlOrRd", None,  None),
-    (axes[1, 0], iter_ms,        "Std iter time (ms)",      "Blues",  None,  None),
-    (axes[1, 1], dm_ms,          "D-matrix time (ms)",      "Oranges",None,  None),
+    (axes[0, 0], cosine_masked, "Cosine (iter vs D-mat)", "RdYlGn", 0.998, 1.0),
+    (axes[0, 1], speedup_masked, "Speedup (t_iter / t_dm)", "YlOrRd", None, None),
+    (axes[1, 0], iter_ms, "Std iter time (ms)", "Blues", None, None),
+    (axes[1, 1], dm_ms, "D-matrix time (ms)", "Oranges", None, None),
 ]
 for ax, data, title, cmap, vmin, vmax in hmap_data:
     kwargs = {"vmin": vmin, "vmax": vmax} if vmin is not None else {}
@@ -391,13 +439,21 @@ for ax, data, title, cmap, vmin, vmax in hmap_data:
         for oi in range(5):
             v = data[gi, oi]
             if v != 0 or (gi == 4 and oi == 4):
-                ax.text(oi, gi, f"{v:.3f}" if v < 10 else f"{v:.1f}",
-                        ha="center", va="center", fontsize=7,
-                        color="white" if (title.startswith("D-mat") and v > dm_ms.max() * 0.6) else "black")
+                ax.text(
+                    oi,
+                    gi,
+                    f"{v:.3f}" if v < 10 else f"{v:.1f}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="white"
+                    if (title.startswith("D-mat") and v > dm_ms.max() * 0.6)
+                    else "black",
+                )
 
 fig.suptitle(
     f"All 25 combinations -- Cosine, Speedup, and Runtime Heatmaps\n"
-    f"(fix-point baseline = {t_fix*1000:.4f} ms, N={N}, M={M})",
+    f"(fix-point baseline = {t_fix * 1000:.4f} ms, N={N}, M={M})",
     fontsize=12,
 )
 plt.tight_layout()
@@ -407,22 +463,32 @@ plt.close()
 print(f"Heatmap chart saved to {out2}")
 
 # -- Plot 3: Runtime bar chart -- all 25 combos --
-combo_labels = [f"{gn[:3]}\n+{on[:3]}"
-                for gn, _ in GENE_STRATEGIES for on, _ in ORG_STRATEGIES]
+combo_labels = [
+    f"{gn[:3]}\n+{on[:3]}" for gn, _ in GENE_STRATEGIES for on, _ in ORG_STRATEGIES
+]
 iter_ms_flat = iter_times.flatten() * 1000
-dm_ms_flat   = np.where(np.isnan(dm_times.flatten()), np.nan, dm_times.flatten() * 1000)
+dm_ms_flat = np.where(np.isnan(dm_times.flatten()), np.nan, dm_times.flatten() * 1000)
 
 idx = np.arange(25)
 fig, ax = plt.subplots(figsize=(18, 5))
 ax.bar(idx - 0.2, iter_ms_flat, 0.4, label="Std iterative", color="#4C72B0", alpha=0.85)
-ax.bar(idx + 0.2, dm_ms_flat,   0.4, label="D-matrix iterative", color="#DD8452", alpha=0.85)
-ax.axhline(t_fix * 1000, color="#55A868", linewidth=1.5, linestyle="--",
-           label=f"Fix-point ({t_fix*1000:.3f} ms)")
+ax.bar(
+    idx + 0.2, dm_ms_flat, 0.4, label="D-matrix iterative", color="#DD8452", alpha=0.85
+)
+ax.axhline(
+    t_fix * 1000,
+    color="#55A868",
+    linewidth=1.5,
+    linestyle="--",
+    label=f"Fix-point ({t_fix * 1000:.3f} ms)",
+)
 ax.set_xticks(idx)
 ax.set_xticklabels(combo_labels, fontsize=6.5)
 ax.set_ylabel("Time (ms)")
-ax.set_title(f"Runtime: Standard iterative vs D-matrix iterative -- all 25 combinations\n"
-             f"(max_iter={MAX_ITER}, epsilon={EPSILON}, N={N}, M={M})")
+ax.set_title(
+    f"Runtime: Standard iterative vs D-matrix iterative -- all 25 combinations\n"
+    f"(max_iter={MAX_ITER}, epsilon={EPSILON}, N={N}, M={M})"
+)
 ax.legend(fontsize=9)
 ax.set_xlim(-0.7, 24.7)
 plt.tight_layout()
@@ -435,9 +501,9 @@ print(f"Runtime bar chart saved to {out3}")
 fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharey=True)
 for ax, model, title in [
     (axes[0], m_iter_A, f"Std iterative  (Dom+Bal, ESE={m_iter_A.ESE_iter})"),
-    (axes[1], m_dm_A,   f"D-matrix iter  (Dom+Bal, ESE={m_dm_A.ESE_iter})"),
+    (axes[1], m_dm_A, f"D-matrix iter  (Dom+Bal, ESE={m_dm_A.ESE_iter})"),
 ]:
-    hist   = model.gene_fitness_history
+    hist = model.gene_fitness_history
     filled = hist[hist.sum(axis=1) > 0]
     for j in range(M):
         ax.plot(filled[:, j], label=short_labels[j], color=bar_colors[j])
@@ -446,7 +512,9 @@ for ax, model, title in [
     ax.set_ylabel("Gene fitness weight")
     ax.legend(fontsize=8)
     ax.set_ylim(0, 0.7)
-plt.suptitle("Convergence: Standard iterative vs D-matrix iterative (Dominant+Balanced)")
+plt.suptitle(
+    "Convergence: Standard iterative vs D-matrix iterative (Dominant+Balanced)"
+)
 plt.tight_layout()
 out4 = f"{OUT_DIR}/convergence_comparison.png"
 plt.savefig(out4, dpi=150, bbox_inches="tight")
@@ -467,12 +535,20 @@ def rank_apartments(pop, gf, x_raw, k=5):
     return [(i + 1, scores[i], x_raw[i]) for i in top_idx]
 
 
-for label, gf in [("Fix-point", gf_fix), ("Std iter", gf_iter_A), ("D-matrix", gf_dm_A)]:
+for label, gf in [
+    ("Fix-point", gf_fix),
+    ("Std iter", gf_iter_A),
+    ("D-matrix", gf_dm_A),
+]:
     print(f"\n  {label}:")
-    print(f"  {'Rk':<4} {'Apt':>4} {'Score':>8}  {'Rent':>6} {'Size':>6} {'Rooms':>6} {'Balcony':>8}")
+    print(
+        f"  {'Rk':<4} {'Apt':>4} {'Score':>8}  {'Rent':>6} {'Size':>6} {'Rooms':>6} {'Balcony':>8}"
+    )
     for rank, (apt_idx, score, raw) in enumerate(rank_apartments(phi, gf, X_raw), 1):
-        print(f"  {rank:<4} {apt_idx:>4} {score:>8.4f}  "
-              f"{raw[0]:>6.0f} {raw[1]:>6.0f} {raw[2]:>6.1f} {raw[3]:>8.0f}")
+        print(
+            f"  {rank:<4} {apt_idx:>4} {score:>8.4f}  "
+            f"{raw[0]:>6.0f} {raw[1]:>6.0f} {raw[2]:>6.1f} {raw[3]:>8.0f}"
+        )
 
 # ---------------------------------------------------------------------------
 # 10. Final summary
@@ -480,19 +556,25 @@ for label, gf in [("Fix-point", gf_fix), ("Std iter", gf_iter_A), ("D-matrix", g
 print("\n" + "=" * 75)
 print("Summary")
 print("=" * 75)
-print(f"\n  Fix-point  : {t_fix*1000:.4f} ms  -- analytical, instant, Dom+Bal only")
-print(f"  Std iter   : mean {np.nanmean(iter_times)*1000:.3f} ms over 25 combos")
-print(f"  D-matrix   : mean {np.nanmean(dm_times)*1000:.3f} ms over 24 combos")
-print(f"\n  D-matrix speedup over std-iter: mean={np.mean(valid_sp):.1f}x, "
-      f"max={np.max(valid_sp):.1f}x")
-print(f"  (speedup = O(N*M^2) / O(M^2) = N={N}x theoretical; "
-      f"observed lower due to Python overhead)")
+print(f"\n  Fix-point  : {t_fix * 1000:.4f} ms  -- analytical, instant, Dom+Bal only")
+print(f"  Std iter   : mean {np.nanmean(iter_times) * 1000:.3f} ms over 25 combos")
+print(f"  D-matrix   : mean {np.nanmean(dm_times) * 1000:.3f} ms over 24 combos")
+print(
+    f"\n  D-matrix speedup over std-iter: mean={np.mean(valid_sp):.1f}x, "
+    f"max={np.max(valid_sp):.1f}x"
+)
+print(
+    f"  (speedup = O(N*M^2) / O(M^2) = N={N}x theoretical; "
+    f"observed lower due to Python overhead)"
+)
 valid_cosines = cosines[~np.isnan(cosines)]
 n_perfect = np.sum(valid_cosines > 0.9999)
-n_close   = np.sum((valid_cosines > 0.999) & (valid_cosines <= 0.9999))
+n_close = np.sum((valid_cosines > 0.999) & (valid_cosines <= 0.9999))
 print("\n  Cosine(std-iter, D-matrix) across 24 combos:")
-print(f"    Perfect (>0.9999): {n_perfect}   Near-perfect (>0.999): {n_close}   "
-      f"Other: {len(valid_cosines) - n_perfect - n_close}")
+print(
+    f"    Perfect (>0.9999): {n_perfect}   Near-perfect (>0.999): {n_close}   "
+    f"Other: {len(valid_cosines) - n_perfect - n_close}"
+)
 print(f"    Min cosine: {valid_cosines.min():.6f}   Max: {valid_cosines.max():.6f}")
 print()
 print(f"  Output artefacts saved to: {OUT_DIR}/")

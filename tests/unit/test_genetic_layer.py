@@ -41,7 +41,10 @@ class TestGeneticLayer:
 
     def test_custom_activation(self):
         layer = GeneticLayer(
-            input_shape=8, hidden_dim=16, orgs_shape=4, genes_shape=2,
+            input_shape=8,
+            hidden_dim=16,
+            orgs_shape=4,
+            genes_shape=2,
             activation_fn=nn.ReLU(),
         )
         x = torch.randn(2, 8)
@@ -59,13 +62,17 @@ class TestGeneticLayer:
 
 class TestInputProjection:
     def test_forward(self):
-        proj = InputProjection(input_shape=16, hidden_dim=32, activation_fn=nn.SiLU(), dropout_rate=0.1)
+        proj = InputProjection(
+            input_shape=16, hidden_dim=32, activation_fn=nn.SiLU(), dropout_rate=0.1
+        )
         x = torch.randn(2, 5, 16)
         out = proj(x)
         assert out.shape == (2, 5, 32)
 
     def test_zero_dropout_uses_identity(self):
-        proj = InputProjection(input_shape=8, hidden_dim=16, activation_fn=nn.SiLU(), dropout_rate=0.0)
+        proj = InputProjection(
+            input_shape=8, hidden_dim=16, activation_fn=nn.SiLU(), dropout_rate=0.0
+        )
         assert isinstance(proj.dropout, nn.Identity)
         x = torch.randn(2, 5, 8)
         out = proj(x)
@@ -75,8 +82,11 @@ class TestInputProjection:
 class TestGeneticProjection:
     def test_forward_shape(self):
         proj = GeneticProjection(
-            hidden_dim=32, orgs_shape=8, genes_shape=4,
-            activation_fn=nn.SiLU(), dropout_rate=0.1,
+            hidden_dim=32,
+            orgs_shape=8,
+            genes_shape=4,
+            activation_fn=nn.SiLU(),
+            dropout_rate=0.1,
         )
         x = torch.randn(2, 5, 32)
         out = proj(x, batch_size=2, input_length=5, orgs_shape=8, genes_shape=4)
@@ -84,8 +94,11 @@ class TestGeneticProjection:
 
     def test_output_values_in_unit_interval(self):
         proj = GeneticProjection(
-            hidden_dim=16, orgs_shape=4, genes_shape=2,
-            activation_fn=nn.SiLU(), dropout_rate=0.0,
+            hidden_dim=16,
+            orgs_shape=4,
+            genes_shape=2,
+            activation_fn=nn.SiLU(),
+            dropout_rate=0.0,
         )
         x = torch.randn(2, 3, 16)
         out = proj(x, batch_size=2, input_length=3, orgs_shape=4, genes_shape=2)
@@ -106,11 +119,15 @@ class TestStrategyModule:
 
 class TestOutputProjection:
     def test_forward(self):
-        proj = OutputProjection(orgs_shape=8, output_shape=12, activation_fn=nn.SiLU(), dropout_rate=0.1)
+        proj = OutputProjection(
+            orgs_shape=8, output_shape=12, activation_fn=nn.SiLU(), dropout_rate=0.1
+        )
         x = torch.randn(2, 5, 8)
         out = proj(x)
         assert out.shape == (2, 5, 12)
 
     def test_zero_dropout_uses_identity(self):
-        proj = OutputProjection(orgs_shape=8, output_shape=4, activation_fn=nn.SiLU(), dropout_rate=0.0)
+        proj = OutputProjection(
+            orgs_shape=8, output_shape=4, activation_fn=nn.SiLU(), dropout_rate=0.0
+        )
         assert isinstance(proj.dropout, nn.Identity)

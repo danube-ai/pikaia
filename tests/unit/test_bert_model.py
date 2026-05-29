@@ -8,7 +8,6 @@ from pikaia.data.population import PikaiaPopulation
 from pikaia.models.backbones.bert import BertEncoder, BertEncoderLayer, BertModel
 from pikaia.models.danube_model import DanubeModel
 
-
 # ---------------------------------------------------------------------------
 # BertModel
 # ---------------------------------------------------------------------------

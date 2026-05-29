@@ -6,19 +6,23 @@ from pikaia.models.pikaia_model import PikaiaModel
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
-from pikaia.strategies.gs_strategies.kin_altruistic_strategy import KinAltruisticGeneStrategy
+from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
+    KinAltruisticGeneStrategy,
+)
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
-from pikaia.strategies.mix_strategies.self_consistent_strategy import SelfConsistentMixStrategy
+from pikaia.strategies.mix_strategies.self_consistent_strategy import (
+    SelfConsistentMixStrategy,
+)
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 
-
 # ---------------------------------------------------------------------------
 # Minimal strategy subclass that returns a d-vector (no D matrix)
 # ---------------------------------------------------------------------------
+
 
 class _LinearGeneStrategy(GeneStrategy):
     """Test-only strategy: returns (None, d) where d = x_bar."""
@@ -30,7 +34,9 @@ class _LinearGeneStrategy(GeneStrategy):
     def __call__(self, ctx: StrategyContext) -> float:
         return 0.0
 
-    def kernel(self, population, gene_similarity, org_similarity, initial_org_fitness_range):
+    def kernel(
+        self, population, gene_similarity, org_similarity, initial_org_fitness_range
+    ):
         d = population.matrix.mean(axis=0)
         return None, d
 
@@ -183,7 +189,17 @@ class TestPikaiaModel:
 # ---------------------------------------------------------------------------
 
 
-def _make_model(rng_seed, N=8, M=5, *, use_d_matrix=False, gene_strats, org_strats, max_iter=None, epsilon=None):
+def _make_model(
+    rng_seed,
+    N=8,
+    M=5,
+    *,
+    use_d_matrix=False,
+    gene_strats,
+    org_strats,
+    max_iter=None,
+    epsilon=None,
+):
     """Helper: build a PikaiaModel with the given strategy combo."""
     X = np.random.default_rng(rng_seed).random((N, M))
     pop = PikaiaPopulation(X)
@@ -277,7 +293,9 @@ class TestDMatrixIterations:
 class TestV1IterativeEquivalence:
     """V1: Both paths should converge to the same fixed point within tolerance."""
 
-    def _run_both(self, seed, gene_strats, org_strats, N=10, M=5, max_iter=500, epsilon=1e-8):
+    def _run_both(
+        self, seed, gene_strats, org_strats, N=10, M=5, max_iter=500, epsilon=1e-8
+    ):
         X = np.random.default_rng(seed).random((N, M))
         pop = PikaiaPopulation(X)
 
@@ -349,6 +367,7 @@ class TestV1IterativeEquivalence:
 # ---------------------------------------------------------------------------
 # D-matrix error paths
 # ---------------------------------------------------------------------------
+
 
 class TestDMatrixErrorPaths:
     """Tests for ValueError branches in the D-matrix path."""
@@ -591,6 +610,7 @@ class TestSelfConsistentDMatrix:
 # ---------------------------------------------------------------------------
 # D-matrix with complex strategy combinations
 # ---------------------------------------------------------------------------
+
 
 class TestDMatrixComplexStrategies:
     """D-matrix runs for strategy combinations beyond dominant+none."""

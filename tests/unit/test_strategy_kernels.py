@@ -13,7 +13,9 @@ import pytest
 from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
-from pikaia.strategies.gs_strategies.kin_altruistic_strategy import KinAltruisticGeneStrategy
+from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
+    KinAltruisticGeneStrategy,
+)
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
@@ -22,10 +24,10 @@ from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgSt
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_pop(rng, N, M):
     return PikaiaPopulation(np.random.default_rng(rng).random((N, M)))
@@ -33,6 +35,7 @@ def _make_pop(rng, N, M):
 
 def _make_sims(pop):
     """Return (gene_similarity, org_similarity, initial_org_fitness_range)."""
+
     def sim(matrix):
         diff = matrix[:, np.newaxis, :] - matrix[np.newaxis, :, :]
         dist = np.linalg.norm(diff, axis=2)
@@ -50,6 +53,7 @@ def _make_sims(pop):
 # ---------------------------------------------------------------------------
 # Gene strategies – kernel()
 # ---------------------------------------------------------------------------
+
 
 class TestNoneGeneStrategyKernel:
     def test_returns_none_none(self):
@@ -190,6 +194,7 @@ class TestKinAltruisticGeneStrategyKernel:
 # ---------------------------------------------------------------------------
 # Org strategies – kernel()
 # ---------------------------------------------------------------------------
+
 
 class TestNoneOrgStrategyKernel:
     def test_returns_none_none(self):

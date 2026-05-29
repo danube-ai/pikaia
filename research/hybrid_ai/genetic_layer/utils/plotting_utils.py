@@ -181,9 +181,11 @@ def plot_bal_acc_vs_params(results, dataset, arch_type, save_path=None):
     ax.set_xlabel("Number of Parameters")
     ax.xaxis.set_major_formatter(
         ticker.FuncFormatter(
-            lambda x, pos: f"{x / 1e6:.0f}M"
-            if x >= 1e6
-            else (f"{x / 1e3:.0f}K" if x >= 1e3 else f"{x:.0f}")
+            lambda x, pos: (
+                f"{x / 1e6:.0f}M"
+                if x >= 1e6
+                else (f"{x / 1e3:.0f}K" if x >= 1e3 else f"{x:.0f}")
+            )
         )
     )
     ax.set_ylabel("Final Balanced Accuracy")

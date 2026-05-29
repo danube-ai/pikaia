@@ -344,10 +344,7 @@ class GeneticModel(ABC):
                 has_d = True
 
         if not has_D and not has_d:
-            strategy_names = [
-                type(s).__name__
-                for s, _ in all_pairs
-            ]
+            strategy_names = [type(s).__name__ for s, _ in all_pairs]
             raise ValueError(
                 "use_d_matrix=True requires at least one strategy to implement "
                 "kernel(). None of the selected strategies contribute a D-matrix "

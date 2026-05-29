@@ -97,11 +97,14 @@ class SelfConsistentMixStrategy(MixStrategy):
             Updated and renormalized mixing coefficients, shape ``(K,)``.
         """
         M = len(gamma)
-        magnitudes = np.array([
-            np.mean(np.abs(gamma * (D_s @ gamma))) if D_s is not None
-            else (np.mean(np.abs(d_s)) if d_s is not None else 0.0)
-            for D_s, d_s in zip(D_list, d_list)
-        ])
+        magnitudes = np.array(
+            [
+                np.mean(np.abs(gamma * (D_s @ gamma)))
+                if D_s is not None
+                else (np.mean(np.abs(d_s)) if d_s is not None else 0.0)
+                for D_s, d_s in zip(D_list, d_list)
+            ]
+        )
         mix_coeffs = mix_coeffs * (1 + M * magnitudes)
         mix_coeffs /= mix_coeffs.sum()
         return mix_coeffs

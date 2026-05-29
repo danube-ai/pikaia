@@ -81,6 +81,7 @@ reportPrivateImportUsage = false
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.0",
     "pyright>=1.1.409",
     "pytest-cov>=7.1.0",
 ]

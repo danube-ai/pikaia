@@ -1,7 +1,7 @@
 import numpy as np
 
-from pikaia.data.population import PikaiaPopulation
 from pikaia.config.logger import logger
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 

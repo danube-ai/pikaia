@@ -48,9 +48,7 @@ PROF_COL = "profession"  # change if different
 GEND_COL = "gender"  # change if different
 
 
-def build_label_maps(
-    dataset, col: str
-) -> tuple[dict[str, int], dict[int, str]]:
+def build_label_maps(dataset, col: str) -> tuple[dict[str, int], dict[int, str]]:
     """Build label-to-id and id-to-label mappings from a dataset column.
 
     Args:
@@ -231,9 +229,7 @@ val_loader = DataLoader(
 )
 
 
-def evaluate(
-    model: BertMultiHead, loader: DataLoader
-) -> dict[str, object]:
+def evaluate(model: BertMultiHead, loader: DataLoader) -> dict[str, object]:
     """Evaluate the multi-head model on a data loader.
 
     Computes profession and gender accuracy, macro-F1, joint accuracy, and
