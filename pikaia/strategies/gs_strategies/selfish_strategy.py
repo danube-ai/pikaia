@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -21,6 +22,12 @@ class SelfishGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Selfish gene strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -36,13 +43,10 @@ class SelfishGeneStrategy(GeneStrategy):
         penalizing other genes to benefit the current one.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
         # Get all gene indices except the current gene
         indices = np.arange(ctx.population.M) != ctx.gene_id
@@ -71,3 +75,20 @@ class SelfishGeneStrategy(GeneStrategy):
             )
             / ctx.population.M
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """D_sel = -D_alt: negated altruistic gene kernel."""
+        X = population.matrix  # (N, M)
+        M = population.M
+        X_centered = X - 0.5
+        X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
+        kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)
+        D = -(16.0 / M) * gene_similarity * kernel
+        np.fill_diagonal(D, 0.0)
+        return D, None

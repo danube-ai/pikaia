@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -16,6 +17,12 @@ class AltruisticGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Altruistic gene strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -31,13 +38,10 @@ class AltruisticGeneStrategy(GeneStrategy):
         interactions between the current gene and all other genes in the organism.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
         # Get all gene indices except the current gene
         indices = np.arange(ctx.population.M) != ctx.gene_id
@@ -67,3 +71,25 @@ class AltruisticGeneStrategy(GeneStrategy):
             # normalization by number of genes
             / ctx.population.M
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Full (M, M) D matrix; diagonal zeroed.
+
+        D[j,k] = (16/M) * gene_similarity[j,k]
+                 * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]
+        """
+        X = population.matrix  # (N, M)
+        M = population.M
+        X_centered = X - 0.5  # (N, M)
+        # X_diff[i, j, k] = X[i,k] - X[i,j]
+        X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
+        kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
+        D = (16.0 / M) * gene_similarity * kernel
+        np.fill_diagonal(D, 0.0)
+        return D, None

@@ -1,5 +1,6 @@
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -18,6 +19,15 @@ class KinAltruisticGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the KinAltruistic gene strategy.
+
+        Keyword Args:
+            kin_range (int): Number of most-similar genes to consider as kin
+                when computing the interaction term.  Defaults to ``M``
+                (the full feature dimension).
+            **kwargs: Additional options forwarded to :class:`GeneStrategy`
+                and stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -33,13 +43,10 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         factor of `(0.5 - similarity)`.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.M)
@@ -78,3 +85,37 @@ class KinAltruisticGeneStrategy(GeneStrategy):
             # normalization by number of genes
             / ctx.population.M
         )
+
+    def kernel(
+        self,
+        population: PikaiaPopulation,
+        gene_similarity: np.ndarray,
+        org_similarity: np.ndarray,
+        initial_org_fitness_range: float,
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Full (M, M) D matrix with (0.5 - s^g_jk) similarity weight.
+
+        Respects the ``kin_range`` option: per gene j, only the top
+        ``kin_range`` most similar genes k contribute (self excluded).
+
+        D[j,k] = (16/M) * (0.5 - gene_sim_masked[j,k])
+                 * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]
+        """
+        X = population.matrix  # (N, M)
+        M = population.M
+        kin_range = self.options.get("kin_range", M)
+
+        # Build masked similarity: only top kin_range similar genes per row
+        gene_sim_masked = np.zeros_like(gene_similarity)
+        for j in range(M):
+            sorted_k = np.argsort(-gene_similarity[j, :])
+            top_k = sorted_k[:kin_range]
+            top_k = top_k[top_k != j]  # exclude self
+            gene_sim_masked[j, top_k] = gene_similarity[j, top_k]
+
+        X_centered = X - 0.5  # (N, M)
+        X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
+        inner = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
+        D = (16.0 / M) * (0.5 - gene_sim_masked) * inner
+        np.fill_diagonal(D, 0.0)
+        return D, None

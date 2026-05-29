@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Verify lockfile is up to date
+        run: uv lock --locked
+
+      - name: Install dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Run unit tests
+        run: uv run pytest tests/unit/ --cov=pikaia --cov-report=term-missing --cov-fail-under=95
+
+  version-check:
+    name: Version Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
+        with:
+          python-version: "3.14"
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}
+
+      - name: Export base pyproject.toml
+        run: git show origin/${{ github.base_ref }}:pyproject.toml > /tmp/base_pyproject.toml
+
+      - name: Check version bump
+        run: uv run --no-project --with packaging .github/scripts/check_version.py pyproject.toml /tmp/base_pyproject.toml
+
+      - name: Check version not already on target index
+        run: |
+          if [ "${{ github.base_ref }}" = "main" ]; then
+            INDEX=pypi
+          else
+            INDEX=testpypi
+          fi
+          uv run --no-project .github/scripts/check_pypi_version.py "$INDEX" pyproject.toml

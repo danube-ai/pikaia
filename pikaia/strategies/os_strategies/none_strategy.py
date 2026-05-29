@@ -13,6 +13,12 @@ class NoneOrgStrategy(OrgStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the None (no-op) organism strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to :class:`OrgStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -29,11 +35,9 @@ class NoneOrgStrategy(OrgStrategy):
         this organism.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            np.ndarray:
-                A zero vector of shape `(m,)`.
+            np.ndarray: A zero vector of shape `(m,)`.
         """
         return np.zeros(ctx.population.M)

@@ -220,4 +220,14 @@ __marimo__/
 
 # data
 .data/
-.artefacts/
+**/.artefacts/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# temporary files
+*.tmp
+*.temp
+*.log
+*.bak

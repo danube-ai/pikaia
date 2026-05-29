@@ -1,6 +1,6 @@
 
 pikaia: Genetic AI Documentation
-===============================
+=================================
 
 Welcome to the documentation for **pikaia**, a Python package for data analysis using evolutionary simulation (Genetic AI).
 
