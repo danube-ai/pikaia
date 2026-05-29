@@ -9,15 +9,20 @@ on:
 permissions:
   contents: read
 
+# Serialize publishes per branch; never cancel an in-flight publish.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
         with:
           python-version: "3.14"
           enable-cache: true
@@ -28,31 +33,91 @@ jobs:
       - name: Run unit tests
         run: uv run pytest tests/unit/ --cov=pikaia --cov-report=term-missing --cov-fail-under=95
 
-  publish:
-    name: Build & Publish
+  build:
+    name: Build & Validate
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      index: ${{ steps.index.outputs.index }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
         with:
           python-version: "3.14"
+          enable-cache: true
+
+      - name: Determine target index
+        id: index
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "index=pypi" >> "$GITHUB_OUTPUT"
+          else
+            echo "index=testpypi" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refuse to publish duplicate version
+        run: uv run --no-project .github/scripts/check_pypi_version.py "${{ steps.index.outputs.index }}" pyproject.toml
 
       - name: Build package
         run: uv build
 
+      - name: Validate distributions
+        run: uv run --no-project --with twine twine check --strict dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/pikaia/
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: dist
+          path: dist/
+
       - name: Publish to TestPyPI
-        if: github.ref == 'refs/heads/develop'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          skip_existing: true
+          skip-existing: true
+          verbose: true
+          print-hash: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Configure required reviewers on this environment in repo Settings ->
+    # Environments -> "pypi" to enforce a manual approval gate before upload.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pikaia/
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: dist
+          path: dist/
 
       - name: Publish to PyPI
-        if: github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+          print-hash: true
