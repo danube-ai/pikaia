@@ -591,7 +591,7 @@ Current benchmarks provide initial insights but have limited scope:
 ## 📁 Repository Structure
 
 ```text
-examples/genetic_layer/
+research/hybrid_ai/genetic_layer/
 ├── README.md                          # This file
 ├── genetic_networks.ipynb             # Main benchmark notebook
 ├── compute_summary.py                 # Automated statistics computation
@@ -612,8 +612,8 @@ examples/genetic_layer/
 
 For more information on the underlying Pikaia framework and genetic strategies, see:
 
-- `/pikaia/layers/genetic_layer.py` - GeneticLayer implementation
-- `/pikaia/strategies/` - Strategy implementations
+- `pikaia/models/nn_modules/genetic_layer.py` - GeneticLayer implementation
+- `pikaia/strategies/` - Strategy implementations
 - `/docs/` - Full documentation
 
 ---

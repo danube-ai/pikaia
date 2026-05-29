@@ -3,6 +3,7 @@
     <img src="https://img.shields.io/pypi/pyversions/pikaia" alt="Python version">
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
+    <img src="https://github.com/danube-ai/pikaia/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 # 🧬 Pikaia
@@ -20,8 +21,6 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
 - ✅ 99% test coverage
-
----
 
 ---
 
@@ -89,7 +88,7 @@ For more installation options, visit the [UV installation guide](https://astral.
 2. Sync the dependencies (including development and notebook extras):
 
    ```bash
-   uv sync --extra dev --extra notebooks
+   uv sync --extra dev --extra examples
    ```
 
 3. Activate the virtual environment:
@@ -200,7 +199,7 @@ For questions, suggestions, or contributions, please feel free to open an issue.
 
 ## 📄 License
 
-This project is licensed under the terms of the MIT License. See the [LICENSE](../LICENSE) file for details.
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
