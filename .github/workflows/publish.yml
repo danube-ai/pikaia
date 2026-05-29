@@ -19,10 +19,10 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.14"
           enable-cache: true
@@ -40,10 +40,10 @@ jobs:
     outputs:
       index: ${{ steps.index.outputs.index }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5.4.2
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.14"
           enable-cache: true
@@ -67,7 +67,7 @@ jobs:
         run: uv run --no-project --with twine twine check --strict dist/*
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
@@ -82,9 +82,10 @@ jobs:
     environment:
       name: testpypi
       url: https://test.pypi.org/project/pikaia/
+
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
@@ -108,9 +109,10 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/pikaia/
+
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
@@ -129,8 +131,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/checkout@v4
 
       - name: Read version
         id: version
