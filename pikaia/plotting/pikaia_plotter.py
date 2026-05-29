@@ -53,6 +53,7 @@ class PikaiaPlotter:
         save_path: Path | None = None,
         gene_labels: list[str] | None = None,
         org_labels: list[str] | None = None,
+        title: str | None = None,
     ) -> tuple[Figure, Axes]:
         """
         Plots the specified data from the model.
@@ -68,6 +69,8 @@ class PikaiaPlotter:
                 Custom labels for genes.
             org_labels : list[str] | None
                 Custom labels for organisms.
+            title : str | None
+                Custom title for the plot. If None, a default title is used.
 
         Returns:
             tuple : A tuple containing the matplotlib Figure and Axes objects.
@@ -80,53 +83,59 @@ class PikaiaPlotter:
 
         match plot_type:
             case PlotType.GENE_FITNESS_HISTORY:
+                plot_title = title or "Gene Fitness History"
                 fig, ax = self._plot_history(
                     data=self.model.gene_fitness_history,
-                    title="Gene Fitness History",
+                    title=plot_title,
                     ylabel="Fitness",
                     labels=gene_labels,
                     show=show,
                     save_path=save_path,
                 )
             case PlotType.ORGANISM_FITNESS_HISTORY:
+                plot_title = title or "Organism Fitness History"
                 fig, ax = self._plot_history(
                     data=self.model.organism_fitness_history,
-                    title="Organism Fitness History",
+                    title=plot_title,
                     ylabel="Fitness",
                     labels=org_labels,
                     show=show,
                     save_path=save_path,
                 )
             case PlotType.GENE_MIXING_HISTORY:
+                plot_title = title or "Gene Mixing Coefficients History"
                 fig, ax = self._plot_history(
                     data=self.model.gene_mixing_history,
-                    title="Gene Mixing Coefficients History",
+                    title=plot_title,
                     ylabel="Mixing Coefficient",
                     labels=[strategy.name for strategy in self.model.gene_strategies],
                     show=show,
                     save_path=save_path,
                 )
             case PlotType.ORGANISM_MIXING_HISTORY:
+                plot_title = title or "Organism Mixing Coefficients History"
                 fig, ax = self._plot_history(
                     data=self.model.organism_mixing_history,
-                    title="Organism Mixing Coefficients History",
+                    title=plot_title,
                     ylabel="Mixing Coefficient",
                     labels=[strategy.name for strategy in self.model.org_strategies],
                     show=show,
                     save_path=save_path,
                 )
             case PlotType.GENE_SIMILARITY:
+                plot_title = title or "Gene Similarity Matrix"
                 fig, ax = self._plot_heatmap(
                     data=self.model.gene_similarity,
-                    title="Gene Similarity Matrix",
+                    title=plot_title,
                     labels=gene_labels,
                     show=show,
                     save_path=save_path,
                 )
             case PlotType.ORGANISM_SIMILARITY:
+                plot_title = title or "Organism Similarity Matrix"
                 fig, ax = self._plot_heatmap(
                     data=self.model.org_similarity,
-                    title="Organism Similarity Matrix",
+                    title=plot_title,
                     labels=org_labels,
                     show=show,
                     save_path=save_path,
