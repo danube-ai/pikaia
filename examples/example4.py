@@ -6,8 +6,7 @@ This script demonstrates using movie data for evolutionary search and recommenda
 It prints results and saves plots for visualization.
 """
 
-from pathlib import Path
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -31,7 +30,7 @@ print("=== Example 4: Search with Movie Data ===\n")
 
 # Data Processing
 print("Data Processing")
-movie_df = pd.read_csv(Path("data/movie_matrix.csv"))
+movie_df = pd.read_csv("examples/data/movie_matrix.csv")
 
 print("Movie data shape:", movie_df.shape)
 print("Columns:", list(movie_df.columns))
@@ -88,10 +87,8 @@ print("Fitting model (this may take a while)...")
 model.fit()
 
 print("Gene fitness history shape:", model.gene_fitness_history.shape)
-print("Initial gene fitness:", model.gene_fitness_history[0][:5], "...")  # Show first 5
 print("Final gene fitness:", model.gene_fitness_history[-1][:5], "...")  # Show first 5
 print("Org fitness history shape:", model.organism_fitness_history.shape)
-print("Initial org fitness:", model.organism_fitness_history[0][:5], "...")
 print("Final org fitness:", model.organism_fitness_history[-1][:5], "...")
 print()
 

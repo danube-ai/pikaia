@@ -43,13 +43,10 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         factor of `(0.5 - similarity)`.
 
         Args:
-            ctx (StrategyContext):
-                Context object containing all required and optional fields.
+            ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
-            float:
-                The computed delta value `Delta_G(i,j)` for the specified gene
-                and organism.
+            float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.M)

@@ -58,7 +58,7 @@ class PikaiaModel(GeneticModel):
         """
         Fits the genetic model to the population data by running the simulation.
 
-        This method iteratively updates the gene and organism fitness values based\n        on the
+        This method iteratively updates the gene and organism fitness values based on the
         provided strategies. The simulation runs for a maximum number of iterations as
         defined by `max_iter`. If an `epsilon` value is provided, the simulation will
         stop early if the change in gene fitness between iterations falls below this
@@ -223,8 +223,7 @@ class PikaiaModel(GeneticModel):
             current_gene_fitness (np.ndarray): The current gene fitness vector.
 
         Returns:
-            tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and
-            delta_o matrices.
+            tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and delta_o matrices.
         """
         delta_g = np.zeros(
             [self._population.N, self._population.M, len(self._gene_strategies)]

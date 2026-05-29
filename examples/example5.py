@@ -20,18 +20,7 @@ print("=== Example 5: 3x3 Data - Single Point Prediction ===\n")
 
 # Data Processing
 print("Data Processing")
-data_3x3_raw = np.array(
-    [
-        [300, 10, 2],
-        [600, 5, 2],
-        [1500, 4, 1],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
-)
+data_3x3_raw = np.array([[300, 10, 2], [600, 5, 2], [1500, 4, 1]])
 print("Raw data:")
 print(data_3x3_raw)
 
@@ -64,10 +53,8 @@ print("Fitting model with default strategies...")
 model.fit()
 
 print("Gene fitness history shape:", model.gene_fitness_history.shape)
-print("Initial gene fitness:", model.gene_fitness_history[0])
 print("Final gene fitness:", model.gene_fitness_history[-1])
 print("Org fitness history shape:", model.organism_fitness_history.shape)
-print("Initial org fitness:", model.organism_fitness_history[0])
 print("Final org fitness:", model.organism_fitness_history[-1])
 
 # Single point prediction
