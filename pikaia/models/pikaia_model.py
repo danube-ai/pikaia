@@ -1,20 +1,21 @@
 import multiprocessing
-from typing import Iterable
 
 import numpy as np
 
 from pikaia.config.logger import logger
 from pikaia.data.population import PikaiaPopulation
+from pikaia.models.genetic_model import GeneticModel
 from pikaia.strategies.base_strategies import (
     GeneStrategy,
-    MixStrategy,
     OrgStrategy,
     StrategyContext,
 )
-from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
+from pikaia.strategies.mix_strategies.self_consistent_strategy import (
+    SelfConsistentMixStrategy,
+)
 
 
-class PikaiaModel:
+class PikaiaModel(GeneticModel):
     """
     Central organizing class for the Genetic AI model.
 
@@ -27,343 +28,31 @@ class PikaiaModel:
     fitness values based on the provided strategies.
     """
 
-    def __init__(
-        self,
-        population: PikaiaPopulation,
-        gene_strategies: Iterable[GeneStrategy] | None = None,
-        org_strategies: Iterable[OrgStrategy] | None = None,
-        gene_mix_strategy: MixStrategy | None = None,
-        org_mix_strategy: MixStrategy | None = None,
-        gene_mixing_coeffs: list[float] | None = None,
-        org_mixing_coeffs: list[float] | None = None,
-        initial_gene_fitness: Iterable[float] | None = None,
-        max_iter: int | None = None,
-        epsilon: float | None = None,
-        n_jobs: int = 1,
-    ):
+    def __init__(self, *args, use_d_matrix: bool = False, **kwargs):
         """
-        Initializes the PikaiaModel.
+        Initialises the PikaiaModel.
+
+        Accepts all arguments of :class:`GeneticModel` plus:
 
         Args:
-            population (Population):
-                The population of organisms and genes.
-            gene_strategies (Iterable[GeneStrategy] | None, optional):
-                A list of strategies to update gene fitness.
-            org_strategies (Iterable[OrgStrategy] | None, optional):
-                A list of strategies to update organism fitness.
-            gene_mix_strategy (MixStrategy | None, optional):
-                The strategy for mixing gene strategies.
-                Defaults to FixedMixStrategy.
-            org_mix_strategy (MixStrategy | None, optional):
-                The strategy for mixing organism strategies.
-                Defaults to FixedMixStrategy.
-            gene_mixing_coeffs (list[float] | None, optional):
-                Initial coefficients for mixing gene strategies.
-                Defaults to a uniform distribution.
-            org_mixing_coeffs (list[float] | None, optional):
-                Initial coefficients for mixing organism strategies.
-                Defaults to a uniform distribution.
-            initial_gene_fitness (Iterable[float] | None, optional):
-                Initial fitness values for each gene.
-                Defaults to a uniform distribution.
-            max_iter (int, optional):
-                The maximum number of iterations for the simulation. Defaults to 1.
-                When set to 1, strategies and initial gene fitness will be ignored and
-                the optimal solution will be computed directly.
-            epsilon (float, optional):
-                The convergence threshold. If the L2 norm of the
-                change in gene fitness between two consecutive iterations is less than
-                this value, the simulation is considered to have reached an
-                Evolutionarily Stable Equilibrium (ESE) and stops. If None, the
-                simulation runs for `max_iter` iterations. Defaults to None.
-            n_jobs (int):
-                The number of parallel processes to use for strategy evaluations.
-                Defaults to 1. If -1, all available CPUs are used.
+            use_d_matrix (bool):
+                When ``True``, the D-matrix fast path is used instead of the
+                standard per-organism loop. Precomputes the ``(M, M)`` D matrix
+                and ``(M,)`` d-vector once before the iteration loop, reducing
+                per-step cost from ``O(N·M²)`` to ``O(M²)``.  All active
+                strategies must have a registered D-matrix kernel; a
+                ``ValueError`` is raised at fit time if any do not.
+                Defaults to ``False``.
         """
-        # Population and strategies
-        self._population = population
+        super().__init__(*args, **kwargs)
+        self._use_d_matrix = use_d_matrix
 
-        if gene_strategies is None:
-            self._gene_strategies = []
-            if max_iter is not None:
-                raise ValueError("gene_strategies must be provided if max_iter is set")
-        else:
-            if max_iter is None:
-                logger.warning(
-                    "gene_strategies is ignored when max_iter is None (default)"
-                )
-            self._gene_strategies = list(gene_strategies)
-
-        if org_strategies is None:
-            self._org_strategies = []
-            if max_iter is not None:
-                raise ValueError("org_strategies must be provided if max_iter is set")
-        else:
-            if max_iter is None:
-                logger.warning(
-                    "org_strategies is ignored when max_iter is None (default)"
-                )
-            self._org_strategies = list(org_strategies)
-
-        if gene_mix_strategy is not None and max_iter is None:
-            logger.warning(
-                "gene_mix_strategy is ignored when max_iter is None (default)"
-            )
-
-        self._gene_mix_strategy = gene_mix_strategy or FixedMixStrategy()
-
-        if org_mix_strategy is not None and max_iter is None:
-            logger.warning(
-                "org_mix_strategy is ignored when max_iter is None (default)"
-            )
-        self._org_mix_strategy = org_mix_strategy or FixedMixStrategy()
-
-        # Initialize and validate mixing coefficients
-        self._initial_gene_mixing_coeffs = self._init_and_validate_mixing_coeffs(
-            gene_mixing_coeffs, self._gene_strategies, "gene_mixing_coeffs"
-        )
-        self._initial_org_mixing_coeffs = self._init_and_validate_mixing_coeffs(
-            org_mixing_coeffs, self._org_strategies, "org_mixing_coeffs"
-        )
-
-        self._max_iter = max_iter
-
-        if epsilon is not None and max_iter is None:
-            logger.warning("epsilon is ignored when max_iter is None (default)")
-        self._epsilon = epsilon
-
-        # Initial fitness values
-        if initial_gene_fitness is not None:
-            if max_iter is None:
-                logger.warning(
-                    "initial_gene_fitness has no effect when max_iter is None (default); "
-                    "the algorithm will reach convergence independent of initial "
-                    "gene preferences."
-                )
-            elif max_iter > 5:
-                logger.info(
-                    "With max_iter > 5, initial_gene_fitness will likely have little "
-                    "effect; gene preferences will vanish and the algorithm will "
-                    "approximate convergence."
-                )
-        self._initial_gene_fitness = (
-            np.array(initial_gene_fitness)
-            if initial_gene_fitness is not None
-            else np.ones(self._population.M) / self._population.M
-        )
-        self._initial_org_fitness = np.dot(
-            self._population.matrix, self._initial_gene_fitness
-        )
-
-        self._initial_org_fitness_range = np.max(self._initial_org_fitness) - np.min(
-            self._initial_org_fitness
-        )
-        if self._initial_org_fitness_range == 0:
-            raise ValueError("All organism fitness values are 0.")
-
-        # Similarity matrices
-        self._gene_similarity = self._compute_similarity(mode="gene")
-        self._org_similarity = self._compute_similarity(mode="org")
-
-        # History containers
-        self._gene_fitness_hist = np.zeros(
-            [(self._max_iter or 1) + 1, self._population.M]
-        )
-        self._gene_fitness_hist[0, :] = self._initial_gene_fitness
-        self._org_fitness_hist = np.zeros(
-            [(self._max_iter or 1) + 1, self._population.N]
-        )
-        self._org_fitness_hist[0, :] = self._initial_org_fitness
-
-        self._gene_mixing_coeffs_hist = np.zeros(
-            [(self._max_iter or 1) + 1, len(self._gene_strategies)]
-        )
-        self._gene_mixing_coeffs_hist[0, :] = self._initial_gene_mixing_coeffs
-        self._org_mixing_coeffs_hist = np.zeros(
-            [(self._max_iter or 1) + 1, len(self._org_strategies)]
-        )
-        self._org_mixing_coeffs_hist[0, :] = self._initial_org_mixing_coeffs
-
-        self._ESE_iter = -1
-        if n_jobs == -1:
-            self._n_jobs = multiprocessing.cpu_count()
-        else:
-            self._n_jobs = n_jobs
-
-    @staticmethod
-    def _init_and_validate_mixing_coeffs(
-        coeffs: list[float] | None,
-        strategies: list,
-        param_name: str,
-    ) -> list[float]:
-        """
-        Initializes, validates, and normalizes mixing coefficients to sum to 1.
-
-        Args:
-            coeffs (list[float] | None): User-provided coefficients or None.
-            strategies (list): List of strategies.
-            param_name (str): Parameter name for error messages.
-
-        Returns:
-            list[float]: Validated and normalized coefficients that sum to 1.
-
-        Raises:
-            ValueError: If the length doesn't match or all coefficients are zero/negative.
-        """
-        if not strategies:
-            return []
-
-        # Use provided coefficients or create uniform distribution
-        if coeffs is None:
-            return [1.0 / len(strategies)] * len(strategies)
-
-        # Validate length
-        if len(coeffs) != len(strategies):
-            raise ValueError(
-                f"{param_name} must have length {len(strategies)}, got {len(coeffs)}"
-            )
-
-        coeffs_array = np.array(coeffs)
-
-        # Validate non-negativity
-        if np.any(coeffs_array < 0):
-            raise ValueError(
-                f"{param_name} contains negative values. All coefficients must be non-negative."
-            )
-
-        # Validate non-zero sum
-        total = np.sum(coeffs_array)
-        if total == 0:
-            raise ValueError(
-                f"{param_name} sums to zero. At least one coefficient must be positive."
-            )
-
-        # Normalize to sum to 1
-        normalized = coeffs_array / total
-
-        # Log warning if normalization was needed
-        if not np.isclose(total, 1.0, rtol=1e-9):
-            logger.warning(
-                f"{param_name} did not sum to 1 (sum={total:.6f}). "
-                f"Normalized coefficients to sum to 1."
-            )
-
-        return normalized.tolist()
-
-    def _compute_similarity(self, mode: str = "org") -> np.ndarray:
-        """
-        Computes the similarity/kinship matrix for organisms or genes.
-
-        The similarity is defined as 1 minus the normalized Euclidean distance
-        between the vectors representing each organism or gene.
-
-        Args:
-            mode (str): Specifies whether to compute similarity for 'org' (organisms)
-                or 'gene' (genes). Defaults to "org".
-
-        Returns:
-            np.ndarray: A square matrix where the element (i, j) is the similarity
-                between item i and item j. The shape is (N, N) for organisms or (M, M)
-                for genes, where N is the number of organisms and M is the number of genes.
-
-        Raises:
-            ValueError: If an unknown mode is provided or if all items are identical.
-        """
-        if mode == "gene":
-            matrix = self._population.matrix.T
-        elif mode == "org":
-            matrix = self._population.matrix
-        else:
-            raise ValueError(f"Unknown mode '{mode}'. Use 'org' or 'gene'.")
-
-        diff = matrix[:, np.newaxis, :] - matrix[np.newaxis, :, :]
-        distances = np.linalg.norm(diff, axis=2)
-        max_dist = np.max(distances)
-
-        if max_dist == 0:
-            raise ValueError(f"All {mode} items are identical")
-
-        return 1 - distances / max_dist
-
-    @property
-    def population(self) -> PikaiaPopulation:
-        """The population used in the model."""
-        return self._population
-
-    @property
-    def gene_strategies(self) -> Iterable[GeneStrategy]:
-        """The gene strategies used in the model."""
-        return self._gene_strategies
-
-    @property
-    def org_strategies(self) -> Iterable[OrgStrategy]:
-        """The organism strategies used in the model."""
-        return self._org_strategies
-
-    @property
-    def gene_mixing(self) -> Iterable[float]:
-        """The initial gene mixing proportions."""
-        return self._initial_gene_mixing_coeffs
-
-    @property
-    def org_mixing(self) -> Iterable[float]:
-        """The initial organism mixing proportions."""
-        return self._initial_org_mixing_coeffs
-
-    @property
-    def initial_gene_fitness(self) -> np.ndarray:
-        """The initial gene fitness values."""
-        return self._initial_gene_fitness
-
-    @property
-    def initial_org_fitness(self) -> np.ndarray:
-        """The initial organism fitness values, derived from initial gene fitness."""
-        return self._initial_org_fitness
-
-    @property
-    def initial_org_fitness_range(self) -> float:
-        """The initial range of organism fitness values."""
-        return self._initial_org_fitness_range
-
-    @property
-    def gene_similarity(self) -> np.ndarray:
-        """The gene similarity matrix."""
-        return self._gene_similarity
-
-    @property
-    def org_similarity(self) -> np.ndarray:
-        """The organism similarity matrix."""
-        return self._org_similarity
-
-    @property
-    def gene_fitness_history(self) -> np.ndarray:
-        """The history of gene fitness values over iterations."""
-        return self._gene_fitness_hist
-
-    @property
-    def organism_fitness_history(self) -> np.ndarray:
-        """The history of organism fitness values over iterations."""
-        return self._org_fitness_hist
-
-    @property
-    def gene_mixing_history(self) -> np.ndarray:
-        """The history of gene mixing proportions over iterations."""
-        return self._gene_mixing_coeffs_hist
-
-    @property
-    def organism_mixing_history(self) -> np.ndarray:
-        """The history of organism mixing proportions over iterations."""
-        return self._org_mixing_coeffs_hist
-
-    @property
-    def max_iter(self) -> int | None:
-        """The maximum number of iterations for the model."""
-        return self._max_iter
-
-    @property
-    def ESE_iter(self) -> int:
-        """The iteration number at which the simulation converged (ESE). -1 if not converged."""
-        return self._ESE_iter
+        # D-matrix state — populated by _compute_d_matrix() inside fit().
+        # Initialized as empty lists so type-checkers accept slicing.
+        self._D_matrix: np.ndarray | None = None
+        self._d_vector: np.ndarray | None = None
+        self._D_per_strategy: list = []
+        self._d_per_strategy: list = []
 
     def fit(self) -> None:
         """
@@ -378,7 +67,22 @@ class PikaiaModel:
         import time
 
         start_time = time.perf_counter()
-        if self._max_iter is None:
+        if self._use_d_matrix:
+            if self._max_iter is None:
+                raise ValueError(
+                    "use_d_matrix=True requires max_iter to be set. "
+                    "There is no general closed-form fixed point for an arbitrary D matrix. "
+                    "Use max_iter with a large value (e.g. max_iter=500) and optionally "
+                    "epsilon for convergence detection, or use use_d_matrix=False for the "
+                    "analytical Dominant+Balanced fixed point."
+                )
+            logger.info("D-matrix path selected. Precomputing D matrix...")
+            self._compute_d_matrix()
+            logger.info(
+                f"Running D-matrix simulation for up to {self._max_iter} iterations."
+            )
+            self._run_d_matrix_iterations()
+        elif self._max_iter is None:
             logger.info("No max iterations set, solving for optimal solution directly.")
             self._run_fix_point()
         else:
@@ -614,6 +318,143 @@ class PikaiaModel:
                 **context_args,
             )
         )
+
+    # ------------------------------------------------------------------
+    # D-matrix fast paths
+    # ------------------------------------------------------------------
+
+    def _run_d_matrix_iterations(
+        self, *, epsilon_override: float | None = None
+    ) -> None:
+        """Run the D-matrix fast iteration loop.
+
+        Uses the precomputed ``self._D_matrix`` (bilinear term) and
+        ``self._d_vector`` (linear term from balanced org) to execute each
+        step in ``O(M²)`` instead of ``O(N·M²)``.
+
+        Args:
+            epsilon_override: If provided, overrides ``self._epsilon`` as the
+                convergence threshold.  Used internally by
+                ``_run_d_matrix_fix_point()`` to apply a tight tolerance.
+        """
+        import time
+
+        D = self._D_matrix  # (M, M) or None
+        d = self._d_vector  # (M,)  or None
+        epsilon = epsilon_override if epsilon_override is not None else self._epsilon
+
+        is_sc_gene = isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
+        is_sc_org = isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
+        K_g = len(self._gene_strategies)
+
+        gene_mix_coeffs = np.array(self._initial_gene_mixing_coeffs)
+        org_mix_coeffs = np.array(self._initial_org_mixing_coeffs)
+
+        logger.info(
+            f"Starting D-matrix iteration for up to {self._max_iter} iterations."
+        )
+        total_start = time.perf_counter()
+
+        for i in range(1, (self._max_iter or 1) + 1):
+            iter_start = time.perf_counter()
+            logger.debug(f"D-matrix iteration {i}...")
+            gamma = self._gene_fitness_hist[i - 1, :]
+
+            # When SelfConsistentMixStrategy is active, the mixing coefficients
+            # evolve and D_total must be recomputed each step.
+            if is_sc_gene or is_sc_org:
+                all_coeffs = np.concatenate([gene_mix_coeffs, org_mix_coeffs])
+                D_active, d_active = self._recompute_combined_d(all_coeffs)
+            else:
+                D_active, d_active = D, d
+
+            # Fast replicator step
+            bilinear = gamma * (D_active @ gamma) if D_active is not None else 0.0
+            linear = d_active if d_active is not None else 0.0
+            step = linear + bilinear
+            gamma_new = gamma * (1.0 + step)
+
+            if np.any(gamma_new <= 0):
+                raise ValueError(
+                    f"D-matrix step produced non-positive gene fitness at iteration "
+                    f"{i}. Population structure may be incompatible with the "
+                    "D-matrix path. Check for gene columns with mean expression > 0.5 "
+                    "when using BalancedOrgStrategy."
+                )
+            gamma_new /= gamma_new.sum()
+
+            self._gene_fitness_hist[i, :] = gamma_new
+            self._org_fitness_hist[i, :] = self._population.matrix @ gamma_new
+
+            # Update mixing coefficients for SelfConsistent
+            if is_sc_gene:
+                D_gene = self._D_per_strategy[:K_g]
+                d_gene = self._d_per_strategy[:K_g]
+                gene_mix_coeffs = SelfConsistentMixStrategy.update_coeffs_d_matrix(
+                    D_gene, d_gene, gamma_new, gene_mix_coeffs
+                )
+            if is_sc_org:
+                D_org = self._D_per_strategy[K_g:]
+                d_org = self._d_per_strategy[K_g:]
+                org_mix_coeffs = SelfConsistentMixStrategy.update_coeffs_d_matrix(
+                    D_org, d_org, gamma_new, org_mix_coeffs
+                )
+
+            self._gene_mixing_coeffs_hist[i, :] = gene_mix_coeffs
+            self._org_mixing_coeffs_hist[i, :] = org_mix_coeffs
+
+            delta_norm = np.linalg.norm(gamma_new - gamma)
+            iter_elapsed = time.perf_counter() - iter_start
+            logger.debug(
+                f"D-matrix iteration {i} done. Δ={delta_norm:.6g}. "
+                f"Time: {iter_elapsed:.4f}s."
+            )
+            if epsilon is not None and delta_norm < epsilon:
+                self._ESE_iter = i
+                total_elapsed = time.perf_counter() - total_start
+                logger.info(
+                    f"D-matrix reached ESE after {i} iterations. "
+                    f"Δ={delta_norm}. Total: {total_elapsed:.4f}s."
+                )
+                break
+        else:
+            total_elapsed = time.perf_counter() - total_start
+            logger.info(
+                f"D-matrix completed {self._max_iter} iterations without ESE. "
+                f"Total: {total_elapsed:.4f}s."
+            )
+
+    def _recompute_combined_d(
+        self, all_coeffs: np.ndarray
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """Recompute the combined D matrix and d-vector from current mixing coefficients.
+
+        Used only by ``_run_d_matrix_iterations()`` when ``SelfConsistentMixStrategy``
+        is active (coefficients evolve each step).
+
+        Args:
+            all_coeffs: Combined mixing coefficients for gene strategies followed by
+                org strategies, shape ``(K_g + K_o,)``.
+
+        Returns:
+            ``(D_total, d_total)`` with current coefficients applied.
+        """
+        M = self._population.M
+        D_total = np.zeros((M, M))
+        d_total = np.zeros(M)
+        has_D = False
+        has_d = False
+        for idx, (D_s, d_s) in enumerate(
+            zip(self._D_per_strategy, self._d_per_strategy)
+        ):
+            c = all_coeffs[idx]
+            if D_s is not None:
+                D_total += c * D_s
+                has_D = True
+            if d_s is not None:
+                d_total += c * d_s
+                has_d = True
+        return (D_total if has_D else None), (d_total if has_d else None)
 
     def predict(self, population: PikaiaPopulation) -> np.ndarray:
         """

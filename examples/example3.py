@@ -6,7 +6,8 @@ This script demonstrates self-consistency using the 10x5 dataset with SELF_CONSI
 It prints results and saves plots for visualization.
 """
 
-import matplotlib.pyplot as plt
+from pathlib import Path
+
 import numpy as np
 
 from pikaia.data import PikaiaPopulation
@@ -107,6 +108,9 @@ print("Final org fitness:", model.organism_fitness_history[-1])
 print()
 
 # Plotting Results
+OUT_DIR = Path("artefacts/example3")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 print("Plotting Results")
 print("Saving plots...")
 
@@ -114,17 +118,17 @@ plotter = PikaiaPlotter(model)
 plotter.plot(
     plot_type=PlotType.GENE_FITNESS_HISTORY,
     show=False,
+    save_path=OUT_DIR / "gene_fitness.png",
     gene_labels=gene_labels,
 )
-plt.savefig("examples/artefacts/example3_gene_fitness.png", dpi=300)
-print("Gene fitness history plot saved to examples/artefacts/example3_gene_fitness.png")
+print(f"Gene fitness history plot saved to {OUT_DIR}/gene_fitness.png")
 
 plotter.plot(
     plot_type=PlotType.ORGANISM_FITNESS_HISTORY,
     show=False,
+    save_path=OUT_DIR / "org_fitness.png",
     org_labels=org_labels,
 )
-plt.savefig("examples/artefacts/example3_org_fitness.png", dpi=300)
-print("Org fitness history plot saved to examples/artefacts/example3_org_fitness.png")
+print(f"Org fitness history plot saved to {OUT_DIR}/org_fitness.png")
 
 print("\n=== Example 3 completed. Plots saved as PNG files. ===")

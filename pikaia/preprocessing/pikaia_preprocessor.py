@@ -17,13 +17,6 @@ class PikaiaPreprocessor:
 
     The class follows the scikit-learn transformer interface, providing fit(),
     transform(), and fit_transform() methods for compatibility with ML pipelines.
-
-    Attributes:
-        num_features (int): The number of features expected in the input data.
-    feature_types (Sequence[FeatureType]): A sequence of feature types for each feature.
-    feature_transforms (Sequence[Callable[[np.ndarray], np.ndarray] | None]):
-            A list where each element is either a transformation function to apply to
-            the corresponding feature or None if no transformation is needed.
     """
 
     def __init__(
@@ -90,6 +83,10 @@ class PikaiaPreprocessor:
         Raises:
             ValueError: If the number of features in X does not match num_features.
         """
+        if not np.issubdtype(X.dtype, np.number):
+            raise ValueError("Input data must be numeric.")
+        if np.any(np.isnan(X.astype(float))):
+            raise ValueError("Input data must not contain NaN values.")
         if X.shape[1] != self.num_features:
             raise ValueError(
                 f"Number of features in X ({X.shape[1]}) "
@@ -122,12 +119,19 @@ class PikaiaPreprocessor:
         Warns:
             Logs a warning if any values in the transformed data fall outside [0, 1].
         """
-        X_transformed = X.copy()
+        if np.any(np.isnan(X.astype(float))):
+            raise ValueError("Input data must not contain NaN values.")
+
+        X_transformed = X.astype(float)
 
         for i in range(self.num_features):
             transform_func = self.feature_transforms[i]
             if transform_func is not None:
                 X_transformed[:, i] = transform_func(X_transformed[:, i])
+                if np.any(np.isnan(X_transformed[:, i])):
+                    raise ValueError(
+                        f"Transform function produced NaN values in feature column {i}."
+                    )
 
             # Invert COST features
             if self.feature_types[i] == FeatureType.COST:

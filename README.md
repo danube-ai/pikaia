@@ -3,6 +3,7 @@
     <img src="https://img.shields.io/pypi/pyversions/pikaia" alt="Python version">
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
+    <img src="https://github.com/danube-ai/pikaia/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 # 🧬 Pikaia
@@ -15,11 +16,11 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system
+- 🧩 Modular, extensible strategy system (Dominant, Altruistic, Selfish, Balanced, Kin-Altruistic, Kin-Selfish, None)
+- ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
-
----
+- ✅ 99% test coverage
 
 ---
 
@@ -87,7 +88,7 @@ For more installation options, visit the [UV installation guide](https://astral.
 2. Sync the dependencies (including development and notebook extras):
 
    ```bash
-   uv sync --extra dev --extra notebooks
+   uv sync --extra dev --extra examples
    ```
 
 3. Activate the virtual environment:
@@ -145,9 +146,26 @@ model.fit()
 print("Gene fitness history:", model.gene_fitness_history())
 ```
 
+For a significant speed-up on large populations, enable the **D-matrix accelerated** mode:
+
+```python
+model = PikaiaModel(
+    population=population,
+    gene_strategies=gene_strategies,
+    org_strategies=org_strategies,
+    gene_mix_strategy=gene_mix_strategy,
+    org_mix_strategy=org_mix_strategy,
+    use_d_matrix=True,  # 30–80× faster for compatible strategy combinations
+    max_iter=500,
+)
+model.fit()
+```
+
 - Explore the `examples/` directory for Jupyter notebooks, Python scripts, and data files.
+- See [`examples/README.md`](examples/README.md) for a full index of all examples.
 - See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
 - See `examples/paper_example.py` for the paper example script.
+- See `examples/d_matrix_comparison.py` to benchmark all 25 strategy combinations with D-matrix acceleration.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -181,7 +199,7 @@ For questions, suggestions, or contributions, please feel free to open an issue.
 
 ## 📄 License
 
-This project is licensed under the terms of the MIT License. See the [LICENSE](../LICENSE) file for details.
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

@@ -73,7 +73,7 @@ model = PikaiaModel(
     org_strategies=org_strategies,
     gene_mix_strategy=gene_mix_strategy,
     org_mix_strategy=org_mix_strategy,
-    max_iter=32,
+    max_iter=None,
 )
 print("Fitting model...")
 model.fit()
@@ -85,6 +85,9 @@ print("Final org fitness:", model.organism_fitness_history[-1])
 print()
 
 # Plotting Results
+OUT_DIR = Path("artefacts/example1")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 print("Plotting Results")
 print("Saving plots...")
 
@@ -92,17 +95,17 @@ plotter = PikaiaPlotter(model)
 plotter.plot(
     plot_type=PlotType.GENE_FITNESS_HISTORY,
     show=False,
-    save_path=Path("examples/artefacts/example1_gene_fitness.png"),
+    save_path=OUT_DIR / "gene_fitness.png",
     gene_labels=gene_labels,
 )
-print("Gene fitness history plot saved to examples/artefacts/example1_gene_fitness.png")
+print(f"Gene fitness history plot saved to {OUT_DIR}/gene_fitness.png")
 
 plotter.plot(
     plot_type=PlotType.ORGANISM_FITNESS_HISTORY,
     show=False,
-    save_path=Path("examples/artefacts/example1_org_fitness.png"),
+    save_path=OUT_DIR / "org_fitness.png",
     org_labels=org_labels,
 )
-print("Org fitness history plot saved to examples/artefacts/example1_org_fitness.png")
+print(f"Org fitness history plot saved to {OUT_DIR}/org_fitness.png")
 
 print("\n=== Example 1 completed. Plots saved as PNG files. ===")

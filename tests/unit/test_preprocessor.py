@@ -130,3 +130,55 @@ class TestPikaiaPreprocessor:
         # Verify the scaled data is properly normalized
         assert np.all(paper_example_scaled >= 0) and np.all(paper_example_scaled <= 1)
         assert paper_example_scaled.shape == paper_example_X.shape
+
+    def test_fit_non_numeric_data_raises(self):
+        """Test fit raises ValueError when data is not numeric."""
+        preprocessor = PikaiaPreprocessor(
+            2, [FeatureType.GAIN, FeatureType.COST], [None, None]
+        )
+        X = np.array([["a", "b"], ["c", "d"]])
+        with pytest.raises(ValueError, match="numeric"):
+            preprocessor.fit(X)
+
+    def test_fit_nan_data_raises(self):
+        """Test fit raises ValueError when data contains NaN."""
+        preprocessor = PikaiaPreprocessor(
+            2, [FeatureType.GAIN, FeatureType.COST], [None, None]
+        )
+        X = np.array([[0.1, np.nan], [0.3, 0.4]])
+        with pytest.raises(ValueError, match="NaN"):
+            preprocessor.fit(X)
+
+    def test_transform_nan_input_raises(self):
+        """Test transform raises ValueError when input contains NaN."""
+        preprocessor = PikaiaPreprocessor(
+            2, [FeatureType.GAIN, FeatureType.COST], [None, None]
+        )
+        X = np.array([[0.1, np.nan], [0.3, 0.4]])
+        with pytest.raises(ValueError, match="NaN"):
+            preprocessor.transform(X)
+
+    def test_transform_boolean_data_converted(self):
+        """Test transform converts boolean data to int."""
+        preprocessor = PikaiaPreprocessor(
+            2, [FeatureType.GAIN, FeatureType.GAIN], [None, None]
+        )
+        X = np.array([[True, False], [False, True]])
+        result = preprocessor.transform(X)
+        assert result.dtype != np.bool_
+        np.testing.assert_array_equal(result, np.array([[1, 0], [0, 1]]))
+
+    def test_transform_nan_after_transform_raises(self):
+        """Test transform raises when a custom transform function produces NaN."""
+
+        def nan_transform(col):
+            result = col.copy().astype(float)
+            result[0] = np.nan
+            return result
+
+        preprocessor = PikaiaPreprocessor(
+            2, [FeatureType.GAIN, FeatureType.GAIN], [nan_transform, None]
+        )
+        X = np.array([[0.1, 0.2], [0.3, 0.4]])
+        with pytest.raises(ValueError, match="NaN"):
+            preprocessor.transform(X)

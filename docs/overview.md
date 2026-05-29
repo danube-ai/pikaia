@@ -79,14 +79,16 @@ plotter.plot(plot_type=PlotType.GENE_FITNESS_HISTORY, show=True)
 
 ## Examples
 
-Extensive examples are provided in [`examples/examples.ipynb`](../examples/examples.ipynb):
+Extensive examples are provided in the `examples/` directory.
+See `examples/README.md` for a full index, or open
+`examples/examples.ipynb` for an interactive walkthrough.
 
-### 1. Small Decision Problem (3x3)
+### 1. Small Decision Problem (3×3)
 
 - Compares different selection strategies (Balanced vs. Altruistic)
 - Shows how to preprocess data, set up the model, and plot results
 
-### 2. Larger Problem (10x5)
+### 2. Larger Problem (10×5)
 
 - Demonstrates performance on more complex data
 - Shows how strategies affect convergence and fitness
@@ -100,7 +102,12 @@ Extensive examples are provided in [`examples/examples.ipynb`](../examples/examp
 - Uses a real dataset to rank movies based on multiple criteria
 - Demonstrates how to use pikaia for search and recommendation
 
-See the notebook for code and output.
+### 5. D-Matrix Strategy Comparison
+
+- Runs all 25 gene × organism strategy combinations (5 × 5 grid)
+- Benchmarks standard iterative vs D-matrix accelerated modes
+- Reports timing and cosine-similarity consistency across combos
+- See `examples/d_matrix_comparison.py`
 
 ---
 
@@ -114,18 +121,43 @@ See the notebook for code and output.
 
 ---
 
+## D-Matrix Accelerated Mode (v0.2.0)
+
+For compatible strategy combinations, pikaia supports a **D-matrix accelerated** iteration mode that is typically **30–80× faster** than the standard iterative mode.
+
+Instead of recomputing the full O(N·M²) replicator update each iteration, the D-matrix path precomputes a compact kernel from the strategy interactions and then runs O(M²) updates per step.
+
+```python
+model = PikaiaModel(
+    population=population,
+    gene_strategies=gene_strategies,
+    org_strategies=org_strategies,
+    gene_mix_strategy=gene_mix_strategy,
+    org_mix_strategy=org_mix_strategy,
+    use_d_matrix=True,   # enable D-matrix acceleration
+    max_iter=500,
+)
+model.fit()
+```
+
+**Requirements:** at least one strategy must implement a `kernel()` method.
+`NoneGeneStrategy + NoneOrgStrategy` is the only combination that does not satisfy this requirement.
+
+---
+
 ## Advanced Usage
 
 - **Custom strategies**: Implement your own by subclassing `GeneStrategy` or `OrgStrategy`.
 - **Mixing strategies**: Control how multiple strategies are combined (e.g., fixed weights, self-consistent mixing).
 - **Similarity analysis**: Explore gene and organism similarity matrices to understand relationships in your data.
+- **D-matrix acceleration**: Pass `use_d_matrix=True` to `PikaiaModel` for a significant speedup on large populations.
 
 ---
 
 ## Where to Find More
 
 - **Examples**: See [`examples/examples.ipynb`](../examples/examples.ipynb) for detailed walkthroughs.
-- **API Reference**: Auto-generated from the codebase (see left sidebar or [API docs](autoapi/index.html) if enabled).
+- **API Reference**: Auto-generated from the codebase (see left sidebar or [API docs](autoapi/index) if enabled).
 - **Source code**: [GitHub repository](https://github.com/danube-ai/pikaia)
 - **Issues & Questions**: [GitHub Issues](https://github.com/danube-ai/pikaia/issues)
 
