@@ -6,6 +6,8 @@ This script demonstrates self-consistency using the 10x5 dataset with SELF_CONSI
 It prints results and saves plots for visualization.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
