@@ -35,6 +35,7 @@ class GeneticModel(ABC):
         max_iter: int | None = None,
         epsilon: float | None = None,
         n_jobs: int = 1,
+        y: np.ndarray | None = None,
     ):
         """
         Initializes the GeneticModel.
@@ -77,6 +78,7 @@ class GeneticModel(ABC):
         """
         # Population and strategies
         self._population = population
+        self._y = y
 
         if gene_strategies is None:
             self._gene_strategies = []
@@ -333,6 +335,7 @@ class GeneticModel(ABC):
                 self._gene_similarity,
                 self._org_similarity,
                 self._initial_org_fitness_range,
+                self._y,
             )
             D_per.append(D_s)
             d_per.append(d_s)

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pikaia"
-version = "0.2.2"
+version = "0.2.4"
 authors = [
   { name="Philipp Wissgott", email="philipp@danube.ai" },
   { name="Andreas Roschal", email="andreas@danube.ai" },

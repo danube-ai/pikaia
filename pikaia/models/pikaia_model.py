@@ -241,6 +241,7 @@ class PikaiaModel(GeneticModel):
             "initial_org_fitness_range": self._initial_org_fitness_range,
             "org_similarity": self._org_similarity,
             "gene_similarity": self._gene_similarity,
+            "y": self._y,
         }
 
         if self._n_jobs > 1:
