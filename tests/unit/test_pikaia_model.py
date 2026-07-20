@@ -35,7 +35,12 @@ class _LinearGeneStrategy(GeneStrategy):
         return 0.0
 
     def kernel(
-        self, population, gene_similarity, org_similarity, initial_org_fitness_range
+        self,
+        population,
+        gene_similarity,
+        org_similarity,
+        initial_org_fitness_range,
+        y=None,
     ):
         d = population.matrix.mean(axis=0)
         return None, d
@@ -686,3 +691,120 @@ class TestDMatrixComplexStrategies:
         assert model._d_vector is not None
         assert model._d_vector.shape == (pop.M,)
         assert model._D_matrix is None  # no bilinear contribution
+
+
+# ---------------------------------------------------------------------------
+# Adaptive supervision tests
+# ---------------------------------------------------------------------------
+
+
+class _CapturingGeneStrategy(GeneStrategy):
+    """Test-only strategy that records the y values it receives via ctx."""
+
+    def __init__(self):
+        super().__init__()
+        self.captured_y: list = []
+
+    @property
+    def name(self) -> str:
+        return "Capturing"
+
+    def __call__(self, ctx: StrategyContext) -> float:
+        self.captured_y.append(ctx.y)
+        return 0.0
+
+
+class TestAdaptiveSupervision:
+    """Tests for y threading through PikaiaModel and StrategyContext."""
+
+    def _make_pop(self, n: int = 5, m: int = 3, seed: int = 0) -> PikaiaPopulation:
+        return PikaiaPopulation(np.random.default_rng(seed).random((n, m)))
+
+    def test_y_defaults_to_none_on_model(self):
+        pop = self._make_pop()
+        model = PikaiaModel(population=pop)
+        assert model._y is None
+
+    def test_y_stored_on_model(self):
+        pop = self._make_pop()
+        y = np.array([0, 1, 0, 1, 0])
+        model = PikaiaModel(population=pop, y=y)
+        assert model._y is not None
+        assert np.array_equal(model._y, y)
+
+    def test_no_y_unsupervised_runs_unchanged(self):
+        """Model without y runs identically to before — no regression."""
+        pop = self._make_pop()
+        model = PikaiaModel(
+            population=pop,
+            gene_strategies=[NoneGeneStrategy()],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=3,
+        )
+        model.fit()
+        assert model.gene_fitness_history.shape == (4, pop.M)
+
+    def test_y_none_explicit_same_as_default(self):
+        """Passing y=None is identical to omitting y."""
+        pop = self._make_pop(seed=7)
+        rng = np.random.default_rng(7)
+        _ = rng  # same seed used for pop
+
+        def _run(y):
+            m = PikaiaModel(
+                population=pop,
+                gene_strategies=[NoneGeneStrategy()],
+                org_strategies=[NoneOrgStrategy()],
+                max_iter=2,
+                y=y,
+            )
+            m.fit()
+            return m.gene_fitness_history
+
+        assert np.allclose(_run(None), _run(None))
+
+    def test_y_propagated_to_strategy_context(self):
+        """Strategies receive ctx.y matching the y passed to PikaiaModel."""
+        pop = self._make_pop()
+        y = np.array([1, 0, 1, 0, 1])
+        strat = _CapturingGeneStrategy()
+        model = PikaiaModel(
+            population=pop,
+            gene_strategies=[strat],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=1,
+            y=y,
+        )
+        model.fit()
+        assert all(
+            captured is not None and np.array_equal(captured, y)
+            for captured in strat.captured_y
+        )
+
+    def test_y_none_propagated_to_strategy_context(self):
+        """Without y, strategies receive ctx.y == None."""
+        pop = self._make_pop()
+        strat = _CapturingGeneStrategy()
+        model = PikaiaModel(
+            population=pop,
+            gene_strategies=[strat],
+            org_strategies=[NoneOrgStrategy()],
+            max_iter=1,
+        )
+        model.fit()
+        assert all(captured is None for captured in strat.captured_y)
+
+    def test_y_with_d_matrix_path(self):
+        """D-matrix path passes y to kernel(); built-in strategies ignore it."""
+        pop = self._make_pop()
+        y = np.array([0, 1, 0, 1, 0])
+        model = PikaiaModel(
+            population=pop,
+            gene_strategies=[DominantGeneStrategy()],
+            org_strategies=[BalancedOrgStrategy()],
+            use_d_matrix=True,
+            max_iter=3,
+            y=y,
+        )
+        model.fit()
+        assert np.isclose(model.gene_fitness_history[3].sum(), 1.0)

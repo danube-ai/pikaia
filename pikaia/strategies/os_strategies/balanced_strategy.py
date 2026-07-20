@@ -65,6 +65,7 @@ class BalancedOrgStrategy(OrgStrategy):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Rank-1 D matrix exploiting gamma normalization.
 

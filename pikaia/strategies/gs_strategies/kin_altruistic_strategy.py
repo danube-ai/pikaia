@@ -92,6 +92,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Full (M, M) D matrix with (0.5 - s^g_jk) similarity weight.
 

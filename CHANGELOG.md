@@ -5,6 +5,20 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-07-20
+
+### Added
+
+- **Adaptive supervision** — every strategy can now operate in supervised or
+  unsupervised mode on demand.  `StrategyContext` gains an optional `y:
+  np.ndarray | None` field (default `None`); `GeneticModel.__init__` and
+  `PikaiaModel` accept a matching `y` keyword argument that is threaded through
+  `_calculate_deltas()` into every `StrategyContext`.  The `kernel()` method on
+  `GeneStrategy` and `OrgStrategy` (and all built-in concrete overrides) also
+  receives `y=None` so supervised kernels can be implemented downstream.
+  All existing callers are unaffected — omitting `y` preserves the previous
+  unsupervised behaviour exactly.
+
 ## [0.2.3] - 2026-07-06
 
 ### Fixed
