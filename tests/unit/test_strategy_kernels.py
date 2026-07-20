@@ -349,3 +349,61 @@ class TestKinSelfishOrgStrategyKernel:
         # because similarity weights differ: s_il vs (0.5 - s_il))
         assert np.all(np.isfinite(D_ksel))
         assert not np.allclose(D_ksel, D_sel)
+
+
+# ---------------------------------------------------------------------------
+# kernel() y parameter — adaptive supervision
+# ---------------------------------------------------------------------------
+
+
+ALL_STRATEGIES = [
+    DominantGeneStrategy(),
+    AltruisticGeneStrategy(),
+    SelfishGeneStrategy(),
+    KinAltruisticGeneStrategy(),
+    NoneGeneStrategy(),
+    BalancedOrgStrategy(),
+    AltruisticOrgStrategy(),
+    SelfishOrgStrategy(),
+    KinSelfishOrgStrategy(),
+    NoneOrgStrategy(),
+]
+
+
+class TestKernelYParameter:
+    """kernel() accepts y without error; built-in strategies produce identical output."""
+
+    def setup_method(self):
+        self.pop = _make_pop(99, 6, 4)
+        self.gs, self.os_, self.R = _make_sims(self.pop)
+        self.y = np.array([0, 1, 0, 1, 0, 1])
+
+    @pytest.mark.parametrize("strat", ALL_STRATEGIES, ids=lambda s: type(s).__name__)
+    def test_kernel_accepts_y_none(self, strat):
+        """kernel(y=None) does not raise."""
+        D, d = strat.kernel(self.pop, self.gs, self.os_, self.R, y=None)
+        assert D is None or isinstance(D, np.ndarray)
+        assert d is None or isinstance(d, np.ndarray)
+
+    @pytest.mark.parametrize("strat", ALL_STRATEGIES, ids=lambda s: type(s).__name__)
+    def test_kernel_accepts_y_array(self, strat):
+        """kernel(y=array) does not raise."""
+        D, d = strat.kernel(self.pop, self.gs, self.os_, self.R, y=self.y)
+        assert D is None or isinstance(D, np.ndarray)
+        assert d is None or isinstance(d, np.ndarray)
+
+    @pytest.mark.parametrize("strat", ALL_STRATEGIES, ids=lambda s: type(s).__name__)
+    def test_kernel_y_does_not_change_builtin_output(self, strat):
+        """Built-in strategies return identical matrices regardless of y."""
+        D_none, d_none = strat.kernel(self.pop, self.gs, self.os_, self.R, y=None)
+        D_y, d_y = strat.kernel(self.pop, self.gs, self.os_, self.R, y=self.y)
+        if D_none is None:
+            assert D_y is None
+        else:
+            assert D_y is not None
+            assert np.allclose(D_none, D_y)
+        if d_none is None:
+            assert d_y is None
+        else:
+            assert d_y is not None
+            assert np.allclose(d_none, d_y)

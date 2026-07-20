@@ -246,6 +246,35 @@ class TestStrategyContext:
         assert ctx.org_id == 1
         assert ctx.gene_id == 2
 
+    def test_strategy_context_y_defaults_to_none(self):
+        """y is None when not provided."""
+        population = PikaiaPopulation(np.random.rand(2, 3))
+        ctx = StrategyContext(
+            population=population,
+            org_fitness=np.array([0.5, 0.7]),
+            gene_fitness=np.array([0.6, 0.8, 0.4]),
+            org_similarity=np.random.rand(2, 2),
+            gene_similarity=np.random.rand(3, 3),
+            initial_org_fitness_range=0.3,
+        )
+        assert ctx.y is None
+
+    def test_strategy_context_y_accepts_array(self):
+        """y is stored and accessible when provided."""
+        population = PikaiaPopulation(np.random.rand(2, 3))
+        y = np.array([0, 1])
+        ctx = StrategyContext(
+            population=population,
+            org_fitness=np.array([0.5, 0.7]),
+            gene_fitness=np.array([0.6, 0.8, 0.4]),
+            org_similarity=np.random.rand(2, 2),
+            gene_similarity=np.random.rand(3, 3),
+            initial_org_fitness_range=0.3,
+            y=y,
+        )
+        assert ctx.y is not None
+        assert np.array_equal(ctx.y, y)
+
 
 class TestStrategyFactories:
     """Test cases for strategy factories."""
