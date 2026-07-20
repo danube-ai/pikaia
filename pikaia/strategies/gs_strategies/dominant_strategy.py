@@ -56,6 +56,7 @@ class DominantGeneStrategy(GeneStrategy):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Diagonal D: D[j,j] = 4 * (x_bar_j - 0.5)."""
         D = np.diag(4.0 * (population.matrix.mean(axis=0) - 0.5))

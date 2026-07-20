@@ -29,6 +29,8 @@ class StrategyContext:
     org_id: Optional[int] = None
     #: The index of the current gene being evaluated.
     gene_id: Optional[int] = None
+    #: Optional target variable for supervised strategies.
+    y: Optional[np.ndarray] = None
 
 
 class GeneStrategy(ABC):
@@ -81,6 +83,7 @@ class GeneStrategy(ABC):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: Optional[np.ndarray] = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Return the D-matrix kernel contribution ``(D, d)`` for this strategy.
 
@@ -146,6 +149,7 @@ class OrgStrategy(ABC):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: Optional[np.ndarray] = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Return the D-matrix kernel contribution ``(D, d)`` for this strategy.
 

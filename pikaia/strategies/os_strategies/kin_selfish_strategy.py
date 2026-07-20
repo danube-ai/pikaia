@@ -95,6 +95,7 @@ class KinSelfishOrgStrategy(OrgStrategy):
         gene_similarity: np.ndarray,
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
+        y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """D[j,k] = (+2 / (n_rel * R)) * mean_i[sum_l (0.5-s^o_il) * x_ij * (x_ik-x_lk)].
 
