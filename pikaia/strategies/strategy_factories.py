@@ -12,7 +12,12 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
+from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
+    ValuationBlendGeneStrategy,
+)
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
 from pikaia.strategies.mix_strategies.self_consistent_strategy import (
     SelfConsistentMixStrategy,
@@ -38,6 +43,9 @@ class GeneStrategyFactory:
         GeneStrategyEnum.ALTRUISTIC: AltruisticGeneStrategy,
         GeneStrategyEnum.KIN_ALTRUISTIC: KinAltruisticGeneStrategy,
         GeneStrategyEnum.SELFISH: SelfishGeneStrategy,
+        GeneStrategyEnum.REWARD_HARD: RewardHardGeneStrategy,
+        GeneStrategyEnum.REWARD_EASY: RewardEasyGeneStrategy,
+        GeneStrategyEnum.VALUATION_BLEND: ValuationBlendGeneStrategy,
         GeneStrategyEnum.NONE: NoneGeneStrategy,
     }
 

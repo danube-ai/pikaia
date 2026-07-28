@@ -23,9 +23,10 @@ uv sync --extra examples
 | [`example3.py`](example3.py) | **Self-consistency** — Runs the model multiple times with `SelfConsistentMixStrategy` to average results for stability. |
 | [`example4.py`](example4.py) | **Movie search** — Real-world ranking and recommendation using a movie feature matrix (`data/movie_matrix.csv`). |
 | [`example5.py`](example5.py) | **Single-point prediction** — Predicts fitness for a new unseen data point injected into the population. |
+| [`example6.py`](example6.py) | **Valuation strategies** — REWARD_HARD vs REWARD_EASY vs VALUATION_BLEND, ported from the tgeneticai CalSim framework (`experiments/tgeneticai/calsim.py`). |
 | [`paper_example.py`](paper_example.py) | Reference implementation matching the results reported in the Genetic AI preprint. |
 | [`arxiv_example.py`](arxiv_example.py) | Standalone script reproducing figures from the arXiv paper. |
-| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 25 strategy combinations** (5 gene × 5 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. |
+| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 40 strategy combinations** (8 gene × 5 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. |
 
 ---
 

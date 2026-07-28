@@ -16,7 +16,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system (Dominant, Altruistic, Selfish, Balanced, Kin-Altruistic, Kin-Selfish, None)
+- 🧩 Modular, extensible strategy system (Dominant, Altruistic, Selfish, Balanced, Kin-Altruistic, Kin-Selfish, Reward Hard, Reward Easy, Valuation Blend, None) — 8 gene strategies and 5 organism strategies
 - ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching

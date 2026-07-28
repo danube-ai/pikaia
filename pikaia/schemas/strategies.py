@@ -10,6 +10,17 @@ class GeneStrategyEnum(str, Enum):
         SELFISH: Gene acts in its own interest.
         KIN_ALTRUISTIC: Gene favors kin altruism.
         ALTRUISTIC: Gene acts altruistically toward others.
+        REWARD_HARD: Rewards features that are hard to achieve (port of
+            tgeneticai CalSim ``"Difficulty1"``).  Features with low average
+            expression receive a positive delta boost.
+        REWARD_EASY: Rewards features that are easy to achieve (port of
+            tgeneticai CalSim ``"Inverse"``).  The exact inverse of
+            REWARD_HARD — features with high average expression receive a
+            positive delta boost.
+        VALUATION_BLEND: Blends between REWARD_HARD and REWARD_EASY via a
+            ``preference`` parameter in ``[0, 1]`` (port of tgeneticai CalSim
+            ``"Mixed"``).  ``0.0`` → pure REWARD_EASY, ``0.5`` → balanced,
+            ``1.0`` → pure REWARD_HARD.
         NONE: No specific strategy.
     """
 
@@ -17,6 +28,9 @@ class GeneStrategyEnum(str, Enum):
     SELFISH = "SELFISH"
     KIN_ALTRUISTIC = "KIN_ALTRUISTIC"
     ALTRUISTIC = "ALTRUISTIC"
+    REWARD_HARD = "REWARD_HARD"
+    REWARD_EASY = "REWARD_EASY"
+    VALUATION_BLEND = "VALUATION_BLEND"
     NONE = "NONE"
 
 

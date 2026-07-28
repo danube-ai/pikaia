@@ -17,7 +17,12 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
+from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
+    ValuationBlendGeneStrategy,
+)
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
@@ -192,6 +197,140 @@ class TestKinAltruisticGeneStrategyKernel:
 
 
 # ---------------------------------------------------------------------------
+# Reward Hard / Reward Easy kernels
+# ---------------------------------------------------------------------------
+
+
+class TestRewardHardGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(8, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "RewardHard gene D must be diagonal"
+
+    def test_diagonal_formula(self, result):
+        pop, (D, _) = result
+        M = pop.M
+        mean_all = pop.matrix.mean(axis=0)
+        exclusiveness = 1.0 - mean_all
+        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        expected = np.diag((16.0 / M) * difficulty)
+        np.testing.assert_allclose(D, expected)
+
+    def test_D_shape(self, result):
+        pop, (D, _) = result
+        assert D.shape == (pop.M, pop.M)
+
+    def test_D_is_non_negative(self, result):
+        """Difficulty is always >= 0, so diagonal entries should be >= 0."""
+        _, (D, _) = result
+        assert np.all(np.diag(D) >= 0)
+
+
+class TestRewardEasyGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "RewardEasy gene D must be diagonal"
+
+    def test_D_opposite_sign_to_reward_hard(self):
+        """RewardEasy D should be the negation of RewardHard D."""
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D_easy, d_easy = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        D_hard, d_hard = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_easy is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_easy, -D_hard, atol=1e-12)
+
+    def test_D_shape(self):
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D, _ = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        assert D is not None
+        assert D.shape == (pop.M, pop.M)
+
+    def test_D_is_non_positive(self):
+        """Difficulty >= 0, negated → diagonal entries should be <= 0."""
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D, _ = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        assert D is not None
+        assert np.all(np.diag(D) <= 0)
+
+
+class TestValuationBlendGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(10, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, ValuationBlendGeneStrategy(preference=0.3).kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "ValuationBlend gene D must be diagonal"
+
+    def test_p_zero_is_negation_of_reward_hard(self):
+        """preference=0.0 → pure RewardEasy → negation of RewardHard."""
+        pop = _make_pop(11, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=0.0).kernel(pop, gs, os_, R)
+        D_hard, _ = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_blend, -D_hard, atol=1e-12)
+
+    def test_p_one_matches_reward_hard(self):
+        """preference=1.0 → pure RewardHard."""
+        pop = _make_pop(12, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=1.0).kernel(pop, gs, os_, R)
+        D_hard, _ = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_blend, D_hard, atol=1e-12)
+
+    def test_p_half_is_near_zero(self):
+        """preference=0.5 → sign=0 → D should be (near) zero matrix."""
+        pop = _make_pop(13, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=0.5).kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert np.allclose(D_blend, 0.0)
+
+    def test_D_shape(self, result):
+        pop, (D, _) = result
+        assert D.shape == (pop.M, pop.M)
+
+
+# ---------------------------------------------------------------------------
 # Org strategies – kernel()
 # ---------------------------------------------------------------------------
 
@@ -361,6 +500,9 @@ ALL_STRATEGIES = [
     AltruisticGeneStrategy(),
     SelfishGeneStrategy(),
     KinAltruisticGeneStrategy(),
+    RewardHardGeneStrategy(),
+    RewardEasyGeneStrategy(),
+    ValuationBlendGeneStrategy(),
     NoneGeneStrategy(),
     BalancedOrgStrategy(),
     AltruisticOrgStrategy(),
