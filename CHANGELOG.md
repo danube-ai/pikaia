@@ -27,9 +27,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   replaced the erroneous `Yan, Zhurong` with the correct co-author `Stoica, Alina`
   (arXiv:1611.09268).
 
-## [Unreleased]
+## [0.2.5] - 2026-07-28
 
-Slated for release as `0.2.0`.
+### Added
+
+- **Trading strategies** (RewardHard, RewardEasy, ValuationBlend) — three new
+  `GeneStrategy` implementations ported from
+  `experiments/tgeneticai/calsim.py`:
+  - **RewardHard** (`REWARD_HARD`) — rewards features that are hard to achieve
+    (low mean expression), equivalent to the CalSim "Difficulty1" sell strategy
+  - **RewardEasy** (`REWARD_EASY`) — the exact inverse of RewardHard, rewards
+    easy-to-express features, equivalent to the CalSim "Inverse" sell strategy
+  - **ValuationBlend** (`VALUATION_BLEND`) — blends between RewardHard and
+    RewardEasy via a `preference` parameter in `[0, 1]`, equivalent to the
+    CalSim "Mixed" sell strategy
+- Registered all three strategies in `GeneStrategyEnum` and
+  `GeneStrategyFactory`, with unit tests (name, call, kernel, edge cases,
+  integration) and example in `examples/example6.py`
+- **D-matrix comparison benchmark** updated to cover all 8 gene strategies
+  (40 strategy combinations instead of 25)
+
+### Changed
+
+- `d_matrix_comparison.py` and strategy documentation now reflect 8 gene
+  strategies / 40 combinations (was 5 strategies / 25 combinations)
+
+## [Unreleased]
 
 ### Added
 
@@ -68,7 +91,7 @@ Slated for release as `0.2.0`.
   isolated under `examples/artefacts/{example_name}/`.
 - Improved input validation in `Population` (numeric + NaN guards) and in
   `PikaiaModel` (stricter mixing-coefficient checks).
-- Sphinx documentation build now produces **zero warnings, zero errors**.
+- Sphinx documentation build is functional with AutoAPI auto-generation.
 - Documentation overhaul: every Markdown file in the repository reviewed
   for accuracy, cross-references fixed, README updated with index links to
   `examples/` and `research/`, and reference notes cleaned of HTML artefacts
