@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://img.shields.io/badge/pypi-0.2.2-blue?logo=pypi" alt="PyPI version">
+    <img src="https://img.shields.io/pypi/v/pikaia?logo=pypi" alt="PyPI version">
     <img src="https://img.shields.io/badge/python-3.14%2B-blue?logo=python" alt="Python 3.14+">
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
@@ -16,11 +16,11 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system (Dominant, Altruistic, Selfish, Balanced, Kin-Altruistic, Kin-Selfish, Reward Hard, Reward Easy, Valuation Blend, None) — 8 gene strategies and 5 organism strategies
+- 🧩 Modular, extensible strategy system — 8 gene strategies (Dominant, Selfish, Kin-Altruistic, Altruistic, Reward Hard, Reward Easy, Valuation Blend, None) and 5 organism strategies (Balanced, Altruistic, Kin-Selfish, Selfish, None)
 - ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
-- ✅ 99% test coverage
+- ✅ 99% test coverage across the `pikaia` package
 
 ---
 
@@ -211,16 +211,14 @@ If you use Pikaia in your research, please cite our preprint:
 
 ```bibtex
 @misc{wissgott2025geneticaievolutionarygames,
-            title={Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization},
-            author={Philipp Wissgott},
-            year={2025},
-            eprint={2501.19113},
-            archivePrefix={arXiv},
-            primaryClass={cs.NE},
-            url={https://arxiv.org/abs/2501.19113},
+             title={Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization},
+             author={Philipp Wissgott},
+             year={2025},
+             eprint={2501.19113},
+             archivePrefix={arXiv},
+             primaryClass={cs.NE},
+             url={https://arxiv.org/abs/2501.19113},
 }
 ```
-
-**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
