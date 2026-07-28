@@ -55,7 +55,7 @@ The `artefacts/` directory is used as the default output location for generated 
 
 ## Strategy Combinations Benchmark
 
-`d_matrix_comparison.py` is the most comprehensive example. It covers all 25 combinations of:
+`d_matrix_comparison.py` is the most comprehensive example. It covers all 40 combinations of:
 
 | Gene strategies | Org strategies |
 |-----------------|---------------|
@@ -63,7 +63,10 @@ The `artefacts/` directory is used as the default output location for generated 
 | `AltruisticGeneStrategy` | `AltruisticOrgStrategy` |
 | `SelfishGeneStrategy` | `SelfishOrgStrategy` |
 | `KinAltruisticGeneStrategy` | `KinSelfishOrgStrategy` |
-| `NoneGeneStrategy` | `NoneOrgStrategy` |
+| `RewardHardGeneStrategy` | `NoneOrgStrategy` |
+| `RewardEasyGeneStrategy` | |
+| `ValuationBlendGeneStrategy` | |
+| `NoneGeneStrategy` | |
 
 Three fit modes are compared for each valid combination:
 

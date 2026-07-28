@@ -104,7 +104,7 @@ See `examples/README.md` for a full index, or open
 
 ### 5. D-Matrix Strategy Comparison
 
-- Runs all 25 gene × organism strategy combinations (5 × 5 grid)
+- Runs all 40 gene × organism strategy combinations (8 × 5 grid)
 - Benchmarks standard iterative vs D-matrix accelerated modes
 - Reports timing and cosine-similarity consistency across combos
 - See `examples/d_matrix_comparison.py`
@@ -121,7 +121,7 @@ See `examples/README.md` for a full index, or open
 
 ---
 
-## D-Matrix Accelerated Mode (v0.2.2)
+## D-Matrix Accelerated Mode
 
 For compatible strategy combinations, pikaia supports a **D-matrix accelerated** iteration mode that is typically **30–80× faster** than the standard iterative mode.
 

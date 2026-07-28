@@ -165,7 +165,7 @@ model.fit()
 - See [`examples/README.md`](examples/README.md) for a full index of all examples.
 - See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
 - See `examples/paper_example.py` for the paper example script.
-- See `examples/d_matrix_comparison.py` to benchmark all 25 strategy combinations with D-matrix acceleration.
+- See `examples/d_matrix_comparison.py` to benchmark all 40 strategy combinations with D-matrix acceleration.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
