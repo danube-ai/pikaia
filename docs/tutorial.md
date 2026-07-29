@@ -120,13 +120,13 @@ for label, fitness in zip(gene_labels, final_fitness):
 
 Example output:
 ```
-  Speed               : 0.1823
-  Accuracy            : 0.2741
-  Cost efficiency     : 0.1534
-  Reliability         : 0.3902
+  Speed               : 0.2766
+  Accuracy            : 0.2368
+  Cost efficiency     : 0.2517
+  Reliability         : 0.2349
 ```
 
-Reliability and Accuracy emerged as the most differentiating criteria for this dataset.
+Speed emerged as the most differentiating criterion here — it spans the widest range across candidates (150 → 900). The other three criteria are closer together, reflecting the more uniform spread of Accuracy, Cost efficiency, and Reliability in this dataset.
 
 ---
 

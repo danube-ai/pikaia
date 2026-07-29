@@ -99,7 +99,7 @@ model = PikaiaModel(
 )
 ```
 
-All built-in strategies except `NoneGeneStrategy + NoneOrgStrategy` support the D-matrix path. Custom strategies must implement the `kernel()` method to participate; see the [Contributor Guide](contributing.md).
+All built-in strategies support the D-matrix path — each implements `kernel()` returning at least one non-`None` term. The only combination that cannot use it is one where every active strategy returns `(None, None)` from `kernel()` (i.e. exclusively `NONE` strategies). Custom strategies must implement `kernel()` to participate; see the [Contributor Guide](contributing.md).
 
 ---
 

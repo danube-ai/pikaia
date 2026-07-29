@@ -242,8 +242,8 @@ For your strategy to support this path:
 ## Development workflow
 
 ```bash
-# Install in editable mode
-uv pip install -e ".[dev]"
+# Install all dependencies (editable mode, dev + examples extras)
+uv sync --extra dev --extra examples
 
 # Run the full test suite
 uv run pytest tests/unit/ --cov=pikaia --cov-report=term-missing

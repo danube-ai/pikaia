@@ -11,7 +11,7 @@
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Report vulnerabilities by email to **carlosuzielpm@gmail.com**. Include:
+Report vulnerabilities by email to **carlos@danube.ai**. Include:
 
 - A description of the vulnerability and its potential impact.
 - Steps to reproduce or a minimal proof-of-concept.
