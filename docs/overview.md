@@ -1,168 +1,126 @@
-# pikaia: Genetic AI Documentation
+# pikaia: Genetic AI — Overview
 
-Welcome to the documentation for **pikaia**, a Python package for data analysis using evolutionary simulation (Genetic AI). This guide will help you understand what pikaia is, how to get started, and how to use its main features.
+**pikaia** is a Python library for data analysis using evolutionary simulation. It models tabular data as a population of organisms (rows) and genes (columns), then applies strategies inspired by evolutionary biology and game theory to uncover which features drive differentiation in your data.
 
----
-
-## What is pikaia?
-
-**pikaia** is a library for analyzing data using evolutionary simulation. It models your data as a population of organisms (rows) and genes (columns), then applies evolutionary strategies to uncover patterns, rank features, and solve decision problems. Unlike traditional machine learning, pikaia does not require training data or labels—it autonomously explores your data using strategies inspired by genetics and game theory.
-
-- **Key features:**
-  - No training data required
-  - Flexible evolutionary strategies (dominant, altruistic, selfish, etc.)
-  - Works on any tabular data (normalized to [0, 1])
-  - Visualizes gene and organism fitness over time
-  - Extensible and modular design
-
-For the scientific background, see the [Genetic AI preprint](http://arxiv.org/abs/2501.19113).
+For a step-by-step first run, see the [Tutorial](tutorial.md). For adding new strategies, see the [Contributor Guide](contributing.md).
 
 ---
 
-## How to Get Started
+## The replicator equation
 
-### Installation
+pikaia evolves a gene-fitness vector **γ** (one value per feature, summing to 1) using the **replicator equation**:
 
-Install pikaia from PyPI:
-
-```bash
-pip install pikaia
+```
+γ_j(t+1) = γ_j(t) · (1 + Σ_i Δ(i, j))
 ```
 
-### Basic Example
+At each iteration, every organism *i* contributes a delta Δ(i, j) to gene *j*. The result is multiplied element-wise and re-normalised. Genes with consistently positive deltas grow in fitness; genes with negative deltas shrink.
 
-Here's a minimal example to get you started:
+This differs from gradient-based optimisation: there is no loss function, no training data, and no labels. The simulation explores the population's internal structure through the strategy rules.
 
-```python
-import numpy as np
-from pikaia.data import PikaiaPopulation
-from pikaia.models import PikaiaModel
-from pikaia.plotting import PikaiaPlotter, PlotType
-from pikaia.schemas import GeneStrategyEnum, OrgStrategyEnum, MixStrategyEnum
-from pikaia.strategies import GeneStrategyFactory, OrgStrategyFactory, MixStrategyFactory
+---
 
-# Prepare your data (rows: organisms, columns: genes, values in [0, 1])
-data = np.array([[0.1, 0.5, 0.9], [0.2, 0.3, 0.7], [0.8, 0.2, 0.4]])
-population = PikaiaPopulation(data)
+## Organisms, genes, and the population matrix
 
-# Choose strategies
-gene_strategies = [GeneStrategyFactory.get_strategy(GeneStrategyEnum.DOMINANT)]
-org_strategies = [OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED)]
-gene_mix_strategy = org_mix_strategy = MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED)
+| Concept | Meaning | Representation |
+|---------|---------|----------------|
+| **Gene** | A feature or criterion in your data | Column of the matrix |
+| **Organism** | A sample, candidate, or entity | Row of the matrix |
+| **Gene fitness γ_j** | How much gene *j* drives differentiation | Scalar in [0, 1], Σ = 1 |
+| **Organism fitness** | How well organism *i* expresses the current gene-fitness weighting | Dot product of row *i* with **γ** |
 
-# Create and fit the model
-model = PikaiaModel(
-    population=population,
-    gene_strategies=gene_strategies,
-    org_strategies=org_strategies,
-    gene_mix_strategy=gene_mix_strategy,
-    org_mix_strategy=org_mix_strategy,
-    max_iter=16,
-)
-model.fit()
+Data must be normalised to [0, 1] (higher = better) before passing to `PikaiaPopulation`. The `PikaiaPreprocessor` handles this for common cases.
 
-# Plot results
-plotter = PikaiaPlotter(model)
-plotter.plot(plot_type=PlotType.GENE_FITNESS_HISTORY, show=True)
+---
+
+## Strategies
+
+Strategies are the rules that determine how organisms and genes interact each iteration. They produce the delta values that feed the replicator equation.
+
+### Gene strategies (`GeneStrategy`)
+
+Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j* based on how organism *i* expressed it.
+
+| Strategy | Effect |
+|----------|--------|
+| `DOMINANT` | Rewards genes that are highly and broadly expressed |
+| `ALTRUISTIC` | Gene donates fitness to dissimilar genes |
+| `SELFISH` | Gene takes fitness from similar genes |
+| `KIN_ALTRUISTIC` | Altruistic within a similarity neighbourhood |
+| `REWARD_HARD` | Rewards genes that are rarely expressed (high exclusiveness) |
+| `REWARD_EASY` | Rewards genes that are commonly expressed (low exclusiveness) |
+| `VALUATION_BLEND` | Interpolates between REWARD_HARD and REWARD_EASY via a `preference` parameter |
+| `SELL` | Drains value from commonly-expressed genes proportional to their difficulty odds; pair with `BUY` |
+| `NONE` | No contribution |
+
+### Organism strategies (`OrgStrategy`)
+
+Called once per organism *i*. Returns an array of shape (M,) — the delta for every gene in one shot. Organism strategies can express **cross-gene** interactions that a per-gene strategy cannot.
+
+| Strategy | Effect |
+|----------|--------|
+| `BALANCED` | Organism balances mean expression against current gene fitness |
+| `ALTRUISTIC` | Redistributes fitness toward dissimilar organisms |
+| `SELFISH` | Takes fitness from similar organisms |
+| `KIN_SELFISH` | Selfish within a similarity neighbourhood |
+| `BUY` | Redistributes sell capital from high-performing organisms to genes they lack; pair with `SELL` |
+| `NONE` | No contribution |
+
+### Mixing strategies (`MixStrategy`)
+
+When multiple gene or organism strategies are active, a mixing strategy determines how their deltas are combined each iteration.
+
+| Strategy | Effect |
+|----------|--------|
+| `FIXED` | Fixed equal weights across strategies |
+| `SELF_CONSISTENT` | Weights adapt each iteration based on strategy performance |
+
+---
+
+## D-matrix accelerated mode
+
+For compatible strategy combinations, pikaia precomputes a compact kernel `(D, d)` once before the iteration loop and then runs cheap `O(M²)` updates:
+
+```
+γ_new = γ * (1 + D @ γ + d)
 ```
 
----
+instead of the full `O(N·M²)` per-organism loop. This is typically **30–80× faster** for large populations.
 
-## Main Concepts & Classes
-
-- **PikaiaPopulation**: Wraps your data matrix. Each row is an organism, each column is a gene/feature. Data must be normalized to [0, 1].
-- **PikaiaModel**: The core evolutionary simulation. Takes a population and strategies, runs the simulation, and stores fitness histories.
-- **Strategies**: Control how genes and organisms evolve. Choose from Dominant, Altruistic, Selfish, Balanced, etc. (see `pikaia.schemas.strategies`).
-- **PikaiaPlotter**: Visualizes fitness histories and other results.
-
----
-
-## Examples
-
-Extensive examples are provided in the `examples/` directory.
-See `examples/README.md` for a full index, or open
-`examples/examples.ipynb` for an interactive walkthrough.
-
-### 1. Small Decision Problem (3×3)
-
-- Compares different selection strategies (Balanced vs. Altruistic)
-- Shows how to preprocess data, set up the model, and plot results
-
-### 2. Larger Problem (10×5)
-
-- Demonstrates performance on more complex data
-- Shows how strategies affect convergence and fitness
-
-### 3. Self-Consistency
-
-- Runs the model multiple times to average results for stability
-
-### 4. Real-World Search (Movie Data)
-
-- Uses a real dataset to rank movies based on multiple criteria
-- Demonstrates how to use pikaia for search and recommendation
-
-### 5. D-Matrix Strategy Comparison
-
-- Runs all 40 gene × organism strategy combinations (8 × 5 grid)
-- Benchmarks standard iterative vs D-matrix accelerated modes
-- Reports timing and cosine-similarity consistency across combos
-- See `examples/d_matrix_comparison.py`
-
----
-
-## How to Use pikaia for Your Data
-
-1. **Prepare your data**: Organize your data as a 2D NumPy array (organisms × genes), and scale all values to [0, 1].
-2. **Create a PikaiaPopulation**: `population = PikaiaPopulation(data)`
-3. **Choose strategies**: Use the factories and enums to select gene and organism strategies.
-4. **Create and fit a PikaiaModel**: Pass your population and strategies, set `max_iter` for the number of evolutionary steps.
-5. **Analyze results**: Use `PikaiaPlotter` to visualize gene/organism fitness, mixing coefficients, and similarities.
-
----
-
-## D-Matrix Accelerated Mode
-
-For compatible strategy combinations, pikaia supports a **D-matrix accelerated** iteration mode that is typically **30–80× faster** than the standard iterative mode.
-
-Instead of recomputing the full O(N·M²) replicator update each iteration, the D-matrix path precomputes a compact kernel from the strategy interactions and then runs O(M²) updates per step.
+Enable it with:
 
 ```python
 model = PikaiaModel(
     population=population,
     gene_strategies=gene_strategies,
     org_strategies=org_strategies,
-    gene_mix_strategy=gene_mix_strategy,
-    org_mix_strategy=org_mix_strategy,
-    use_d_matrix=True,   # enable D-matrix acceleration
+    use_d_matrix=True,
     max_iter=500,
 )
-model.fit()
 ```
 
-**Requirements:** at least one strategy must implement a `kernel()` method.
-`NoneGeneStrategy + NoneOrgStrategy` is the only combination that does not satisfy this requirement.
+All built-in strategies except `NoneGeneStrategy + NoneOrgStrategy` support the D-matrix path. Custom strategies must implement the `kernel()` method to participate; see the [Contributor Guide](contributing.md).
 
 ---
 
-## Advanced Usage
+## Key classes
 
-- **Custom strategies**: Implement your own by subclassing `GeneStrategy` or `OrgStrategy`. See [Contributing](contributing) for a step-by-step guide.
-- **Mixing strategies**: Control how multiple strategies are combined (e.g., fixed weights, self-consistent mixing).
-- **Similarity analysis**: Explore gene and organism similarity matrices to understand relationships in your data.
-- **D-matrix acceleration**: Pass `use_d_matrix=True` to `PikaiaModel` for a significant speedup on large populations.
-
----
-
-## Where to Find More
-
-- **Examples**: See [`examples/examples.ipynb`](../examples/examples.ipynb) for detailed walkthroughs.
-- **API Reference**: Auto-generated from the codebase (see left sidebar or [API docs](autoapi/index) if enabled).
-- **Source code**: [GitHub repository](https://github.com/danube-ai/pikaia)
-- **Issues & Questions**: [GitHub Issues](https://github.com/danube-ai/pikaia/issues)
+| Class | Role |
+|-------|------|
+| `PikaiaPopulation` | Wraps the (N, M) data matrix |
+| `PikaiaModel` | Orchestrates the simulation; records fitness histories |
+| `PikaiaPreprocessor` | Scales raw data to [0, 1] per feature |
+| `PikaiaPlotter` | Plots gene/organism fitness trajectories |
+| `GeneStrategyFactory` | Instantiates gene strategies by enum |
+| `OrgStrategyFactory` | Instantiates organism strategies by enum |
+| `MixStrategyFactory` | Instantiates mixing strategies by enum |
 
 ---
 
-## License
+## Where to go next
 
-MIT License. See [LICENSE](../LICENSE) for details.
+- [Tutorial](tutorial.md) — run your first analysis end to end
+- [Contributor Guide](contributing.md) — add new strategies and extend pikaia
+- [API Reference](autoapi/index) — full auto-generated API documentation
+- [Examples](https://github.com/danube-ai/pikaia/tree/main/examples) — runnable scripts for real-world and synthetic datasets
+- [Preprint](https://arxiv.org/abs/2501.19113) — scientific background (Genetic AI)

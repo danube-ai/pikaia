@@ -191,7 +191,7 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 - Martin Bär (<martin@danube.ai>)
 - Carlos U. Pérez Malla (<carlos@danube.ai>)
 
-For questions, suggestions, or contributions, please feel free to open an issue.
+For questions, suggestions, or contributions, please feel free to open an issue or read our [Contributing Guide](CONTRIBUTING.md). By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
