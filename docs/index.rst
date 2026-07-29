@@ -51,4 +51,4 @@ For a detailed introduction, see the :doc:`overview <overview>`.
    :caption: Contents:
 
    overview
-
+   contributing

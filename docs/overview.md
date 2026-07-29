@@ -147,7 +147,7 @@ model.fit()
 
 ## Advanced Usage
 
-- **Custom strategies**: Implement your own by subclassing `GeneStrategy` or `OrgStrategy`.
+- **Custom strategies**: Implement your own by subclassing `GeneStrategy` or `OrgStrategy`. See [Contributing](contributing) for a step-by-step guide.
 - **Mixing strategies**: Control how multiple strategies are combined (e.g., fixed weights, self-consistent mixing).
 - **Similarity analysis**: Explore gene and organism similarity matrices to understand relationships in your data.
 - **D-matrix acceleration**: Pass `use_d_matrix=True` to `PikaiaModel` for a significant speedup on large populations.
