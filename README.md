@@ -16,7 +16,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system — 8 gene strategies (Dominant, Selfish, Kin-Altruistic, Altruistic, Reward Hard, Reward Easy, Valuation Blend, None) and 5 organism strategies (Balanced, Altruistic, Kin-Selfish, Selfish, None)
+- 🧩 Modular, extensible strategy system — 9 gene strategies (Dominant, Selfish, Kin-Altruistic, Altruistic, Reward Hard, Reward Easy, Valuation Blend, Sell, None) and 6 organism strategies (Balanced, Altruistic, Kin-Selfish, Selfish, Buy, None)
 - ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
@@ -29,6 +29,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 - [🧬 Pikaia](#-pikaia)
   - [✨ Key Features](#-key-features)
   - [📚 Table of Contents](#-table-of-contents)
+  - [📖 Documentation](#-documentation)
   - [🚀 Installation](#-installation)
   - [🛠️ Local Development](#️-local-development)
     - [Prerequisites](#prerequisites)
@@ -39,6 +40,17 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
   - [👥 Authors \& Contact](#-authors--contact)
   - [📄 License](#-license)
   - [📚 How to Cite](#-how-to-cite)
+
+---
+
+## 📖 Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [Tutorial](docs/tutorial.md) | Step-by-step first analysis — from raw data to ranked results |
+| [Overview](docs/overview.md) | Conceptual explanation: replicator equation, strategies, D-matrix |
+| [Contributor Guide](docs/contributing.md) | How to add new strategies and extend pikaia |
+| [API Reference](https://danube-ai.github.io/pikaia/) | Auto-generated API docs |
 
 ---
 
@@ -143,7 +155,7 @@ model = PikaiaModel(
 )
 model.fit()
 
-print("Gene fitness history:", model.gene_fitness_history())
+print("Gene fitness history:", model.gene_fitness_history)
 ```
 
 For a significant speed-up on large populations, enable the **D-matrix accelerated** mode:
