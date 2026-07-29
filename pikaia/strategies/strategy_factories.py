@@ -15,6 +15,7 @@ from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
 from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.sell_strategy import SellGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
@@ -24,6 +25,7 @@ from pikaia.strategies.mix_strategies.self_consistent_strategy import (
 )
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
+from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
@@ -46,6 +48,7 @@ class GeneStrategyFactory:
         GeneStrategyEnum.REWARD_HARD: RewardHardGeneStrategy,
         GeneStrategyEnum.REWARD_EASY: RewardEasyGeneStrategy,
         GeneStrategyEnum.VALUATION_BLEND: ValuationBlendGeneStrategy,
+        GeneStrategyEnum.SELL: SellGeneStrategy,
         GeneStrategyEnum.NONE: NoneGeneStrategy,
     }
 
@@ -87,6 +90,7 @@ class OrgStrategyFactory:
         OrgStrategyEnum.ALTRUISTIC: AltruisticOrgStrategy,
         OrgStrategyEnum.KIN_SELFISH: KinSelfishOrgStrategy,
         OrgStrategyEnum.SELFISH: SelfishOrgStrategy,
+        OrgStrategyEnum.BUY: BuyOrgStrategy,
         OrgStrategyEnum.NONE: NoneOrgStrategy,
     }
 

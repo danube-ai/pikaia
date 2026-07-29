@@ -21,6 +21,9 @@ class GeneStrategyEnum(str, Enum):
             ``preference`` parameter in ``[0, 1]`` (port of tgeneticai CalSim
             ``"Mixed"``).  ``0.0`` → pure REWARD_EASY, ``0.5`` → balanced,
             ``1.0`` → pure REWARD_HARD.
+        SELL: CalSim sell-phase signal — drains value from commonly-expressed
+            genes proportional to their difficulty odds.  Pair with
+            ``OrgStrategyEnum.BUY`` to reproduce a full CalSim round.
         NONE: No specific strategy.
     """
 
@@ -31,6 +34,7 @@ class GeneStrategyEnum(str, Enum):
     REWARD_HARD = "REWARD_HARD"
     REWARD_EASY = "REWARD_EASY"
     VALUATION_BLEND = "VALUATION_BLEND"
+    SELL = "SELL"
     NONE = "NONE"
 
 
@@ -43,6 +47,9 @@ class OrgStrategyEnum(str, Enum):
         ALTRUISTIC: Organism acts altruistically toward others.
         KIN_SELFISH: Organism is selfish toward non-kin, altruistic toward kin.
         SELFISH: Organism acts selfishly.
+        BUY: CalSim buy-phase signal — redistributes sell capital from
+            high-performing organisms to genes they lack.  Pair with
+            ``GeneStrategyEnum.SELL`` to reproduce a full CalSim round.
         NONE: No specific strategy.
     """
 
@@ -50,6 +57,7 @@ class OrgStrategyEnum(str, Enum):
     ALTRUISTIC = "ALTRUISTIC"
     KIN_SELFISH = "KIN_SELFISH"
     SELFISH = "SELFISH"
+    BUY = "BUY"
     NONE = "NONE"
 
 

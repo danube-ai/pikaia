@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-Example 6: Valuation Strategies — Reward Hard vs Reward Easy vs Blend
+Example 6: Valuation Strategies — Reward Hard vs Reward Easy vs Blend vs Sell+Buy
 
-This script demonstrates the three new valuation gene strategies ported from
-the tgeneticai CalSim framework (experiments/tgeneticai/calsim.py):
+This script demonstrates the valuation gene strategies ported from the tgeneticai
+CalSim framework (experiments/tgeneticai/calsim.py):
 
   - REWARD_HARD   — rewards features that are hard to achieve (high difficulty)
   - REWARD_EASY   — rewards features that are easy to achieve (low difficulty)
   - VALUATION_BLEND — interpolates between the two via a preference parameter
+  - SELL + BUY    — full CalSim market recalibration round reproduced inside
+                    the replicator framework.  SELL drains value from commonly-
+                    expressed genes; BUY redistributes capital from high-
+                    performers to genes they lack.
 
 The original CalSim used these as "sellStrategy" settings:
-  "Difficulty1" → REWARD_HARD
-  "Inverse"     → REWARD_EASY
-  "Mixed"       → VALUATION_BLEND
+  "Difficulty1" → SELL (gene) + BUY (org)
 
 We use a synthetic dataset with one easy, one hard, and two medium-difficulty
 features so the strategies produce visibly different fitness trajectories.
@@ -91,17 +93,15 @@ gene_mix_strategy = org_mix_strategy = MixStrategyFactory.get_strategy(
     MixStrategyEnum.FIXED
 )
 
-org_strategies = [
-    OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED),
-]
+_balanced = [OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED)]
 
-# Three runs, one per valuation strategy
 runs = [
     {
         "label": "REWARD_HARD",
         "gene_strategies": [
             GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD),
         ],
+        "org_strategies": _balanced,
         "description": "Harder features gain fitness",
     },
     {
@@ -109,6 +109,7 @@ runs = [
         "gene_strategies": [
             GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY),
         ],
+        "org_strategies": _balanced,
         "description": "Easier features gain fitness",
     },
     {
@@ -118,7 +119,17 @@ runs = [
                 GeneStrategyEnum.VALUATION_BLEND, preference=0.3
             ),
         ],
+        "org_strategies": _balanced,
         "description": "Leans toward rewarding easy features",
+    },
+    {
+        "label": "SELL + BUY (CalSim Difficulty1)",
+        "gene_strategies": [
+            GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL),
+        ],
+        "org_strategies": [OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY)],
+        "description": "Full CalSim market recalibration: sell drains common genes, "
+        "buy redistributes capital from high-performers to genes they lack",
     },
 ]
 
@@ -135,7 +146,7 @@ for run in runs:
     model = PikaiaModel(
         population=PikaiaPopulation(data_scaled.copy()),
         gene_strategies=run["gene_strategies"],
-        org_strategies=org_strategies,
+        org_strategies=run["org_strategies"],
         gene_mix_strategy=gene_mix_strategy,
         org_mix_strategy=org_mix_strategy,
         max_iter=32,
