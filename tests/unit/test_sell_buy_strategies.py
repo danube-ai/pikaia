@@ -13,9 +13,7 @@ pikaia's replicator framework.  Tests verify:
 import sys
 
 import numpy as np
-
-sys.path.insert(0, "/Users/uziel/Development/DanubeAI/experiments/tgeneticai")
-import calsim
+import pytest
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models import PikaiaModel
@@ -24,6 +22,12 @@ from pikaia.strategies import GeneStrategyFactory, OrgStrategyFactory
 from pikaia.strategies.base_strategies import StrategyContext
 from pikaia.strategies.gs_strategies.sell_strategy import SellGeneStrategy
 from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
+
+sys.path.insert(0, "/Users/uziel/Development/DanubeAI/experiments/tgeneticai")
+calsim = pytest.importorskip(
+    "calsim",
+    reason="tgeneticai/calsim.py not on PYTHONPATH; skipping CalSim comparison tests",
+)
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
