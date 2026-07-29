@@ -13,7 +13,6 @@ pikaia's replicator framework.  Tests verify:
 import sys
 
 import numpy as np
-import pytest
 
 sys.path.insert(0, "/Users/uziel/Development/DanubeAI/experiments/tgeneticai")
 import calsim
@@ -255,43 +254,35 @@ def test_sell_plus_buy_net_delta_sums_to_zero():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "calsim_strategy, gene_enum, org_enum",
-    [
-        ("Difficulty1", GeneStrategyEnum.SELL, OrgStrategyEnum.BUY),
-        ("Inverse", GeneStrategyEnum.SELL, OrgStrategyEnum.BUY),
-    ],
-)
-def test_direction_matches_calsim(calsim_strategy, gene_enum, org_enum):
+def test_direction_matches_calsim():
     """
-    After one iteration, genes that CalSim moves up should also go up in pikaia,
-    and genes CalSim moves down should go down.
-
-    Note: CalSim Difficulty1 and Inverse differ only in the sign of the sell
-    delta.  Since SellGeneStrategy always uses the positive odds ratio, one
-    pikaia pairing covers both CalSim directions.  We verify the pair matches
-    Difficulty1 (the default CalSim strategy used in the port).
+    After one iteration, every gene that CalSim Difficulty1 moves up also goes
+    up in pikaia, and every gene CalSim moves down also goes down.
     """
-    if calsim_strategy != "Difficulty1":
-        pytest.skip("Only Difficulty1 is directly reproduced by Sell+Buy")
+    cs_norm = _calsim_round("Difficulty1")
+    pk_gf = _pikaia_round(GeneStrategyEnum.SELL, OrgStrategyEnum.BUY)
 
-    cs_norm = _calsim_round(calsim_strategy)
-    pk_gf = _pikaia_round(gene_enum, org_enum)
-
-    directions_match = 0
     for j in range(M):
         cs_dir = np.sign(cs_norm[j] - UNIFORM)
         pk_dir = np.sign(pk_gf[j] - UNIFORM)
-        if cs_dir == 0 or pk_dir == 0:
-            directions_match += 1  # neutral counts as ok
-        elif cs_dir == pk_dir:
-            directions_match += 1
+        if cs_dir != 0:
+            assert cs_dir == pk_dir, (
+                f"Gene {j}: CalSim moved {'UP' if cs_dir > 0 else 'DN'} "
+                f"but pikaia moved {'UP' if pk_dir > 0 else 'DN' if pk_dir < 0 else '='}.\n"
+                f"CalSim norm: {cs_norm}\nPikaia gf:   {pk_gf}"
+            )
 
-    # Require at least 3 of 4 genes to agree in direction
-    assert directions_match >= 3, (
-        f"Only {directions_match}/4 genes agree in direction.\n"
-        f"CalSim norm: {cs_norm}\nPikaia gf:   {pk_gf}"
-    )
+
+def test_exact_numerical_match_calsim_difficulty1():
+    """
+    On the canonical 3×4 dataset starting from uniform gene fitness, pikaia
+    SELL+BUY reproduces CalSim Difficulty1 with zero numerical error.
+
+    This is a regression guard: if the formula changes, this test catches it.
+    """
+    cs_norm = _calsim_round("Difficulty1")
+    pk_gf = _pikaia_round(GeneStrategyEnum.SELL, OrgStrategyEnum.BUY)
+    np.testing.assert_allclose(pk_gf, cs_norm, atol=1e-8, rtol=0)
 
 
 def test_sell_buy_ranking_closer_to_calsim_than_reward_hard():

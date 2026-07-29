@@ -23,7 +23,8 @@ experiments/tgeneticai/calsim.py formulas to ensure the port is correct.
 
     mean_j = matrix.mean(axis=0)   # average expression of gene j
     exclusiveness_j = 1 - mean_j   # same concept: fraction who didn't "score high"
-    difficulty_j = exclusiveness_j / (exclusiveness_j + eps)
+    odds_j = exclusiveness_j / (1 - exclusiveness_j + eps)
+    difficulty_j = odds_j / max(odds_k)  # normalized odds ratio ∈ [0, 1]
 
     REWARD_HARD delta_ij = (16/N) * difficulty_j * gene_fitness_j * (x_ij - 0.5)
     REWARD_EASY delta_ij = -(16/N) * difficulty_j * gene_fitness_j * (x_ij - 0.5)

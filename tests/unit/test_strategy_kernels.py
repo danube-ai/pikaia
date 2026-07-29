@@ -20,11 +20,13 @@ from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
 from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.sell_strategy import SellGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
+from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
@@ -332,6 +334,96 @@ class TestValuationBlendGeneStrategyKernel:
 
 
 # ---------------------------------------------------------------------------
+# Sell / Buy kernels
+# ---------------------------------------------------------------------------
+
+
+class TestSellGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(20, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        return pop, SellGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_none_d(self, result):
+        _, (D, d) = result
+        assert D is None
+        assert d is not None
+
+    def test_d_shape(self, result):
+        pop, (_, d) = result
+        assert d.shape == (pop.M,)
+
+    def test_d_formula(self, result):
+        """d[j] = -mean_j * excl_j / (1 - excl_j + eps)."""
+        pop, (_, d) = result
+        mean_all = pop.matrix.mean(axis=0)
+        excl = 1.0 - mean_all
+        expected = -mean_all * excl / (1.0 - excl + 1e-8)
+        np.testing.assert_allclose(d, expected, atol=1e-12)
+
+    def test_d_non_positive(self, result):
+        """Sell only drains value — every d[j] must be ≤ 0."""
+        _, (_, d) = result
+        assert np.all(d <= 0)
+
+    def test_zero_exclusiveness_gives_zero(self):
+        """Gene solved by everyone (mean=1) has zero sell signal."""
+        data = np.ones((4, 3))
+        pop = PikaiaPopulation(data)
+        gs, os_, R = _make_sims(pop)
+        _, d = SellGeneStrategy().kernel(pop, gs, os_, R)
+        assert d is not None
+        assert np.allclose(d, 0.0, atol=1e-12)
+
+
+class TestBuyOrgStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(21, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        return pop, BuyOrgStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_none_d(self, result):
+        _, (D, d) = result
+        assert D is None
+        assert d is not None
+
+    def test_d_shape(self, result):
+        pop, (_, d) = result
+        assert d.shape == (pop.M,)
+
+    def test_d_non_negative(self, result):
+        """Buy only adds value — every d[j] must be ≥ 0."""
+        _, (_, d) = result
+        assert np.all(d >= -1e-12)
+
+    def test_d_finite(self, result):
+        _, (_, d) = result
+        assert np.all(np.isfinite(d))
+
+    def test_perfect_organism_skipped(self):
+        """An organism that solved all genes contributes nothing to buy."""
+        data = np.array([[1.0, 1.0, 1.0], [0.5, 0.2, 0.8]])
+        pop = PikaiaPopulation(data)
+        strat = BuyOrgStrategy()
+        from pikaia.strategies.base_strategies import StrategyContext
+
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(2) / 2,
+            gene_fitness=np.ones(3) / 3,
+            org_similarity=np.eye(2),
+            gene_similarity=np.eye(3),
+            initial_org_fitness_range=1.0,
+            org_id=0,
+            gene_id=None,
+        )
+        result = strat(ctx)
+        assert np.allclose(result, 0.0, atol=1e-12)
+
+
+# ---------------------------------------------------------------------------
 # Org strategies – kernel()
 # ---------------------------------------------------------------------------
 
@@ -504,11 +596,13 @@ ALL_STRATEGIES = [
     RewardHardGeneStrategy(),
     RewardEasyGeneStrategy(),
     ValuationBlendGeneStrategy(),
+    SellGeneStrategy(),
     NoneGeneStrategy(),
     BalancedOrgStrategy(),
     AltruisticOrgStrategy(),
     SelfishOrgStrategy(),
     KinSelfishOrgStrategy(),
+    BuyOrgStrategy(),
     NoneOrgStrategy(),
 ]
 
