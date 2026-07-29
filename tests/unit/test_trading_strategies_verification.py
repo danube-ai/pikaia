@@ -74,9 +74,13 @@ def _calsim_difficulty(exclusiveness, valid, eps=1e-8):
 
 def _pikaia_difficulty(exclusiveness, eps=1e-8):
     """
-    Pikaia difficulty formula: exclusiveness / (exclusiveness + eps).
+    Pikaia difficulty formula: normalized odds ratio.
+
+    odds_j = exclusiveness_j / (1 - exclusiveness_j + eps)
+    difficulty_j = odds_j / max(odds_k)
     """
-    return exclusiveness / (exclusiveness + eps)
+    odds = exclusiveness / (1.0 - exclusiveness + eps)
+    return odds / (odds.max() + eps)
 
 
 def _make_ctx(pop, org_id, gene_id, gene_fitness=None):
@@ -225,10 +229,11 @@ def test_kernel_diagonal_formula():
     pop = PikaiaPopulation(data)
     M = pop.M
 
-    # Compute expected difficulty
+    # Compute expected difficulty (normalized odds ratio)
     mean_all = pop.matrix.mean(axis=0)
     excl = 1.0 - mean_all
-    expected_difficulty = excl / (excl + 1e-8)
+    odds = excl / (1.0 - excl + 1e-8)
+    expected_difficulty = odds / (odds.max() + 1e-8)
 
     for strat_enum, expected_sign in [
         (GeneStrategyEnum.REWARD_HARD, 1.0),
@@ -346,14 +351,10 @@ def test_deltas_scale_with_expression():
 
     # For gene 0: difficulty is fixed, gf is fixed, only (x - 0.5) changes
     expected_scaling = x_val - 0.5
-    expected_delta = (
-        (16.0 / pop.N)
-        * 1.0
-        * (1.0 - pop.matrix[:, gene_id].mean())
-        / ((1.0 - pop.matrix[:, gene_id].mean()) + 1e-8)
-        * gf[gene_id]
-        * expected_scaling
-    )
+    all_excl = 1.0 - pop.matrix.mean(axis=0)
+    all_odds = all_excl / (1.0 - all_excl + 1e-8)
+    all_diff = all_odds / (all_odds.max() + 1e-8)
+    expected_delta = (16.0 / pop.N) * all_diff[gene_id] * gf[gene_id] * expected_scaling
 
     assert np.isclose(delta1, expected_delta, atol=1e-10), (
         f"delta={delta1:.10e} != expected={expected_delta:.10e}"

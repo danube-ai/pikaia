@@ -223,7 +223,8 @@ class TestRewardHardGeneStrategyKernel:
         M = pop.M
         mean_all = pop.matrix.mean(axis=0)
         exclusiveness = 1.0 - mean_all
-        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
         expected = np.diag((16.0 / M) * difficulty)
         np.testing.assert_allclose(D, expected)
 

@@ -67,7 +67,8 @@ class ValuationBlendGeneStrategy(GeneStrategy):
         preference = self.options.get("preference", 0.5)
         mean_all = ctx.population.matrix.mean(axis=0)  # (M,)
         exclusiveness = 1.0 - mean_all
-        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
 
         # preference=1.0 → reward hard, preference=0.0 → reward easy
         sign = 2.0 * preference - 1.0  # -1 (easy) to +1 (hard)
@@ -98,7 +99,8 @@ class ValuationBlendGeneStrategy(GeneStrategy):
         preference = self.options.get("preference", 0.5)
         mean_all = population.matrix.mean(axis=0)  # (M,)
         exclusiveness = 1.0 - mean_all
-        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
         sign = 2.0 * preference - 1.0
         D = np.diag((16.0 / M) * sign * difficulty)
         return D, None

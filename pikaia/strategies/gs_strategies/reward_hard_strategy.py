@@ -57,7 +57,8 @@ class RewardHardGeneStrategy(GeneStrategy):
         """
         mean_all = ctx.population.matrix.mean(axis=0)  # (M,)
         exclusiveness = 1.0 - mean_all
-        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
 
         term = (
             (16 / ctx.population.N)
@@ -83,6 +84,7 @@ class RewardHardGeneStrategy(GeneStrategy):
         M = population.M
         mean_all = population.matrix.mean(axis=0)  # (M,)
         exclusiveness = 1.0 - mean_all
-        difficulty = exclusiveness / (exclusiveness + 1e-8)
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
         D = np.diag((16.0 / M) * difficulty)
         return D, None
