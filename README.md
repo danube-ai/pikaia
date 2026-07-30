@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://img.shields.io/badge/pypi-0.2.2-blue?logo=pypi" alt="PyPI version">
+    <img src="https://img.shields.io/pypi/v/pikaia?logo=pypi" alt="PyPI version">
     <img src="https://img.shields.io/badge/python-3.14%2B-blue?logo=python" alt="Python 3.14+">
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
@@ -16,11 +16,11 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system (Dominant, Altruistic, Selfish, Balanced, Kin-Altruistic, Kin-Selfish, None)
+- 🧩 Modular, extensible strategy system — 9 gene strategies (Dominant, Selfish, Kin-Altruistic, Altruistic, Reward Hard, Reward Easy, Valuation Blend, Sell, None) and 6 organism strategies (Balanced, Altruistic, Kin-Selfish, Selfish, Buy, None)
 - ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
-- ✅ 99% test coverage
+- ✅ 99% test coverage across the `pikaia` package
 
 ---
 
@@ -29,6 +29,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 - [🧬 Pikaia](#-pikaia)
   - [✨ Key Features](#-key-features)
   - [📚 Table of Contents](#-table-of-contents)
+  - [📖 Documentation](#-documentation)
   - [🚀 Installation](#-installation)
   - [🛠️ Local Development](#️-local-development)
     - [Prerequisites](#prerequisites)
@@ -39,6 +40,17 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
   - [👥 Authors \& Contact](#-authors--contact)
   - [📄 License](#-license)
   - [📚 How to Cite](#-how-to-cite)
+
+---
+
+## 📖 Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [Tutorial](docs/tutorial.md) | Step-by-step first analysis — from raw data to ranked results |
+| [Overview](docs/overview.md) | Conceptual explanation: replicator equation, strategies, D-matrix |
+| [Contributor Guide](docs/contributing.md) | How to add new strategies and extend pikaia |
+| [API Reference](https://danube-ai.github.io/pikaia/) | Auto-generated API docs |
 
 ---
 
@@ -143,7 +155,7 @@ model = PikaiaModel(
 )
 model.fit()
 
-print("Gene fitness history:", model.gene_fitness_history())
+print("Gene fitness history:", model.gene_fitness_history)
 ```
 
 For a significant speed-up on large populations, enable the **D-matrix accelerated** mode:
@@ -165,7 +177,7 @@ model.fit()
 - See [`examples/README.md`](examples/README.md) for a full index of all examples.
 - See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
 - See `examples/paper_example.py` for the paper example script.
-- See `examples/d_matrix_comparison.py` to benchmark all 25 strategy combinations with D-matrix acceleration.
+- See `examples/d_matrix_comparison.py` to benchmark all 40 strategy combinations with D-matrix acceleration.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -191,7 +203,7 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 - Martin Bär (<martin@danube.ai>)
 - Carlos U. Pérez Malla (<carlos@danube.ai>)
 
-For questions, suggestions, or contributions, please feel free to open an issue.
+For questions, suggestions, or contributions, please feel free to open an issue or read our [Contributing Guide](CONTRIBUTING.md). By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -211,16 +223,14 @@ If you use Pikaia in your research, please cite our preprint:
 
 ```bibtex
 @misc{wissgott2025geneticaievolutionarygames,
-            title={Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization},
-            author={Philipp Wissgott},
-            year={2025},
-            eprint={2501.19113},
-            archivePrefix={arXiv},
-            primaryClass={cs.NE},
-            url={https://arxiv.org/abs/2501.19113},
+             title={Genetic AI: Evolutionary Games for ab initio dynamic Multi-Objective Optimization},
+             author={Philipp Wissgott},
+             year={2025},
+             eprint={2501.19113},
+             archivePrefix={arXiv},
+             primaryClass={cs.NE},
+             url={https://arxiv.org/abs/2501.19113},
 }
 ```
-
-**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
