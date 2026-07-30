@@ -17,9 +17,16 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
+from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.sell_strategy import SellGeneStrategy
+from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
+    ValuationBlendGeneStrategy,
+)
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
+from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
@@ -192,6 +199,231 @@ class TestKinAltruisticGeneStrategyKernel:
 
 
 # ---------------------------------------------------------------------------
+# Reward Hard / Reward Easy kernels
+# ---------------------------------------------------------------------------
+
+
+class TestRewardHardGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(8, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "RewardHard gene D must be diagonal"
+
+    def test_diagonal_formula(self, result):
+        pop, (D, _) = result
+        M = pop.M
+        mean_all = pop.matrix.mean(axis=0)
+        exclusiveness = 1.0 - mean_all
+        odds = exclusiveness / (1.0 - exclusiveness + 1e-8)
+        difficulty = odds / (odds.max() + 1e-8)
+        expected = np.diag((16.0 / M) * difficulty)
+        np.testing.assert_allclose(D, expected)
+
+    def test_D_shape(self, result):
+        pop, (D, _) = result
+        assert D.shape == (pop.M, pop.M)
+
+    def test_D_is_non_negative(self, result):
+        """Difficulty is always >= 0, so diagonal entries should be >= 0."""
+        _, (D, _) = result
+        assert np.all(np.diag(D) >= 0)
+
+
+class TestRewardEasyGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "RewardEasy gene D must be diagonal"
+
+    def test_D_opposite_sign_to_reward_hard(self):
+        """RewardEasy D should be the negation of RewardHard D."""
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D_easy, d_easy = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        D_hard, d_hard = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_easy is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_easy, -D_hard, atol=1e-12)
+
+    def test_D_shape(self):
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D, _ = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        assert D is not None
+        assert D.shape == (pop.M, pop.M)
+
+    def test_D_is_non_positive(self):
+        """Difficulty >= 0, negated → diagonal entries should be <= 0."""
+        pop = _make_pop(9, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        D, _ = RewardEasyGeneStrategy().kernel(pop, gs, os_, R)
+        assert D is not None
+        assert np.all(np.diag(D) <= 0)
+
+
+class TestValuationBlendGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(10, 10, 5)
+        gs, os_, R = _make_sims(pop)
+        return pop, ValuationBlendGeneStrategy(preference=0.3).kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        pop, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "ValuationBlend gene D must be diagonal"
+
+    def test_p_zero_is_negation_of_reward_hard(self):
+        """preference=0.0 → pure RewardEasy → negation of RewardHard."""
+        pop = _make_pop(11, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=0.0).kernel(pop, gs, os_, R)
+        D_hard, _ = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_blend, -D_hard, atol=1e-12)
+
+    def test_p_one_matches_reward_hard(self):
+        """preference=1.0 → pure RewardHard."""
+        pop = _make_pop(12, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=1.0).kernel(pop, gs, os_, R)
+        D_hard, _ = RewardHardGeneStrategy().kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert D_hard is not None
+        np.testing.assert_allclose(D_blend, D_hard, atol=1e-12)
+
+    def test_p_half_is_near_zero(self):
+        """preference=0.5 → sign=0 → D should be (near) zero matrix."""
+        pop = _make_pop(13, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        D_blend, _ = ValuationBlendGeneStrategy(preference=0.5).kernel(pop, gs, os_, R)
+        assert D_blend is not None
+        assert np.allclose(D_blend, 0.0)
+
+    def test_D_shape(self, result):
+        pop, (D, _) = result
+        assert D.shape == (pop.M, pop.M)
+
+
+# ---------------------------------------------------------------------------
+# Sell / Buy kernels
+# ---------------------------------------------------------------------------
+
+
+class TestSellGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(20, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        return pop, SellGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_none_d(self, result):
+        _, (D, d) = result
+        assert D is None
+        assert d is not None
+
+    def test_d_shape(self, result):
+        pop, (_, d) = result
+        assert d.shape == (pop.M,)
+
+    def test_d_formula(self, result):
+        """d[j] = -mean_j * excl_j / (1 - excl_j + eps)."""
+        pop, (_, d) = result
+        mean_all = pop.matrix.mean(axis=0)
+        excl = 1.0 - mean_all
+        expected = -mean_all * excl / (1.0 - excl + 1e-8)
+        np.testing.assert_allclose(d, expected, atol=1e-12)
+
+    def test_d_non_positive(self, result):
+        """Sell only drains value — every d[j] must be ≤ 0."""
+        _, (_, d) = result
+        assert np.all(d <= 0)
+
+    def test_zero_exclusiveness_gives_zero(self):
+        """Gene solved by everyone (mean=1) has zero sell signal."""
+        data = np.ones((4, 3))
+        pop = PikaiaPopulation(data)
+        gs, os_, R = _make_sims(pop)
+        _, d = SellGeneStrategy().kernel(pop, gs, os_, R)
+        assert d is not None
+        assert np.allclose(d, 0.0, atol=1e-12)
+
+
+class TestBuyOrgStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(21, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        return pop, BuyOrgStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_none_d(self, result):
+        _, (D, d) = result
+        assert D is None
+        assert d is not None
+
+    def test_d_shape(self, result):
+        pop, (_, d) = result
+        assert d.shape == (pop.M,)
+
+    def test_d_non_negative(self, result):
+        """Buy only adds value — every d[j] must be ≥ 0."""
+        _, (_, d) = result
+        assert np.all(d >= -1e-12)
+
+    def test_d_finite(self, result):
+        _, (_, d) = result
+        assert np.all(np.isfinite(d))
+
+    def test_perfect_organism_skipped(self):
+        """An organism that solved all genes contributes nothing to buy."""
+        data = np.array([[1.0, 1.0, 1.0], [0.5, 0.2, 0.8]])
+        pop = PikaiaPopulation(data)
+        strat = BuyOrgStrategy()
+        from pikaia.strategies.base_strategies import StrategyContext
+
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(2) / 2,
+            gene_fitness=np.ones(3) / 3,
+            org_similarity=np.eye(2),
+            gene_similarity=np.eye(3),
+            initial_org_fitness_range=1.0,
+            org_id=0,
+            gene_id=None,
+        )
+        result = strat(ctx)
+        assert np.allclose(result, 0.0, atol=1e-12)
+
+
+# ---------------------------------------------------------------------------
 # Org strategies – kernel()
 # ---------------------------------------------------------------------------
 
@@ -361,11 +593,16 @@ ALL_STRATEGIES = [
     AltruisticGeneStrategy(),
     SelfishGeneStrategy(),
     KinAltruisticGeneStrategy(),
+    RewardHardGeneStrategy(),
+    RewardEasyGeneStrategy(),
+    ValuationBlendGeneStrategy(),
+    SellGeneStrategy(),
     NoneGeneStrategy(),
     BalancedOrgStrategy(),
     AltruisticOrgStrategy(),
     SelfishOrgStrategy(),
     KinSelfishOrgStrategy(),
+    BuyOrgStrategy(),
     NoneOrgStrategy(),
 ]
 

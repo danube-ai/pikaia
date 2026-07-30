@@ -5,6 +5,60 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-07-30
+
+### Added
+
+- **Information-theoretic and redundancy-aware gene strategies** — four new
+  `GeneStrategy` implementations validated across 65 experiments on 18
+  datasets (see `genetic_importance_scores` research report):
+  - **EntropyMax** (`ENTROPY_MAX`) — supervised strategy combining mutual
+    information with the target and differential entropy.  Converges within
+    5 iterations and matches the best supervised feature selectors (0.985
+    mean accuracy agreement under nested cross-validation).  Requires ``y``.
+  - **OrthoGene** (`ORTHO_GENE`) — promotes features with low pairwise
+    correlation (high orthogonality).  Works unsupervised; in supervised mode
+    appends ``y`` to the correlation matrix to treat target-correlated features
+    as redundant (novelty/diversity pressure, best used in mixes).
+  - **PartialCorr** (`PARTIAL_CORR`) — rewards features whose relationship
+    with the target survives controlling for all other features, estimated
+    via a shrinkage precision matrix.  Supervised; falls back to zeros
+    without ``y``.
+  - **RedundancyPenalty** (`REDUNDANCY_PENALTY`) — suppresses features highly
+    correlated with their peers; unsupervised by default, supervised when
+    ``y`` is provided.
+- All four strategies registered in `GeneStrategyEnum` and
+  `GeneStrategyFactory`, with unit tests and `kernel()` implementations.
+- **Three new examples** showcasing validated results from the audit:
+  - `example7_stability.py` — bootstrap Jaccard stability (Pikaia-DOM-BAL vs MI)
+  - `example8_entropymax_fast_selection.py` — EntropyMax convergence at 5 iterations
+  - `example9_archetypal_organisms.py` — SELFISH organism archetype detection
+
+## [0.2.5] - 2026-07-28
+
+### Added
+
+- **Trading strategies** (RewardHard, RewardEasy, ValuationBlend) — three new
+  `GeneStrategy` implementations ported from
+  `experiments/tgeneticai/calsim.py`:
+  - **RewardHard** (`REWARD_HARD`) — rewards features that are hard to achieve
+    (low mean expression), equivalent to the CalSim "Difficulty1" sell strategy
+  - **RewardEasy** (`REWARD_EASY`) — the exact inverse of RewardHard, rewards
+    easy-to-express features, equivalent to the CalSim "Inverse" sell strategy
+  - **ValuationBlend** (`VALUATION_BLEND`) — blends between RewardHard and
+    RewardEasy via a `preference` parameter in `[0, 1]`, equivalent to the
+    CalSim "Mixed" sell strategy
+- Registered all three strategies in `GeneStrategyEnum` and
+  `GeneStrategyFactory`, with unit tests (name, call, kernel, edge cases,
+  integration) and example in `examples/example6.py`
+- **D-matrix comparison benchmark** updated to cover all 8 gene strategies
+  (40 strategy combinations instead of 25)
+
+### Changed
+
+- `d_matrix_comparison.py` and strategy documentation now reflect 8 gene
+  strategies / 40 combinations (was 5 strategies / 25 combinations)
+
 ## [0.2.4] - 2026-07-20
 
 ### Added
@@ -29,7 +83,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Slated for release as `0.2.0`.
 
 ### Added
 
@@ -68,7 +121,7 @@ Slated for release as `0.2.0`.
   isolated under `examples/artefacts/{example_name}/`.
 - Improved input validation in `Population` (numeric + NaN guards) and in
   `PikaiaModel` (stricter mixing-coefficient checks).
-- Sphinx documentation build now produces **zero warnings, zero errors**.
+- Sphinx documentation build is functional with AutoAPI auto-generation.
 - Documentation overhaul: every Markdown file in the repository reviewed
   for accuracy, cross-references fixed, README updated with index links to
   `examples/` and `research/`, and reference notes cleaned of HTML artefacts
@@ -98,7 +151,10 @@ Maintenance release.
 
 Initial public release.
 
-[Unreleased]: https://github.com/danube-ai/pikaia/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/danube-ai/pikaia/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.6
+[0.2.5]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.5
+[0.2.4]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.4
 [0.2.3]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.3
 [0.1.0]: https://github.com/danube-ai/pikaia/releases/tag/v0.1.0
 [0.0.3]: https://github.com/danube-ai/pikaia/releases/tag/v0.0.3

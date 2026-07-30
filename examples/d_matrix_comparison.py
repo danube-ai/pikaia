@@ -19,8 +19,9 @@ Three fit modes
      Requires at least one strategy to implement kernel().
      Fails for NoneGeneStrategy + NoneOrgStrategy (no kernel).
 
-All 5 x 5 = 25 combinations are run:
-  Gene strategies : Dominant, Altruistic, Selfish, KinAltruistic, None
+All 8 x 5 = 40 combinations are run:
+  Gene strategies : Dominant, Altruistic, Selfish, KinAltruistic,
+                    RewardHard, RewardEasy, ValuationBlend, None
   Org  strategies : Balanced, Altruistic, KinSelfish, Selfish,   None
 
 D-matrix is skipped for NoneGene+NoneOrg (raises ValueError -- no kernel).
@@ -46,7 +47,12 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
+from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
+    ValuationBlendGeneStrategy,
+)
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
@@ -60,7 +66,7 @@ OUT_DIR = "artefacts/d_matrix_comparison"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 print("=" * 75)
-print("D-Matrix Comparison: All 25 Strategy Combinations x Three Fit Modes")
+print("D-Matrix Comparison: All 40 Strategy Combinations x Three Fit Modes")
 print("=" * 75)
 
 # ---------------------------------------------------------------------------
@@ -107,14 +113,17 @@ for lbl, val in zip(gene_labels, x_bar):
     print(f"  {lbl:<22}: {val:.4f}")
 
 # ---------------------------------------------------------------------------
-# 2. Strategy grid (5 gene x 5 org = 25 combinations)
+# 2. Strategy grid (8 gene x 5 org = 40 combinations)
 # ---------------------------------------------------------------------------
 GENE_STRATEGIES = [
-    ("Dominant", DominantGeneStrategy),
-    ("Altruistic", AltruisticGeneStrategy),
-    ("Selfish", SelfishGeneStrategy),
-    ("KinAltruistic", KinAltruisticGeneStrategy),
-    ("None", NoneGeneStrategy),
+    ("Dominant", lambda: DominantGeneStrategy()),
+    ("Altruistic", lambda: AltruisticGeneStrategy()),
+    ("Selfish", lambda: SelfishGeneStrategy()),
+    ("KinAltruistic", lambda: KinAltruisticGeneStrategy()),
+    ("RewardHard", lambda: RewardHardGeneStrategy()),
+    ("RewardEasy", lambda: RewardEasyGeneStrategy()),
+    ("ValuationBlend", lambda: ValuationBlendGeneStrategy(preference=0.3)),
+    ("None", lambda: NoneGeneStrategy()),
 ]
 ORG_STRATEGIES = [
     ("Balanced", BalancedOrgStrategy),
@@ -220,18 +229,20 @@ print(
 print(f"  ESE  std-iter={m_iter_A.ESE_iter}  D-matrix={m_dm_A.ESE_iter}")
 
 # ---------------------------------------------------------------------------
-# 5. Section B -- ALL 25 combos: std iterative vs D-matrix, with timing
+# 5. Section B -- ALL 40 combos: std iterative vs D-matrix, with timing
 # ---------------------------------------------------------------------------
 print("\n" + "=" * 75)
-print("SECTION B -- All 25 combinations: Standard iterative vs D-matrix")
+print("SECTION B -- All 40 combinations: Standard iterative vs D-matrix")
 print("             (D-matrix skipped for NoneGene+NoneOrg -- no kernel)")
 print("=" * 75)
 
-# 5x5 result arrays (rows=gene, cols=org)
-iter_times = np.full((5, 5), np.nan)
-dm_times = np.full((5, 5), np.nan)
-cosines = np.full((5, 5), np.nan)
-speedups = np.full((5, 5), np.nan)  # t_iter / t_dm
+# 8x5 result arrays (rows=gene, cols=org)
+n_genes = len(GENE_STRATEGIES)
+n_orgs = len(ORG_STRATEGIES)
+iter_times = np.full((n_genes, n_orgs), np.nan)
+dm_times = np.full((n_genes, n_orgs), np.nan)
+cosines = np.full((n_genes, n_orgs), np.nan)
+speedups = np.full((n_genes, n_orgs), np.nan)  # t_iter / t_dm
 
 combo_results = {}  # (gi, oi) -> dict
 
@@ -428,15 +439,15 @@ for ax, data, title, cmap, vmin, vmax in hmap_data:
     kwargs = {"vmin": vmin, "vmax": vmax} if vmin is not None else {}
     im = ax.imshow(data, cmap=cmap, aspect="auto", **kwargs)
     plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    ax.set_xticks(range(5))
-    ax.set_yticks(range(5))
+    ax.set_xticks(range(n_orgs))
+    ax.set_yticks(range(n_genes))
     ax.set_xticklabels(ORG_NAMES, rotation=30, ha="right", fontsize=9)
     ax.set_yticklabels(GENE_NAMES, fontsize=9)
     ax.set_xlabel("Org strategy", fontsize=9)
     ax.set_ylabel("Gene strategy", fontsize=9)
     ax.set_title(title, fontsize=11)
-    for gi in range(5):
-        for oi in range(5):
+    for gi in range(n_genes):
+        for oi in range(n_orgs):
             v = data[gi, oi]
             if v != 0 or (gi == 4 and oi == 4):
                 ax.text(
@@ -452,24 +463,24 @@ for ax, data, title, cmap, vmin, vmax in hmap_data:
                 )
 
 fig.suptitle(
-    f"All 25 combinations -- Cosine, Speedup, and Runtime Heatmaps\n"
+    f"All 40 combinations -- Cosine, Speedup, and Runtime Heatmaps\n"
     f"(fix-point baseline = {t_fix * 1000:.4f} ms, N={N}, M={M})",
     fontsize=12,
 )
 plt.tight_layout()
-out2 = f"{OUT_DIR}/heatmaps_25_combos.png"
+out2 = f"{OUT_DIR}/heatmaps_40_combos.png"
 plt.savefig(out2, dpi=150)
 plt.close()
 print(f"Heatmap chart saved to {out2}")
 
-# -- Plot 3: Runtime bar chart -- all 25 combos --
+# -- Plot 3: Runtime bar chart -- all 40 combos --
 combo_labels = [
-    f"{gn[:3]}\n+{on[:3]}" for gn, _ in GENE_STRATEGIES for on, _ in ORG_STRATEGIES
+    f"{gn[:4]}\n+{on[:4]}" for gn, _ in GENE_STRATEGIES for on, _ in ORG_STRATEGIES
 ]
 iter_ms_flat = iter_times.flatten() * 1000
 dm_ms_flat = np.where(np.isnan(dm_times.flatten()), np.nan, dm_times.flatten() * 1000)
 
-idx = np.arange(25)
+idx = np.arange(n_genes * n_orgs)
 fig, ax = plt.subplots(figsize=(18, 5))
 ax.bar(idx - 0.2, iter_ms_flat, 0.4, label="Std iterative", color="#4C72B0", alpha=0.85)
 ax.bar(
@@ -486,7 +497,7 @@ ax.set_xticks(idx)
 ax.set_xticklabels(combo_labels, fontsize=6.5)
 ax.set_ylabel("Time (ms)")
 ax.set_title(
-    f"Runtime: Standard iterative vs D-matrix iterative -- all 25 combinations\n"
+    f"Runtime: Standard iterative vs D-matrix iterative -- all 40 combinations\n"
     f"(max_iter={MAX_ITER}, epsilon={EPSILON}, N={N}, M={M})"
 )
 ax.legend(fontsize=9)
@@ -557,8 +568,13 @@ print("\n" + "=" * 75)
 print("Summary")
 print("=" * 75)
 print(f"\n  Fix-point  : {t_fix * 1000:.4f} ms  -- analytical, instant, Dom+Bal only")
-print(f"  Std iter   : mean {np.nanmean(iter_times) * 1000:.3f} ms over 25 combos")
-print(f"  D-matrix   : mean {np.nanmean(dm_times) * 1000:.3f} ms over 24 combos")
+print(
+    f"  Std iter   : mean {np.nanmean(iter_times) * 1000:.3f} ms over {n_genes * n_orgs} combos"
+)
+n_dm_combos = int(np.sum(~np.isnan(dm_times)))
+print(
+    f"  D-matrix   : mean {np.nanmean(dm_times) * 1000:.3f} ms over {n_dm_combos} combos"
+)
 print(
     f"\n  D-matrix speedup over std-iter: mean={np.mean(valid_sp):.1f}x, "
     f"max={np.max(valid_sp):.1f}x"
@@ -570,7 +586,7 @@ print(
 valid_cosines = cosines[~np.isnan(cosines)]
 n_perfect = np.sum(valid_cosines > 0.9999)
 n_close = np.sum((valid_cosines > 0.999) & (valid_cosines <= 0.9999))
-print("\n  Cosine(std-iter, D-matrix) across 24 combos:")
+print(f"\n  Cosine(std-iter, D-matrix) across {n_dm_combos} combos:")
 print(
     f"    Perfect (>0.9999): {n_perfect}   Near-perfect (>0.999): {n_close}   "
     f"Other: {len(valid_cosines) - n_perfect - n_close}"
