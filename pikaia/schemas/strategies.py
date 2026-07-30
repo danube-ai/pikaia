@@ -10,6 +10,29 @@ class GeneStrategyEnum(str, Enum):
         SELFISH: Gene acts in its own interest.
         KIN_ALTRUISTIC: Gene favors kin altruism.
         ALTRUISTIC: Gene acts altruistically toward others.
+        REWARD_HARD: Rewards features that are hard to achieve (port of
+            tgeneticai CalSim ``"Difficulty1"``).  Features with low average
+            expression receive a positive delta boost.
+        REWARD_EASY: Rewards features that are easy to achieve (port of
+            tgeneticai CalSim ``"Inverse"``).  The exact inverse of
+            REWARD_HARD — features with high average expression receive a
+            positive delta boost.
+        VALUATION_BLEND: Blends between REWARD_HARD and REWARD_EASY via a
+            ``preference`` parameter in ``[0, 1]`` (port of tgeneticai CalSim
+            ``"Mixed"``).  ``0.0`` → pure REWARD_EASY, ``0.5`` → balanced,
+            ``1.0`` → pure REWARD_HARD.
+        SELL: CalSim sell-phase signal — drains value from commonly-expressed
+            genes proportional to their difficulty odds.  Pair with
+            ``OrgStrategyEnum.BUY`` to reproduce a full CalSim round.
+        ENTROPY_MAX: Information-theoretic strategy — rewards features with high
+            mutual information with the target (supervised) weighted by
+            differential entropy.  Converges within 5 iterations.
+        ORTHO_GENE: Orthogonality-based strategy — promotes features that are
+            minimally correlated with all other features.
+        PARTIAL_CORR: Partial-correlation strategy — rewards features whose
+            relationship with the target survives controlling for all others.
+        REDUNDANCY_PENALTY: Redundancy-penalty strategy — suppresses features
+            that are highly correlated with their peers.
         NONE: No specific strategy.
     """
 
@@ -17,6 +40,14 @@ class GeneStrategyEnum(str, Enum):
     SELFISH = "SELFISH"
     KIN_ALTRUISTIC = "KIN_ALTRUISTIC"
     ALTRUISTIC = "ALTRUISTIC"
+    REWARD_HARD = "REWARD_HARD"
+    REWARD_EASY = "REWARD_EASY"
+    VALUATION_BLEND = "VALUATION_BLEND"
+    SELL = "SELL"
+    ENTROPY_MAX = "ENTROPY_MAX"
+    ORTHO_GENE = "ORTHO_GENE"
+    PARTIAL_CORR = "PARTIAL_CORR"
+    REDUNDANCY_PENALTY = "REDUNDANCY_PENALTY"
     NONE = "NONE"
 
 
@@ -29,6 +60,9 @@ class OrgStrategyEnum(str, Enum):
         ALTRUISTIC: Organism acts altruistically toward others.
         KIN_SELFISH: Organism is selfish toward non-kin, altruistic toward kin.
         SELFISH: Organism acts selfishly.
+        BUY: CalSim buy-phase signal — redistributes sell capital from
+            high-performing organisms to genes they lack.  Pair with
+            ``GeneStrategyEnum.SELL`` to reproduce a full CalSim round.
         NONE: No specific strategy.
     """
 
@@ -36,6 +70,7 @@ class OrgStrategyEnum(str, Enum):
     ALTRUISTIC = "ALTRUISTIC"
     KIN_SELFISH = "KIN_SELFISH"
     SELFISH = "SELFISH"
+    BUY = "BUY"
     NONE = "NONE"
 
 
