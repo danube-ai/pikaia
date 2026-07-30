@@ -23,9 +23,13 @@ uv sync --extra examples
 | [`example3.py`](example3.py) | **Self-consistency** — Runs the model multiple times with `SelfConsistentMixStrategy` to average results for stability. |
 | [`example4.py`](example4.py) | **Movie search** — Real-world ranking and recommendation using a movie feature matrix (`data/movie_matrix.csv`). |
 | [`example5.py`](example5.py) | **Single-point prediction** — Predicts fitness for a new unseen data point injected into the population. |
+| [`example6.py`](example6.py) | **Valuation strategies** — REWARD_HARD vs REWARD_EASY vs VALUATION_BLEND, ported from the tgeneticai CalSim framework (`experiments/tgeneticai/calsim.py`). |
+| [`example7_stability.py`](example7_stability.py) | **Gene fitness stability** — Bootstrap Jaccard similarity comparison: Pikaia-DOM-BAL vs Mutual Information on the Wine dataset. Reproduces the K3 audit result (Pikaia Jaccard 0.950 vs MI 0.793). |
+| [`example8_entropymax_fast_selection.py`](example8_entropymax_fast_selection.py) | **EntropyMax fast supervised selection** — Shows Pikaia-ENTR-BAL (supervised) converging to MI-level feature selection within 5 iterations on the Wine dataset. Reproduces the Phase 7 audit result (0.985 accuracy agreement). |
+| [`example9_archetypal_organisms.py`](example9_archetypal_organisms.py) | **Archetypal organism detection** — Pikaia-SELFISH organism fitness retrieving dominant/archetypal samples from a synthetic dataset, with recall comparison against mean-row and random baselines. |
 | [`paper_example.py`](paper_example.py) | Reference implementation matching the results reported in the Genetic AI preprint. |
 | [`arxiv_example.py`](arxiv_example.py) | Standalone script reproducing figures from the arXiv paper. |
-| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 25 strategy combinations** (5 gene × 5 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. |
+| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 40 strategy combinations** (8 gene × 5 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. |
 
 ---
 
@@ -54,7 +58,7 @@ The `artefacts/` directory is used as the default output location for generated 
 
 ## Strategy Combinations Benchmark
 
-`d_matrix_comparison.py` is the most comprehensive example. It covers all 25 combinations of:
+`d_matrix_comparison.py` is the most comprehensive example. It covers all 40 combinations of:
 
 | Gene strategies | Org strategies |
 |-----------------|---------------|
@@ -62,7 +66,10 @@ The `artefacts/` directory is used as the default output location for generated 
 | `AltruisticGeneStrategy` | `AltruisticOrgStrategy` |
 | `SelfishGeneStrategy` | `SelfishOrgStrategy` |
 | `KinAltruisticGeneStrategy` | `KinSelfishOrgStrategy` |
-| `NoneGeneStrategy` | `NoneOrgStrategy` |
+| `RewardHardGeneStrategy` | `NoneOrgStrategy` |
+| `RewardEasyGeneStrategy` | |
+| `ValuationBlendGeneStrategy` | |
+| `NoneGeneStrategy` | |
 
 Three fit modes are compared for each valid combination:
 
