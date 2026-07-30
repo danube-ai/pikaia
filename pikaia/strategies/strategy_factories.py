@@ -8,10 +8,18 @@ from pikaia.schemas.strategies import (
 from pikaia.strategies.base_strategies import GeneStrategy, MixStrategy, OrgStrategy
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
+from pikaia.strategies.gs_strategies.entropy_max_strategy import EntropyMaxGeneStrategy
 from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.orthogonality_strategy import OrthoGeneStrategy
+from pikaia.strategies.gs_strategies.partial_corr_strategy import (
+    PartialCorrGeneStrategy,
+)
+from pikaia.strategies.gs_strategies.redundancy_penalty_strategy import (
+    RedundancyPenaltyGeneStrategy,
+)
 from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
 from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
@@ -49,6 +57,10 @@ class GeneStrategyFactory:
         GeneStrategyEnum.REWARD_EASY: RewardEasyGeneStrategy,
         GeneStrategyEnum.VALUATION_BLEND: ValuationBlendGeneStrategy,
         GeneStrategyEnum.SELL: SellGeneStrategy,
+        GeneStrategyEnum.ENTROPY_MAX: EntropyMaxGeneStrategy,
+        GeneStrategyEnum.ORTHO_GENE: OrthoGeneStrategy,
+        GeneStrategyEnum.PARTIAL_CORR: PartialCorrGeneStrategy,
+        GeneStrategyEnum.REDUNDANCY_PENALTY: RedundancyPenaltyGeneStrategy,
         GeneStrategyEnum.NONE: NoneGeneStrategy,
     }
 

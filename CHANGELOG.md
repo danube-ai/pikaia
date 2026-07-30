@@ -5,6 +5,31 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-07-30
+
+### Added
+
+- **Information-theoretic and redundancy-aware gene strategies** — four new
+  `GeneStrategy` implementations validated across 65 experiments on 18
+  datasets (see `genetic_importance_scores` research report):
+  - **EntropyMax** (`ENTROPY_MAX`) — supervised strategy combining mutual
+    information with the target and differential entropy.  Converges within
+    5 iterations and matches the best supervised feature selectors (0.985
+    mean accuracy agreement under nested cross-validation).  Requires ``y``.
+  - **OrthoGene** (`ORTHO_GENE`) — promotes features with low pairwise
+    correlation (high orthogonality).  Works unsupervised; in supervised mode
+    appends ``y`` to the correlation matrix to bias towards features
+    uncorrelated with each other *and* the target.
+  - **PartialCorr** (`PARTIAL_CORR`) — rewards features whose relationship
+    with the target survives controlling for all other features, estimated
+    via a shrinkage precision matrix.  Supervised; falls back to zeros
+    without ``y``.
+  - **RedundancyPenalty** (`REDUNDANCY_PENALTY`) — suppresses features highly
+    correlated with their peers; unsupervised by default, supervised when
+    ``y`` is provided.
+- All four strategies registered in `GeneStrategyEnum` and
+  `GeneStrategyFactory`, with unit tests and `kernel()` implementations.
+
 ## [0.2.5] - 2026-07-28
 
 ### Added

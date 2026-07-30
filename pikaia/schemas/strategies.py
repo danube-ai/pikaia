@@ -24,6 +24,15 @@ class GeneStrategyEnum(str, Enum):
         SELL: CalSim sell-phase signal — drains value from commonly-expressed
             genes proportional to their difficulty odds.  Pair with
             ``OrgStrategyEnum.BUY`` to reproduce a full CalSim round.
+        ENTROPY_MAX: Information-theoretic strategy — rewards features with high
+            mutual information with the target (supervised) weighted by
+            differential entropy.  Converges within 5 iterations.
+        ORTHO_GENE: Orthogonality-based strategy — promotes features that are
+            minimally correlated with all other features.
+        PARTIAL_CORR: Partial-correlation strategy — rewards features whose
+            relationship with the target survives controlling for all others.
+        REDUNDANCY_PENALTY: Redundancy-penalty strategy — suppresses features
+            that are highly correlated with their peers.
         NONE: No specific strategy.
     """
 
@@ -35,6 +44,10 @@ class GeneStrategyEnum(str, Enum):
     REWARD_EASY = "REWARD_EASY"
     VALUATION_BLEND = "VALUATION_BLEND"
     SELL = "SELL"
+    ENTROPY_MAX = "ENTROPY_MAX"
+    ORTHO_GENE = "ORTHO_GENE"
+    PARTIAL_CORR = "PARTIAL_CORR"
+    REDUNDANCY_PENALTY = "REDUNDANCY_PENALTY"
     NONE = "NONE"
 
 
