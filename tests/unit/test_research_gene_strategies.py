@@ -149,6 +149,21 @@ class TestEntropyMaxGeneStrategy:
         scores = EntropyMaxGeneStrategy.compute_info_scores(X_BASE, y=None)
         assert np.all(scores == 0.0)
 
+    def test_mode_switch_recomputes(self):
+        strat = EntropyMaxGeneStrategy()
+        strat._get_scores(X_BASE, None)
+        assert strat._mode == "unsupervised"
+        first_scores = strat._info_scores.copy()  # type: ignore[union-attr]
+        strat._get_scores(X_BASE, Y_BASE)
+        assert strat._mode == "supervised"
+        assert not np.allclose(strat._info_scores, first_scores)  # recomputed with MI
+
+    def test_precomputed_not_overwritten_on_mode_switch(self):
+        precomputed = np.array([0.8, 0.4, 0.6, 0.2])
+        strat = EntropyMaxGeneStrategy(precomputed_info=precomputed)
+        strat._get_scores(X_BASE, Y_BASE)  # switching "mode" — should NOT recompute
+        assert np.allclose(strat._info_scores, precomputed)
+
     def test_factory_round_trip(self):
         strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.ENTROPY_MAX)
         assert isinstance(strat, EntropyMaxGeneStrategy)
@@ -304,6 +319,21 @@ class TestPartialCorrGeneStrategy:
         assert D is not None
         off_diag = D - np.diag(np.diag(D))
         assert np.allclose(off_diag, 0.0)
+
+    def test_mode_switch_recomputes(self):
+        strat = PartialCorrGeneStrategy()
+        strat._get_scores(X_BASE, None)
+        assert strat._mode == "unsupervised"
+        assert np.all(strat._partial_corrs == 0.0)  # zeros without y
+        strat._get_scores(X_BASE, Y_BASE)
+        assert strat._mode == "supervised"
+        assert not np.all(strat._partial_corrs == 0.0)  # recomputed with y
+
+    def test_precomputed_not_overwritten_on_mode_switch(self):
+        precomputed = np.array([0.9, 0.1, 0.5, 0.3])
+        strat = PartialCorrGeneStrategy(precomputed_pc=precomputed)
+        strat._get_scores(X_BASE, Y_BASE)  # switching "mode" — should NOT recompute
+        assert np.allclose(strat._partial_corrs, precomputed)
 
     def test_factory_round_trip(self):
         strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.PARTIAL_CORR)

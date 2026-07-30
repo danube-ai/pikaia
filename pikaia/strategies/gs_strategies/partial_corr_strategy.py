@@ -47,6 +47,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
         super().__init__(**kwargs)
         self._partial_corrs: np.ndarray | None = precomputed_pc
         self._n_bins = n_bins
+        self._mode: str | None = None if precomputed_pc is None else "precomputed"
 
     @property
     def name(self) -> str:
@@ -110,7 +111,11 @@ class PartialCorrGeneStrategy(GeneStrategy):
         return np.clip(pc, 0.0, 1.0)
 
     def _get_scores(self, X: np.ndarray, y: np.ndarray | None) -> np.ndarray:
-        if self._partial_corrs is None:
+        mode = "supervised" if y is not None else "unsupervised"
+        if self._partial_corrs is None or (
+            self._mode != "precomputed" and self._mode != mode
+        ):
+            self._mode = mode
             self._partial_corrs = self.compute_partial_correlations(X, y)
         return self._partial_corrs
 

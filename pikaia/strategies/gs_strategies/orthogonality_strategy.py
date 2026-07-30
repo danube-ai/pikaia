@@ -21,9 +21,15 @@ class OrthoGeneStrategy(GeneStrategy):
     score is in ``[0, 1]``; a perfectly uncorrelated feature scores 1.
 
     When the target ``y`` is provided, it is appended as an extra column before
-    computing correlations (supervised mode).  This biases the strategy towards
-    features that are simultaneously uncorrelated with each other *and* with
-    the target — useful for redundancy-aware feature selection.
+    computing correlations (supervised mode).  Because orthogonality is now
+    measured against the augmented matrix, features that correlate strongly
+    with ``y`` receive *lower* scores and are suppressed — the opposite of
+    conventional supervised feature selection.  This makes the strategy a
+    **novelty/diversity pressure**: it promotes features that add information
+    beyond what the target and the other features already capture.  It is most
+    useful when mixed with a target-aware strategy (e.g. ``DOMINANT`` or
+    ``ENTROPY_MAX``) that handles target relevance, leaving OrthoGene to
+    enforce diversity.
 
     The replicator delta is::
 

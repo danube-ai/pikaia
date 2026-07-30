@@ -46,6 +46,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
         super().__init__(**kwargs)
         self.n_bins = n_bins
         self._info_scores: np.ndarray | None = precomputed_info
+        self._mode: str | None = None if precomputed_info is None else "precomputed"
 
     @property
     def name(self) -> str:
@@ -110,7 +111,11 @@ class EntropyMaxGeneStrategy(GeneStrategy):
         return np.clip(mi_norm * entropy_norm, 0.0, 1.0)
 
     def _get_scores(self, X: np.ndarray, y: np.ndarray | None) -> np.ndarray:
-        if self._info_scores is None:
+        mode = "supervised" if y is not None else "unsupervised"
+        if self._info_scores is None or (
+            self._mode != "precomputed" and self._mode != mode
+        ):
+            self._mode = mode
             self._info_scores = self.compute_info_scores(X, y, self.n_bins)
         return self._info_scores
 
