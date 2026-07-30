@@ -26,9 +26,9 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         delta[j] = gf[j] * (4 / N) * (pc[j] - 0.5)
 
-    Without a target (unsupervised mode), partial correlations are computed
-    between the last feature and every other feature, which is arbitrary and
-    not recommended.  For meaningful results, always pass ``y``.
+    Without a target (unsupervised mode), all partial correlations are set to
+    zero, making every delta negative.  For meaningful results, always pass
+    ``y``.
 
     Pre-computed partial correlations can be supplied via ``precomputed_pc``
     to skip the expensive matrix inversion.  The scores are cached on first

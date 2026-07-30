@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     ``y`` is provided.
 - All four strategies registered in `GeneStrategyEnum` and
   `GeneStrategyFactory`, with unit tests and `kernel()` implementations.
+- **Three new examples** showcasing validated results from the audit:
+  - `example7_stability.py` — bootstrap Jaccard stability (Pikaia-DOM-BAL vs MI)
+  - `example8_entropymax_fast_selection.py` — EntropyMax convergence at 5 iterations
+  - `example9_archetypal_organisms.py` — SELFISH organism archetype detection
 
 ## [0.2.5] - 2026-07-28
 
