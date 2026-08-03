@@ -17,6 +17,12 @@ class FixedMixStrategy(MixStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Fixed mix strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to `MixStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property

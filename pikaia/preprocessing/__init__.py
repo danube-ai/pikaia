@@ -1,3 +1,5 @@
+"""Data preprocessing utilities for pikaia."""
+
 from .pikaia_preprocessor import PikaiaPreprocessor
 from .utils import (
     max_scaler,

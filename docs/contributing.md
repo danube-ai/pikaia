@@ -45,7 +45,7 @@ then normalises **γ** to sum to 1. The deltas `Δ(i, j)` come from two compleme
 
 Called once per *(organism i, gene j)* pair. Return a **scalar** delta that drives gene *j*'s fitness up or down based on how organism *i* expressed it.
 
-**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `RewardHardGeneStrategy`, `SellGeneStrategy`.
+**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `RewardHardGeneStrategy`.
 
 ### Organism strategies (`OrgStrategy`)
 
@@ -258,6 +258,17 @@ uv run python examples/example6.py
 ```
 
 All CI checks (ruff lint, ruff format, import ordering) run automatically on commit via pre-commit hooks. Fix issues flagged by the hook and re-commit.
+
+---
+
+## Pre-PR checklist
+
+Before opening a pull request, verify:
+
+- [ ] Version bumped in `pyproject.toml`
+- [ ] `uv lock` run after **any** change to `pyproject.toml` (deps, version, extras) and the updated `uv.lock` committed — CI runs `uv lock --locked` and will fail if the lockfile is stale
+- [ ] All unit tests pass: `uv run pytest tests/unit/`
+- [ ] Docs build cleanly: `uv run --extra docs mkdocs build`
 
 ---
 

@@ -18,7 +18,7 @@ class DominantGeneStrategy(GeneStrategy):
         """Initialise the Dominant gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -58,6 +58,18 @@ class DominantGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: D[j,j] = 4 * (x_bar_j - 0.5)."""
+        """Diagonal D matrix from population mean expression.
+
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
+            with ``D[j, j] = 4 * (x_bar_j - 0.5)``.
+        """
         D = np.diag(4.0 * (population.matrix.mean(axis=0) - 0.5))
         return D, None

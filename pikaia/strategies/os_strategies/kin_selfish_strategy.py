@@ -11,7 +11,7 @@ class KinSelfishOrgStrategy(OrgStrategy):
     """
     An organism strategy that promotes selfish behavior towards non-kin.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -29,7 +29,7 @@ class KinSelfishOrgStrategy(OrgStrategy):
             kin_range (int): Maximum number of organisms to consider as kin
                 when computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to :class:`OrgStrategy`
+            **kwargs: Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -97,9 +97,22 @@ class KinSelfishOrgStrategy(OrgStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """D[j,k] = (+2 / (n_rel * R)) * mean_i[sum_l (0.5-s^o_il) * x_ij * (x_ik-x_lk)].
+        """Full ``(M, M)`` D matrix with kin-inverted similarity weights.
 
-        Like selfish org but similarity weight is (0.5 - s^o_il) and sign flips.
+        Like `SelfishOrgStrategy`'s kernel but uses ``(0.5 - s^o_il)``
+        as the similarity weight, flipping the sign for close kin.
+
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Organism similarity matrix of shape ``(N, N)``.
+            initial_org_fitness_range: Used to normalise the D matrix.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            ``D[j, k] = (+2 / (N * R)) * sum_i[x_ij * sum_l((0.5 - s^o_il) * (x_ik - x_lk))]``,
+            summed over kin neighbours of each organism.
         """
         X = population.matrix  # (N, M)
         N = population.N

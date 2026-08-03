@@ -20,7 +20,6 @@ from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
 from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
-from pikaia.strategies.gs_strategies.sell_strategy import SellGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
@@ -30,6 +29,7 @@ from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
+from pikaia.strategies.os_strategies.sell_strategy import SellOrgStrategy
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -338,12 +338,12 @@ class TestValuationBlendGeneStrategyKernel:
 # ---------------------------------------------------------------------------
 
 
-class TestSellGeneStrategyKernel:
+class TestSellOrgStrategyKernel:
     @pytest.fixture
     def result(self):
         pop = _make_pop(20, 8, 4)
         gs, os_, R = _make_sims(pop)
-        return pop, SellGeneStrategy().kernel(pop, gs, os_, R)
+        return pop, SellOrgStrategy().kernel(pop, gs, os_, R)
 
     def test_returns_none_d(self, result):
         _, (D, d) = result
@@ -372,7 +372,7 @@ class TestSellGeneStrategyKernel:
         data = np.ones((4, 3))
         pop = PikaiaPopulation(data)
         gs, os_, R = _make_sims(pop)
-        _, d = SellGeneStrategy().kernel(pop, gs, os_, R)
+        _, d = SellOrgStrategy().kernel(pop, gs, os_, R)
         assert d is not None
         assert np.allclose(d, 0.0, atol=1e-12)
 
@@ -596,7 +596,7 @@ ALL_STRATEGIES = [
     RewardHardGeneStrategy(),
     RewardEasyGeneStrategy(),
     ValuationBlendGeneStrategy(),
-    SellGeneStrategy(),
+    SellOrgStrategy(),
     NoneGeneStrategy(),
     BalancedOrgStrategy(),
     AltruisticOrgStrategy(),

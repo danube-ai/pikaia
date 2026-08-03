@@ -20,7 +20,7 @@ class AltruisticGeneStrategy(GeneStrategy):
         """Initialise the Altruistic gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -80,10 +80,20 @@ class AltruisticGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Full (M, M) D matrix; diagonal zeroed.
+        """Full ``(M, M)`` D matrix encoding cross-gene altruistic interactions.
 
-        D[j,k] = (16/M) * gene_similarity[j,k]
-                 * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Gene similarity matrix of shape ``(M, M)``.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            ``D[j, k] = (16/M) * gene_similarity[j, k]``
+            ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
+            and the diagonal set to zero.
         """
         X = population.matrix  # (N, M)
         M = population.M

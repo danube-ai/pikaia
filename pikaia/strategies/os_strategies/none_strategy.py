@@ -16,7 +16,7 @@ class NoneOrgStrategy(OrgStrategy):
         """Initialise the None (no-op) organism strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`OrgStrategy` and
+            **kwargs: Keyword options forwarded to `OrgStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)

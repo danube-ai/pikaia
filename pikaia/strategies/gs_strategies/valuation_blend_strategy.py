@@ -9,7 +9,7 @@ class ValuationBlendGeneStrategy(GeneStrategy):
     """
     A gene strategy that blends between reward-hard and reward-easy.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -20,9 +20,9 @@ class ValuationBlendGeneStrategy(GeneStrategy):
 
     Pikaia simplifies this to a single ``preference`` parameter in ``[0, 1]``:
 
-    - ``preference = 0.0`` → pure :class:`RewardEasyGeneStrategy`
+    - ``preference = 0.0`` → pure `RewardEasyGeneStrategy`
     - ``preference = 0.5`` → balanced (equal weight, zero signal)
-    - ``preference = 1.0`` → pure :class:`RewardHardGeneStrategy`
+    - ``preference = 1.0`` → pure `RewardHardGeneStrategy`
     """
 
     def __init__(self, preference: float = 0.5, **kwargs):
@@ -32,7 +32,7 @@ class ValuationBlendGeneStrategy(GeneStrategy):
             preference: Blend factor in ``[0, 1]``.  ``0.0`` favours easy
                 features, ``1.0`` favours hard features, ``0.5`` is balanced.
                 Defaults to ``0.5`` (balanced).
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -90,10 +90,20 @@ class ValuationBlendGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: ``D[j,j] = (16/M) * sign * difficulty_j``.
+        """Diagonal D matrix interpolating between hard and easy strategies.
 
-        ``sign = 2*preference - 1`` ranges from ``-1`` (easy) to ``+1``
-        (hard).
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
+            with ``D[j, j] = (16/M) * sign * difficulty_j`` and
+            ``sign = 2 * preference - 1`` ranging from ``-1`` (pure easy)
+            to ``+1`` (pure hard).
         """
         M = population.M
         preference = self.options.get("preference", 0.5)
