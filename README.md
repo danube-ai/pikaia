@@ -4,7 +4,7 @@
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
     <img src="https://github.com/danube-ai/pikaia/actions/workflows/ci.yml/badge.svg" alt="CI">
-    <img src="https://img.shields.io/badge/docs-latest-teal" alt="Docs">
+    <a href="https://danube-ai.github.io/pikaia/"><img src="https://img.shields.io/badge/docs-latest-teal" alt="Docs"></a>
 </p>
 
 # 🧬 Pikaia
@@ -50,10 +50,10 @@ Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai
 
 | Resource | Description |
 |----------|-------------|
-| [Tutorial](https://danube-ai.github.io/pikaia/latest/tutorial/) | Step-by-step first analysis — from raw data to ranked results |
-| [Overview](https://danube-ai.github.io/pikaia/latest/overview/) | Conceptual explanation: replicator equation, strategies, D-matrix |
-| [Reference](https://danube-ai.github.io/pikaia/latest/reference/) | Auto-generated SDK reference |
-| [Contributor Guide](https://danube-ai.github.io/pikaia/latest/contributing/) | How to add new strategies and extend pikaia |
+| [Tutorial](https://danube-ai.github.io/pikaia/tutorial/) | Step-by-step first analysis — from raw data to ranked results |
+| [Overview](https://danube-ai.github.io/pikaia/overview/) | Conceptual explanation: replicator equation, strategies, D-matrix |
+| [Reference](https://danube-ai.github.io/pikaia/reference/) | Auto-generated SDK reference |
+| [Contributor Guide](https://danube-ai.github.io/pikaia/contributing/) | How to add new strategies and extend pikaia |
 
 ---
 
