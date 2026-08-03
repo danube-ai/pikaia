@@ -45,3 +45,4 @@ jobs:
         run: |
           VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           uv run mike deploy --push --update-aliases "$VERSION" latest
+          uv run mike set-default --push latest
