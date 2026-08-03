@@ -2,19 +2,20 @@
 """
 Example 6: Valuation Strategies — Reward Hard vs Reward Easy vs Blend vs Sell+Buy
 
-This script demonstrates the valuation gene strategies ported from the tgeneticai
+This script demonstrates the valuation strategies ported from the tgeneticai
 CalSim framework (experiments/tgeneticai/calsim.py):
 
   - REWARD_HARD   — rewards features that are hard to achieve (high difficulty)
   - REWARD_EASY   — rewards features that are easy to achieve (low difficulty)
   - VALUATION_BLEND — interpolates between the two via a preference parameter
   - SELL + BUY    — full CalSim market recalibration round reproduced inside
-                    the replicator framework.  SELL drains value from commonly-
-                    expressed genes; BUY redistributes capital from high-
-                    performers to genes they lack.
+                    the replicator framework.  Both are organism strategies:
+                    SELL drains value from commonly-expressed genes;
+                    BUY redistributes capital from high-performers to genes
+                    they lack.
 
 The original CalSim used these as "sellStrategy" settings:
-  "Difficulty1" → SELL (gene) + BUY (org)
+  "Difficulty1" → SELL (org) + BUY (org)
 
 We use a synthetic dataset with one easy, one hard, and two medium-difficulty
 features so the strategies produce visibly different fitness trajectories.
@@ -124,10 +125,11 @@ runs = [
     },
     {
         "label": "SELL + BUY (CalSim Difficulty1)",
-        "gene_strategies": [
-            GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL),
+        "gene_strategies": [],
+        "org_strategies": [
+            OrgStrategyFactory.get_strategy(OrgStrategyEnum.SELL),
+            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY),
         ],
-        "org_strategies": [OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY)],
         "description": "Full CalSim market recalibration: sell drains common genes, "
         "buy redistributes capital from high-performers to genes they lack",
     },

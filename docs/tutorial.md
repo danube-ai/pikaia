@@ -82,7 +82,7 @@ mix_strategy    = MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED)
 - **DOMINANT** rewards genes that are highly expressed across the population.
 - **BALANCED** keeps organisms from being purely selfish or purely altruistic.
 
-See the [overview](overview.md) for a conceptual explanation of what strategies do, and the [API reference](autoapi/index) for the full list.
+See the [overview](overview.md) for a conceptual explanation of what strategies do, and the [reference](reference.md) for the full list.
 
 ---
 

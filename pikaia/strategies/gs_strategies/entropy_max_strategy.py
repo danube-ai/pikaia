@@ -8,7 +8,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
     """
     A supervised gene strategy driven by information-theoretic relevance.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -37,7 +37,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
             mutual information estimation.  Default ``10``.
         precomputed_info: Pre-computed info scores of shape ``(n_features,)``.
             If provided, skips the MI computation entirely.
-        **kwargs: Forwarded to :class:`GeneStrategy`.
+        **kwargs: Forwarded to `GeneStrategy`.
     """
 
     def __init__(
@@ -55,6 +55,14 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
     @staticmethod
     def _encode_target(y: np.ndarray) -> np.ndarray:
+        """Encode a target array to integer labels for mutual information estimation.
+
+        Args:
+            y: Target array of any dtype.
+
+        Returns:
+            1D array of integer-encoded labels.
+        """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
             unique_vals = np.unique(y)
@@ -111,6 +119,15 @@ class EntropyMaxGeneStrategy(GeneStrategy):
         return np.clip(mi_norm * entropy_norm, 0.0, 1.0)
 
     def _get_scores(self, X: np.ndarray, y: np.ndarray | None) -> np.ndarray:
+        """Return cached info scores, recomputing if the mode changes.
+
+        Args:
+            X: Data matrix of shape ``(n_samples, n_features)``.
+            y: Optional target array; triggers supervised mode when provided.
+
+        Returns:
+            Per-feature information scores of shape ``(n_features,)``.
+        """
         mode = "supervised" if y is not None else "unsupervised"
         if self._info_scores is None or (
             self._mode != "precomputed" and self._mode != mode

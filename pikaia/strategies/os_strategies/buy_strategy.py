@@ -16,34 +16,40 @@ class BuyOrgStrategy(OrgStrategy):
 
     For organism *i*, its capital from selling is:
 
-    .. math::
-
-        C_i = \\frac{1}{N} \\sum_k x_{ik}
-              \\cdot \\frac{\\text{excl}_k}{1 - \\text{excl}_k + \\varepsilon}
+    $$
+    C_i = \\frac{1}{N} \\sum_k x_{ik}
+          \\cdot \\frac{\\text{excl}_k}{1 - \\text{excl}_k + \\varepsilon}
+    $$
 
     and it is normalised by the exercises it failed weighted by mean:
 
-    .. math::
-
-        Z_i = \\sum_k (1 - x_{ik}) \\cdot \\bar{x}_k
+    $$
+    Z_i = \\sum_k (1 - x_{ik}) \\cdot \\bar{x}_k
+    $$
 
     The buy contribution from organism *i* to gene *j* is:
 
-    .. math::
+    $$
+    \\Delta_{\\text{buy}}(i, j) =
+        (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\bar{x}_j
+    $$
 
-        \\Delta_{\\text{buy}}(i, j) =
-            (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\bar{x}_j
-
-    This strategy is designed to be paired with :class:`SellGeneStrategy` to
+    This strategy is designed to be paired with `SellOrgStrategy` to
     fully reproduce CalSim's recalibration round within the replicator
     framework.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behaviour may change in future
         versions.
     """
 
     def __init__(self, **kwargs):
+        """Initialise the Buy organism strategy.
+
+        Args:
+            **kwargs: Keyword options forwarded to `OrgStrategy` and
+                stored in ``self.options``.
+        """
         super().__init__(**kwargs)
 
     @property
@@ -87,12 +93,22 @@ class BuyOrgStrategy(OrgStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Linear d-vector summing the buy redistribution over all organisms.
+        """Linear d-vector summing buy redistribution over all organisms.
 
-        ``d[j] = mean_j * Σ_i [(1 - x_ij) * C_i / Z_i]``
+        ``d[j] = mean_j * Σ_i [(1 - x_ij) * C_i / Z_i]`` where ``C_i`` is
+        the per-organism sell capital and ``Z_i`` is the normaliser.  The
+        signal is independent of ``gamma``, so ``D = None``.
 
-        where ``C_i`` and ``Z_i`` are the per-organism sell capital and
-        normaliser.  The signal is independent of ``gamma``, so D=None.
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(None, d)`` where ``d`` is a ``(M,)`` vector with
+            ``d[j] = mean_j * Σ_i (1 - x_ij) * C_i / Z_i``.
         """
         X = population.matrix  # (N, M)
         N = population.N

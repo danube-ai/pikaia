@@ -8,7 +8,7 @@ class OrthoGeneStrategy(GeneStrategy):
     """
     A gene strategy driven by feature orthogonality (low pairwise correlation).
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -39,7 +39,7 @@ class OrthoGeneStrategy(GeneStrategy):
     (supervised ↔ unsupervised) triggers a recomputation.
 
     Args:
-        **kwargs: Forwarded to :class:`GeneStrategy`.
+        **kwargs: Forwarded to `GeneStrategy`.
     """
 
     def __init__(self, **kwargs):
@@ -54,6 +54,14 @@ class OrthoGeneStrategy(GeneStrategy):
 
     @staticmethod
     def _encode_target(y: np.ndarray) -> np.ndarray:
+        """Encode a target array to binary ±1 labels centred at the median.
+
+        Args:
+            y: Target array of any dtype.
+
+        Returns:
+            1D float array with values ``+1.0`` (≥ median) or ``-1.0`` (< median).
+        """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
             unique_vals = np.unique(y)
@@ -83,6 +91,15 @@ class OrthoGeneStrategy(GeneStrategy):
         return 1.0 - abs_corr_sum / (n - 1)
 
     def _get_scores(self, X: np.ndarray, y: np.ndarray | None) -> np.ndarray:
+        """Return cached orthogonality scores, recomputing if the mode changes.
+
+        Args:
+            X: Data matrix of shape ``(n_samples, n_features)``.
+            y: Optional target array; triggers supervised mode when provided.
+
+        Returns:
+            Per-feature orthogonality scores of shape ``(n_features,)``.
+        """
         mode = "supervised" if y is not None else "unsupervised"
         if self._orthogonality is None or self._mode != mode:
             self._mode = mode

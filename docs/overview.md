@@ -121,6 +121,6 @@ All built-in strategies support the D-matrix path — each implements `kernel()`
 
 - [Tutorial](tutorial.md) — run your first analysis end to end
 - [Contributor Guide](contributing.md) — add new strategies and extend pikaia
-- [API Reference](autoapi/index) — full auto-generated API documentation
+- [Reference](reference.md) — full auto-generated reference documentation
 - [Examples](https://github.com/danube-ai/pikaia/tree/main/examples) — runnable scripts for real-world and synthetic datasets
 - [Preprint](https://arxiv.org/abs/2501.19113) — scientific background (Genetic AI)

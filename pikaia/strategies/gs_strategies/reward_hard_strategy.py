@@ -8,7 +8,7 @@ class RewardHardGeneStrategy(GeneStrategy):
     """
     A gene strategy that rewards features that are hard to achieve.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -30,7 +30,7 @@ class RewardHardGeneStrategy(GeneStrategy):
         """Initialise the Reward Hard gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -76,10 +76,20 @@ class RewardHardGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: ``D[j,j] = (16/M) * difficulty_j``.
+        """Diagonal D matrix proportional to gene difficulty.
 
-        ``difficulty_j = (1 - mean_j) / (1 - mean_j + eps)`` where ``mean_j``
-        is the average expression of gene *j* across the population.
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
+            with ``D[j, j] = (16/M) * difficulty_j`` and
+            ``difficulty_j = excl_j / (1 - excl_j + eps)`` normalised by
+            the maximum odds across genes.
         """
         M = population.M
         mean_all = population.matrix.mean(axis=0)  # (M,)

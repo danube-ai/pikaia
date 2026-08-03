@@ -9,7 +9,7 @@ class AltruisticOrgStrategy(OrgStrategy):
     """
     An organism strategy that promotes altruistic behavior towards relatives.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -27,7 +27,7 @@ class AltruisticOrgStrategy(OrgStrategy):
             kin_range (int): Maximum number of organisms to consider as kin
                 when computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to :class:`OrgStrategy`
+            **kwargs: Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -99,9 +99,23 @@ class AltruisticOrgStrategy(OrgStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Same kernel as SelfishOrgStrategy (identical __call__ body).
+        """Full ``(M, M)`` D matrix for kin-altruistic org interactions.
 
-        D_alt_o = D_sel_o.
+        Identical computation to `SelfishOrgStrategy`'s kernel
+        (``D_alt = D_sel``) because the formula is symmetric under the sign
+        convention used in the replicator equation.
+
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Organism similarity matrix of shape ``(N, N)``.
+            initial_org_fitness_range: Used to normalise the D matrix.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix summing
+            outer products of gene-expression vectors weighted by kin
+            similarity differences, scaled by ``-2 / (N * R)``.
         """
         X = population.matrix  # (N, M)
         N = population.N

@@ -12,33 +12,13 @@ import torch.nn.functional as F
 
 class MultiheadGeneticAttention(nn.Module):
     """
-    Multihead Genetic Attention module implementing multihead attention with
-    extensions for Grouped Query Attention (GQA) and Multi-Head Latent Attention (MLA).
+    Multihead Genetic Attention module with GQA and MLA support.
 
-    This module provides efficient attention mechanisms by supporting fewer key-value
-    heads (GQA) and optional input projection compression (MLA).
-
-    Parameters:
-        embed_dim (int):
-            Total dimension of the model.
-        n_heads (int):
-            Number of attention heads for queries.
-        n_kv_heads (int, optional):
-            Number of attention heads for keys and values (GQA). Defaults to n_heads.
-        in_proj_dim (int, optional):
-            Dimension to project input to before attention (MLA). If None, no projection.
-        dropout (float):
-            Dropout probability. Defaults to 0.0.
-        bias (bool):
-            Whether to use bias in linear projections. Defaults to True.
-
-    Input:
-        x (torch.Tensor):
-            Input tensor of shape (batch_size, seq_len, embed_dim).
-
-    Output:
-        torch.Tensor:
-            Output tensor of shape (batch_size, seq_len, embed_dim).
+    Implements multihead attention extended with Grouped Query Attention (GQA,
+    fewer key-value heads) and optional Multi-Head Latent Attention (MLA,
+    input compression projection).  Gene fitness scores are applied to the
+    value matrix before the attention weighted sum, so head dimensions that
+    carry stronger signal receive proportionally higher weight.
     """
 
     def __init__(
@@ -50,6 +30,20 @@ class MultiheadGeneticAttention(nn.Module):
         dropout: float = 0.0,
         bias: bool = True,
     ):
+        """Initialise MultiheadGeneticAttention.
+
+        Args:
+            embed_dim: Total dimension of the model.
+            n_heads: Number of attention heads for queries.
+            n_kv_heads: Number of attention heads for keys and values (GQA).
+                Defaults to ``n_heads`` (standard multi-head attention).
+            in_proj_dim: Dimension to project the input to before computing
+                Q/K/V (MLA compression).  ``None`` disables the projection.
+            dropout: Dropout probability applied to attention weights. Defaults
+                to ``0.0``.
+            bias: Whether to include bias terms in linear projections. Defaults
+                to ``True``.
+        """
         super().__init__()
         self.embed_dim = embed_dim
         self.n_heads = n_heads

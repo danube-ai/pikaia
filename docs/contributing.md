@@ -45,7 +45,7 @@ then normalises **γ** to sum to 1. The deltas `Δ(i, j)` come from two compleme
 
 Called once per *(organism i, gene j)* pair. Return a **scalar** delta that drives gene *j*'s fitness up or down based on how organism *i* expressed it.
 
-**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `RewardHardGeneStrategy`, `SellGeneStrategy`.
+**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `RewardHardGeneStrategy`.
 
 ### Organism strategies (`OrgStrategy`)
 

@@ -19,7 +19,7 @@ class BalancedOrgStrategy(OrgStrategy):
         """Initialise the Balanced organism strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`OrgStrategy` and
+            **kwargs: Keyword options forwarded to `OrgStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -67,21 +67,23 @@ class BalancedOrgStrategy(OrgStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Rank-1 D matrix exploiting gamma normalization.
+        """Rank-1 D matrix exploiting gamma normalisation.
 
         Because ``sum_j gamma_j = 1``, a row-constant matrix
-        ``D[j,k] = -2*x_bar_j`` satisfies ``(D@gamma)_j = -2*x_bar_j``
-        for *any* normalized ``gamma``.  Combined with the outer
-        ``gamma_j`` multiplier in the replicator step this gives:
+        ``D[j, k] = -2 * x_bar_j`` satisfies ``(D @ gamma)_j = -2 * x_bar_j``
+        for any normalised ``gamma``, exactly reproducing the balanced-org
+        contribution ``delta_j ≈ -2 * x_bar_j * gamma_j``.
 
-            step_j = gamma_j * (-2*x_bar_j)
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
 
-        which exactly reproduces the balanced-org contribution
-        ``delta_j ≈ -2*x_bar_j*gamma_j`` (the j-independent constant
-        ``2*w_bar/M`` cancels under normalisation).
-
-        Encoding as a ``D`` matrix (rather than a ``d`` vector) keeps the
-        step O(1/M) near the uniform point, ensuring numerical stability.
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is a rank-1 ``(M, M)`` matrix
+            with ``D[j, k] = -2 * x_bar_j`` for all *k*.
         """
         x_bar = population.matrix.mean(axis=0)  # (M,)
         M = population.M

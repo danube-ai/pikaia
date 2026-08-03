@@ -22,7 +22,7 @@ class SelfConsistentMixStrategy(MixStrategy):
         """Initialise the SelfConsistent mix strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`MixStrategy` and
+            **kwargs: Keyword options forwarded to `MixStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)

@@ -8,7 +8,7 @@ class SelfishGeneStrategy(GeneStrategy):
     """
     A gene strategy that promotes selfish behavior.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -25,7 +25,7 @@ class SelfishGeneStrategy(GeneStrategy):
         """Initialise the Selfish gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -84,7 +84,19 @@ class SelfishGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """D_sel = -D_alt: negated altruistic gene kernel."""
+        """Full ``(M, M)`` D matrix as the negation of the altruistic kernel.
+
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Gene similarity matrix of shape ``(M, M)``.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D = -D_altruistic``; an ``(M, M)``
+            matrix with the diagonal set to zero.
+        """
         X = population.matrix  # (N, M)
         M = population.M
         X_centered = X - 0.5

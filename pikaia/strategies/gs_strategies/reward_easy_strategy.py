@@ -8,7 +8,7 @@ class RewardEasyGeneStrategy(GeneStrategy):
     """
     A gene strategy that rewards features that are easy to achieve.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -27,7 +27,7 @@ class RewardEasyGeneStrategy(GeneStrategy):
         """Initialise the Reward Easy gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -44,7 +44,7 @@ class RewardEasyGeneStrategy(GeneStrategy):
         Easier features (high mean expression → low exclusiveness) receive a
         positive delta boost; harder features receive less.
 
-        This is the exact inverse of :class:`RewardHardGeneStrategy`.
+        This is the exact inverse of `RewardHardGeneStrategy`.
 
         Args:
             ctx (StrategyContext): Context object containing all required and
@@ -75,7 +75,20 @@ class RewardEasyGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: ``D[j,j] = -(16/M) * difficulty_j``."""
+        """Diagonal D matrix negatively proportional to gene difficulty.
+
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
+            with ``D[j, j] = -(16/M) * difficulty_j`` (exact negation of the
+            `RewardHardGeneStrategy` kernel).
+        """
         M = population.M
         mean_all = population.matrix.mean(axis=0)  # (M,)
         exclusiveness = 1.0 - mean_all

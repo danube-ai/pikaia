@@ -23,7 +23,7 @@ class SelfishOrgStrategy(OrgStrategy):
             kin_range (int): Maximum number of organisms to consider when
                 computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to :class:`OrgStrategy`
+            **kwargs: Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -90,10 +90,19 @@ class SelfishOrgStrategy(OrgStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """D[j,k] = (-2 / (n_rel * R)) * mean_i[sum_l s^o_il * x_ij * (x_ik - x_lk)].
+        """Full ``(M, M)`` D matrix for kin-selfish org interactions.
 
-        Step 1: 1/M centering dropped (j-independent constant).
-        Step 2: outer w_i multiplier added to cancel 1/w_i denominator.
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Unused.
+            org_similarity: Organism similarity matrix of shape ``(N, N)``.
+            initial_org_fitness_range: Used to normalise the D matrix.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            ``D[j, k] = (-2 / (N * R)) * sum_i[x_ij * sum_l(s^o_il * (x_ik - x_lk))]``,
+            summed over kin neighbours of each organism.
         """
         X = population.matrix  # (N, M)
         N = population.N
