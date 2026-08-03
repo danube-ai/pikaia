@@ -1,3 +1,5 @@
+"""Enums and schema definitions for pikaia."""
+
 from .preprocessing import FeatureType
 from .strategies import GeneStrategyEnum, MixStrategyEnum, OrgStrategyEnum
 

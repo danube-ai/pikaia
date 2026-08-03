@@ -4,6 +4,7 @@
     <img src="https://img.shields.io/github/license/danube-ai/pikaia" alt="License">
     <img src="https://img.shields.io/github/issues/danube-ai/pikaia" alt="GitHub issues">
     <img src="https://github.com/danube-ai/pikaia/actions/workflows/ci.yml/badge.svg" alt="CI">
+    <a href="https://danube-ai.github.io/pikaia/"><img src="https://img.shields.io/badge/docs-latest-teal" alt="Docs"></a>
 </p>
 
 # 🧬 Pikaia
@@ -16,7 +17,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
-- 🧩 Modular, extensible strategy system — 9 gene strategies (Dominant, Selfish, Kin-Altruistic, Altruistic, Reward Hard, Reward Easy, Valuation Blend, Sell, None) and 6 organism strategies (Balanced, Altruistic, Kin-Selfish, Selfish, Buy, None)
+- 🧩 Modular, extensible strategy system — 12 gene strategies and 7 organism strategies; supervised and unsupervised modes supported
 - ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
@@ -45,12 +46,14 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 ## 📖 Documentation
 
+Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai.github.io/pikaia/)**.
+
 | Resource | Description |
 |----------|-------------|
-| [Tutorial](docs/tutorial.md) | Step-by-step first analysis — from raw data to ranked results |
-| [Overview](docs/overview.md) | Conceptual explanation: replicator equation, strategies, D-matrix |
-| [Contributor Guide](docs/contributing.md) | How to add new strategies and extend pikaia |
-| [API Reference](https://danube-ai.github.io/pikaia/) | Auto-generated API docs |
+| [Tutorial](https://danube-ai.github.io/pikaia/tutorial/) | Step-by-step first analysis — from raw data to ranked results |
+| [Overview](https://danube-ai.github.io/pikaia/overview/) | Conceptual explanation: replicator equation, strategies, D-matrix |
+| [Reference](https://danube-ai.github.io/pikaia/reference/) | Auto-generated SDK reference |
+| [Contributor Guide](https://danube-ai.github.io/pikaia/contributing/) | How to add new strategies and extend pikaia |
 
 ---
 

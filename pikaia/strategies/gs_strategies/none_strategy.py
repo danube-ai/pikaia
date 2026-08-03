@@ -14,7 +14,7 @@ class NoneGeneStrategy(GeneStrategy):
         """Initialise the None (no-op) gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to :class:`GeneStrategy` and
+            **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)

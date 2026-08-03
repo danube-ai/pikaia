@@ -8,7 +8,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
     """
     A gene strategy that promotes altruism towards kin (similar genes).
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -25,7 +25,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
             kin_range (int): Number of most-similar genes to consider as kin
                 when computing the interaction term.  Defaults to ``M``
                 (the full feature dimension).
-            **kwargs: Additional options forwarded to :class:`GeneStrategy`
+            **kwargs: Additional options forwarded to `GeneStrategy`
                 and stored in ``self.options``.
         """
         super().__init__(**kwargs)
@@ -94,13 +94,23 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Full (M, M) D matrix with (0.5 - s^g_jk) similarity weight.
+        """Full ``(M, M)`` D matrix with kin-weighted similarity.
 
-        Respects the ``kin_range`` option: per gene j, only the top
-        ``kin_range`` most similar genes k contribute (self excluded).
+        Respects the ``kin_range`` option: per gene *j*, only the top
+        ``kin_range`` most similar genes *k* contribute (self excluded).
 
-        D[j,k] = (16/M) * (0.5 - gene_sim_masked[j,k])
-                 * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]
+        Args:
+            population: Population providing the ``(N, M)`` data matrix.
+            gene_similarity: Gene similarity matrix of shape ``(M, M)``.
+            org_similarity: Unused.
+            initial_org_fitness_range: Unused.
+            y: Unused.
+
+        Returns:
+            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            ``D[j, k] = (16/M) * (0.5 - gene_sim_masked[j, k])``
+            ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
+            and the diagonal set to zero.
         """
         X = population.matrix  # (N, M)
         M = population.M

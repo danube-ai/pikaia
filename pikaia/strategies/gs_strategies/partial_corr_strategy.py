@@ -8,7 +8,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
     """
     A gene strategy driven by partial correlation with the target.
 
-    .. warning::
+    !!! warning
         This strategy is experimental and its behavior may change in future
         versions.
 
@@ -38,7 +38,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
         precomputed_pc: Pre-computed partial correlations of shape
             ``(n_features,)``.  If provided, no computation is done.
         n_bins: Unused; kept for API compatibility.
-        **kwargs: Forwarded to :class:`GeneStrategy`.
+        **kwargs: Forwarded to `GeneStrategy`.
     """
 
     def __init__(
@@ -56,6 +56,14 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
     @staticmethod
     def _encode_target(y: np.ndarray) -> np.ndarray:
+        """Encode a target array to binary ±1 labels centred at the median.
+
+        Args:
+            y: Target array of any dtype.
+
+        Returns:
+            1D float array with values ``+1.0`` (≥ median) or ``-1.0`` (< median).
+        """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
             unique_vals = np.unique(y)
@@ -111,6 +119,15 @@ class PartialCorrGeneStrategy(GeneStrategy):
         return np.clip(pc, 0.0, 1.0)
 
     def _get_scores(self, X: np.ndarray, y: np.ndarray | None) -> np.ndarray:
+        """Return cached partial correlation scores, recomputing if the mode changes.
+
+        Args:
+            X: Data matrix of shape ``(n_samples, n_features)``.
+            y: Optional target array; triggers supervised mode when provided.
+
+        Returns:
+            Per-feature partial correlation scores of shape ``(n_features,)``.
+        """
         mode = "supervised" if y is not None else "unsupervised"
         if self._partial_corrs is None or (
             self._mode != "precomputed" and self._mode != mode

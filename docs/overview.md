@@ -50,7 +50,10 @@ Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j*
 | `REWARD_HARD` | Rewards genes that are rarely expressed (high exclusiveness) |
 | `REWARD_EASY` | Rewards genes that are commonly expressed (low exclusiveness) |
 | `VALUATION_BLEND` | Interpolates between REWARD_HARD and REWARD_EASY via a `preference` parameter |
-| `SELL` | Drains value from commonly-expressed genes proportional to their difficulty odds; pair with `BUY` |
+| `ENTROPY_MAX` | Rewards genes with high entropy; supports supervised mode |
+| `ORTHOGONALITY` | Rewards genes that are uncorrelated with each other; supports supervised mode |
+| `PARTIAL_CORR` | Rewards genes with low partial correlation to others; supports supervised mode |
+| `REDUNDANCY_PENALTY` | Penalises genes that are redundant with the rest; supports supervised mode |
 | `NONE` | No contribution |
 
 ### Organism strategies (`OrgStrategy`)
@@ -63,8 +66,17 @@ Called once per organism *i*. Returns an array of shape (M,) — the delta for e
 | `ALTRUISTIC` | Redistributes fitness toward dissimilar organisms |
 | `SELFISH` | Takes fitness from similar organisms |
 | `KIN_SELFISH` | Selfish within a similarity neighbourhood |
+| `SELL` | Drains value from genes proportional to their difficulty odds; pair with `BUY` |
 | `BUY` | Redistributes sell capital from high-performing organisms to genes they lack; pair with `SELL` |
 | `NONE` | No contribution |
+
+### Supervised mode
+
+Four gene strategies (`ENTROPY_MAX`, `ORTHOGONALITY`, `PARTIAL_CORR`, `REDUNDANCY_PENALTY`) can optionally incorporate a target variable. Pass `y` to `PikaiaModel` and they blend it into their signal automatically — without `y` they run fully unsupervised:
+
+```python
+model = PikaiaModel(population=population, gene_strategies=gene_strategies, y=labels)
+```
 
 ### Mixing strategies (`MixStrategy`)
 
@@ -121,6 +133,6 @@ All built-in strategies support the D-matrix path — each implements `kernel()`
 
 - [Tutorial](tutorial.md) — run your first analysis end to end
 - [Contributor Guide](contributing.md) — add new strategies and extend pikaia
-- [API Reference](autoapi/index) — full auto-generated API documentation
+- [Reference](reference.md) — full auto-generated reference documentation
 - [Examples](https://github.com/danube-ai/pikaia/tree/main/examples) — runnable scripts for real-world and synthetic datasets
 - [Preprint](https://arxiv.org/abs/2501.19113) — scientific background (Genetic AI)
