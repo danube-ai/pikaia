@@ -16,7 +16,7 @@
         <link rel="prev" href="../tutorial/">
       
       
-        <link rel="next" href="../adaptive_supervision/">
+        <link rel="next" href="../contributing/">
       
       
         
@@ -288,25 +288,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../adaptive_supervision/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Adaptive Supervision
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../contributing/" class="md-tabs__link">
         
   
@@ -563,6 +544,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#supervised-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supervised mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mixing-strategies-mixstrategy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -615,33 +607,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../adaptive_supervision/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Adaptive Supervision
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -806,8 +771,20 @@
 <td>Interpolates between REWARD_HARD and REWARD_EASY via a <code>preference</code> parameter</td>
 </tr>
 <tr>
-<td><code>SELL</code></td>
-<td>Drains value from commonly-expressed genes proportional to their difficulty odds; pair with <code>BUY</code></td>
+<td><code>ENTROPY_MAX</code></td>
+<td>Rewards genes with high entropy; supports supervised mode</td>
+</tr>
+<tr>
+<td><code>ORTHOGONALITY</code></td>
+<td>Rewards genes that are uncorrelated with each other; supports supervised mode</td>
+</tr>
+<tr>
+<td><code>PARTIAL_CORR</code></td>
+<td>Rewards genes with low partial correlation to others; supports supervised mode</td>
+</tr>
+<tr>
+<td><code>REDUNDANCY_PENALTY</code></td>
+<td>Penalises genes that are redundant with the rest; supports supervised mode</td>
 </tr>
 <tr>
 <td><code>NONE</code></td>
@@ -842,6 +819,10 @@
 <td>Selfish within a similarity neighbourhood</td>
 </tr>
 <tr>
+<td><code>SELL</code></td>
+<td>Drains value from genes proportional to their difficulty odds; pair with <code>BUY</code></td>
+</tr>
+<tr>
 <td><code>BUY</code></td>
 <td>Redistributes sell capital from high-performing organisms to genes they lack; pair with <code>SELL</code></td>
 </tr>
@@ -851,6 +832,10 @@
 </tr>
 </tbody>
 </table>
+<h3 id="supervised-mode">Supervised mode<a class="headerlink" href="#supervised-mode" title="Permanent link">&para;</a></h3>
+<p>Four gene strategies (<code>ENTROPY_MAX</code>, <code>ORTHOGONALITY</code>, <code>PARTIAL_CORR</code>, <code>REDUNDANCY_PENALTY</code>) can optionally incorporate a target variable. Pass <code>y</code> to <code>PikaiaModel</code> and they blend it into their signal automatically — without <code>y</code> they run fully unsupervised:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="n">gene_strategies</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="mixing-strategies-mixstrategy">Mixing strategies (<code>MixStrategy</code>)<a class="headerlink" href="#mixing-strategies-mixstrategy" title="Permanent link">&para;</a></h3>
 <p>When multiple gene or organism strategies are active, a mixing strategy determines how their deltas are combined each iteration.</p>
 <table>
@@ -874,17 +859,17 @@
 <hr />
 <h2 id="d-matrix-accelerated-mode">D-matrix accelerated mode<a class="headerlink" href="#d-matrix-accelerated-mode" title="Permanent link">&para;</a></h2>
 <p>For compatible strategy combinations, pikaia precomputes a compact kernel <code>(D, d)</code> once before the iteration loop and then runs cheap <code>O(M²)</code> updates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>γ_new = γ * (1 + D @ γ + d)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>γ_new = γ * (1 + D @ γ + d)
 </code></pre></div>
 <p>instead of the full <code>O(N·M²)</code> per-organism loop. This is typically <strong>30–80× faster</strong> for large populations.</p>
 <p>Enable it with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">gene_strategies</span><span class="o">=</span><span class="n">gene_strategies</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">org_strategies</span><span class="o">=</span><span class="n">org_strategies</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">use_d_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">gene_strategies</span><span class="o">=</span><span class="n">gene_strategies</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">org_strategies</span><span class="o">=</span><span class="n">org_strategies</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">use_d_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </code></pre></div>
 <p>All built-in strategies support the D-matrix path — each implements <code>kernel()</code> returning at least one non-<code>None</code> term. The only combination that cannot use it is one where every active strategy returns <code>(None, None)</code> from <code>kernel()</code> (i.e. exclusively <code>NONE</code> strategies). Custom strategies must implement <code>kernel()</code> to participate; see the <a href="../contributing/">Contributor Guide</a>.</p>
 <hr />
