@@ -1,0 +1,1301 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Genetic AI for tabular data analysis using evolutionary simulation">
+      
+      
+      
+        <link rel="canonical" href="https://danube-ai.github.io/pikaia/dev/adaptive_supervision/">
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Adaptive Supervision - pikaia</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adaptive-supervision-for-pikaia-strategies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pikaia" class="md-header__button md-logo" aria-label="pikaia" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pikaia
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Adaptive Supervision
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/danube-ai/pikaia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danube-ai/pikaia
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../tutorial/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Tutorial
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../overview/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Adaptive Supervision
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pikaia" class="md-nav__button md-logo" aria-label="pikaia" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pikaia
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/danube-ai/pikaia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danube-ai/pikaia
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive Supervision
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive Supervision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Goal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-this-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proposed-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proposed Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Proposed Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-y-to-strategycontext-pikaia-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Add y to StrategyContext (pikaia core)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-thread-y-through-pikaiamodelfit-pikaia-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Thread y through PikaiaModel.fit() (pikaia core)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-strategies-check-ctxy-for-supervised-mode-experiment-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Strategies check ctx.y for supervised mode (experiment repo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-runner-passes-y-when-available-experiment-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Runner passes y when available (experiment repo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-on-built-in-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Impact on Built-in Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Impact on Built-in Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dominant-selfish-balanced-altruistic-kin_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DOMINANT, SELFISH, BALANCED, ALTRUISTIC, KIN_*
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed-mode-strategies-to-be-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed-mode strategies (to be implemented)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixed-mode strategies (to be implemented)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#orthogene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OrthoGene
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redpenalty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RedPenalty
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partialcorr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PartialCorr
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multimoment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MultiMoment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entropymax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EntropyMax
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests-pikaia-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unit tests (pikaia core)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests-experiment-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration tests (experiment repo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pikaia-core-changes-this-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Pikaia core changes (this PR)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-experiment-repo-updates-next-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Experiment repo updates (next PR)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-modified-pikaia-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files Modified (Pikaia Core)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-modified-experiment-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files Modified (Experiment Repo)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backward-compatibility-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backward Compatibility Guarantee
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adaptive-supervision-for-pikaia-strategies">Adaptive Supervision for Pikaia Strategies<a class="headerlink" href="#adaptive-supervision-for-pikaia-strategies" title="Permanent link">&para;</a></h1>
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Enable every Pikaia strategy to operate in <strong>both supervised and unsupervised modes</strong> on demand, depending on the nature of the task. This allows strategies to be reused flexibly — no need for separate supervised/unsupervised variants.</p>
+<h3 id="what-this-means">What this means<a class="headerlink" href="#what-this-means" title="Permanent link">&para;</a></h3>
+<p>A strategy like OrthoGene can:
+- <strong>Unsupervised mode</strong> (default): compute orthogonality from the population matrix <code>X</code> alone (current behavior)
+- <strong>Supervised mode</strong> (when <code>y</code> is available): combine orthogonality with MI with the target</p>
+<p>The strategy detects the mode automatically. No API change required for the user — <code>y=None</code> → unsupervised, <code>y=...</code> → supervised.</p>
+<h2 id="why-this-matters">Why This Matters<a class="headerlink" href="#why-this-matters" title="Permanent link">&para;</a></h2>
+<p>Currently, strategies are inconsistently wired for supervision:</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Supervised?</th>
+<th>How <code>y</code> is handled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DOMINANT</td>
+<td>No</td>
+<td>Never uses <code>y</code> (inherently unsupervised)</td>
+</tr>
+<tr>
+<td>SELFISH</td>
+<td>No</td>
+<td>Never uses <code>y</code> (inherently unsupervised)</td>
+</tr>
+<tr>
+<td>BALANCED</td>
+<td>No</td>
+<td>Never uses <code>y</code> (inherently unsupervised)</td>
+</tr>
+<tr>
+<td>EntropyMax</td>
+<td>Yes</td>
+<td>Requires <code>y</code>, no fallback</td>
+</tr>
+<tr>
+<td>OrthoGene</td>
+<td>No</td>
+<td>No <code>y</code> parameter at all</td>
+</tr>
+<tr>
+<td>RedPenalty</td>
+<td>No</td>
+<td>No <code>y</code> parameter at all</td>
+</tr>
+<tr>
+<td>PartialCorr</td>
+<td>Yes/No</td>
+<td>Has <code>y</code> param but unsupervised fallback is buggy (precision matrix issues)</td>
+</tr>
+<tr>
+<td>MultiMoment</td>
+<td>Yes</td>
+<td>Hack: <code>strategy._y = y</code> set after instantiation</td>
+</tr>
+</tbody>
+</table>
+<p>This inconsistency makes strategy composition confusing and forces experiment authors to write custom code for each strategy.</p>
+<h2 id="design-principles">Design Principles<a class="headerlink" href="#design-principles" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Zero breaking changes</strong> — all existing code must continue to work without modification</li>
+<li><strong>Minimal pikaia-core changes</strong> — only touch what's necessary in the core library</li>
+<li><strong>Strategy-level responsibility</strong> — each strategy decides how to use <code>y</code>, not the framework</li>
+<li><strong>Optional by design</strong> — <code>y</code> is always <code>None</code> by default, strategies opt-in to supervised mode</li>
+</ol>
+<h2 id="proposed-changes">Proposed Changes<a class="headerlink" href="#proposed-changes" title="Permanent link">&para;</a></h2>
+<h3 id="1-add-y-to-strategycontext-pikaia-core">1. Add <code>y</code> to <code>StrategyContext</code> (pikaia core)<a class="headerlink" href="#1-add-y-to-strategycontext-pikaia-core" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>pikaia/strategies/base_strategies.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">StrategyContext</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Holds the context for a strategy calculation.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">org_fitness</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">gene_fitness</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">org_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">gene_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>          <span class="c1"># NEW: target variable</span>
+</code></pre></div>
+<p>This is a frozen dataclass with <code>slots=True</code>. Adding an optional field with a default is backward-compatible — callers that don't pass <code>y</code> get <code>None</code>.</p>
+<h3 id="2-thread-y-through-pikaiamodelfit-pikaia-core">2. Thread <code>y</code> through <code>PikaiaModel.fit()</code> (pikaia core)<a class="headerlink" href="#2-thread-y-through-pikaiamodelfit-pikaia-core" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>pikaia/models/pikaia_model.py</code></p>
+<p>The <code>y</code> value is stored on <code>GeneticModel.__init__</code> and passed through to <code>_calculate_deltas()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># In GeneticModel.__init__ (pikaia/models/genetic_model.py):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">org_strategies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>             <span class="o">...</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>             <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># NEW</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>             <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="o">...</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">y</span>
+</code></pre></div>
+<p>Then in <code>PikaiaModel._calculate_deltas()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_calculate_deltas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_org_fitness</span><span class="p">,</span> <span class="n">current_gene_fitness</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="o">...</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">context_args</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="s2">&quot;population&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_population</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="s2">&quot;org_fitness&quot;</span><span class="p">:</span> <span class="n">current_org_fitness</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="s2">&quot;gene_fitness&quot;</span><span class="p">:</span> <span class="n">current_gene_fitness</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="s2">&quot;initial_org_fitness_range&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_org_fitness_range</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="s2">&quot;org_similarity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_org_similarity</span><span class="p">,</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="s2">&quot;gene_similarity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gene_similarity</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span>      <span class="c1"># NEW: pass y to strategies</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="p">}</span>
+</code></pre></div>
+<h3 id="3-strategies-check-ctxy-for-supervised-mode-experiment-repo">3. Strategies check <code>ctx.y</code> for supervised mode (experiment repo)<a class="headerlink" href="#3-strategies-check-ctxy-for-supervised-mode-experiment-repo" title="Permanent link">&para;</a></h3>
+<p>Each strategy in the experiments repo checks <code>ctx.y</code> to decide which mode to use:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrthoGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orthogonality</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>            <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                <span class="c1"># Supervised: orthogonality + MI with target</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_orthogonality</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_supervised</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>                <span class="c1"># Unsupervised: pure orthogonality (existing behavior)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_orthogonality</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_unsupervised</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orthogonality</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="mi">4</span> <span class="o">/</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">*</span> <span class="n">score</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="4-runner-passes-y-when-available-experiment-repo">4. Runner passes <code>y</code> when available (experiment repo)<a class="headerlink" href="#4-runner-passes-y-when-available-experiment-repo" title="Permanent link">&para;</a></h3>
+<p>The experiment runner (e.g., <code>pikaia_helpers_new.py</code>) accepts an optional <code>y</code> parameter and passes it to the model:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_pikaia</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">gene_strat</span><span class="o">=</span><span class="n">GeneStrategyEnum</span><span class="o">.</span><span class="n">DOMINANT</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>               <span class="n">org_strat</span><span class="o">=</span><span class="n">OrgStrategyEnum</span><span class="o">.</span><span class="n">BALANCED</span><span class="p">,</span> <span class="n">n_seeds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>               <span class="n">fixed_point</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># NEW</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="o">...</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">gene_strategies</span><span class="o">=</span><span class="p">[</span><span class="n">gene_obj</span><span class="p">],</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="n">org_strategies</span><span class="o">=</span><span class="p">[</span><span class="n">org_obj</span><span class="p">],</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">gene_mix_strategy</span><span class="o">=</span><span class="n">MixStrategyFactory</span><span class="o">.</span><span class="n">get_strategy</span><span class="p">(</span><span class="n">mix</span><span class="p">),</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="n">org_mix_strategy</span><span class="o">=</span><span class="n">MixStrategyFactory</span><span class="o">.</span><span class="n">get_strategy</span><span class="p">(</span><span class="n">mix</span><span class="p">),</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>  <span class="c1"># NEW: pass y when available</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="p">)</span>
+</code></pre></div>
+<h2 id="impact-on-built-in-strategies">Impact on Built-in Strategies<a class="headerlink" href="#impact-on-built-in-strategies" title="Permanent link">&para;</a></h2>
+<h3 id="dominant-selfish-balanced-altruistic-kin_">DOMINANT, SELFISH, BALANCED, ALTRUISTIC, KIN_*<a class="headerlink" href="#dominant-selfish-balanced-altruistic-kin_" title="Permanent link">&para;</a></h3>
+<p>No changes needed. These strategies have no natural supervised interpretation. They check <code>ctx.y</code> → it's <code>None</code> → they behave exactly as before.</p>
+<h3 id="mixed-mode-strategies-to-be-implemented">Mixed-mode strategies (to be implemented)<a class="headerlink" href="#mixed-mode-strategies-to-be-implemented" title="Permanent link">&para;</a></h3>
+<h4 id="orthogene">OrthoGene<a class="headerlink" href="#orthogene" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Unsupervised</strong>: orthogonality score from correlation matrix of <code>X</code></li>
+<li><strong>Supervised</strong>: orthogonality * (1 + MI(j, y) factor)</li>
+</ul>
+<h4 id="redpenalty">RedPenalty<a class="headerlink" href="#redpenalty" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Unsupervised</strong>: redundancy penalty from pairwise correlations of <code>X</code></li>
+<li><strong>Supervised</strong>: redundancy * (1 + MI(j, y) factor) — penalize redundant features that are also predictive</li>
+</ul>
+<h4 id="partialcorr">PartialCorr<a class="headerlink" href="#partialcorr" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Unsupervised</strong>: partial correlation from precision matrix of <code>X</code> (fix: increase regularization)</li>
+<li><strong>Supervised</strong>: partial correlation from precision matrix of <code>[X, y_encoded]</code> — controls for target to find direct relationships</li>
+</ul>
+<h4 id="multimoment">MultiMoment<a class="headerlink" href="#multimoment" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Unsupervised</strong>: skewness + kurtosis terms only (MI term = 0)</li>
+<li><strong>Supervised</strong>: full score with MI(j, y) term</li>
+</ul>
+<h4 id="entropymax">EntropyMax<a class="headerlink" href="#entropymax" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Unsupervised</strong>: entropy of <code>X</code> only (MI term = 0)</li>
+<li><strong>Supervised</strong>: entropy + MI(j, y) (current behavior)</li>
+</ul>
+<h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="unit-tests-pikaia-core">Unit tests (pikaia core)<a class="headerlink" href="#unit-tests-pikaia-core" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>StrategyContext</code> accepts <code>y=None</code> and <code>y=array</code> — no constructor errors</li>
+<li><code>PikaiaModel</code> without <code>y</code> — behaves identically to before</li>
+<li><code>PikaiaModel</code> with <code>y=None</code> — behaves identically to before</li>
+<li><code>PikaiaModel</code> with <code>y=array</code> — context receives <code>y</code>, strategies that don't use it continue to work</li>
+</ol>
+<h3 id="integration-tests-experiment-repo">Integration tests (experiment repo)<a class="headerlink" href="#integration-tests-experiment-repo" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Run existing experiments without <code>y</code> — all 64 experiments pass (backward compat)</li>
+<li>Run same experiments with <code>y</code> — supervised variants produce results</li>
+<li>Compare supervised vs unsupervised for strategies that support both</li>
+</ol>
+<h2 id="migration-path">Migration Path<a class="headerlink" href="#migration-path" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-pikaia-core-changes-this-pr">Phase 1: Pikaia core changes (this PR)<a class="headerlink" href="#phase-1-pikaia-core-changes-this-pr" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add <code>y</code> to <code>StrategyContext</code></li>
+<li>Thread <code>y</code> through <code>GeneticModel.__init__</code> and <code>PikaiaModel._calculate_deltas</code></li>
+<li>Add unit tests</li>
+<li>No behavior change for existing users</li>
+</ul>
+<h3 id="phase-2-experiment-repo-updates-next-pr">Phase 2: Experiment repo updates (next PR)<a class="headerlink" href="#phase-2-experiment-repo-updates-next-pr" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update all custom strategies to check <code>ctx.y</code> for mode switching</li>
+<li>Fix PartialCorr precision matrix (increase regularization)</li>
+<li>Add supervised variants of OrthoGene and RedPenalty</li>
+<li>Re-run comparison experiments</li>
+</ul>
+<h3 id="phase-3-validation">Phase 3: Validation<a class="headerlink" href="#phase-3-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Re-run full experiment suite (64 experiments)</li>
+<li>Document which strategies support supervised mode</li>
+<li>Add to strategy documentation</li>
+</ul>
+<h2 id="files-modified-pikaia-core">Files Modified (Pikaia Core)<a class="headerlink" href="#files-modified-pikaia-core" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pikaia/strategies/base_strategies.py</code></td>
+<td>Add <code>y: Optional[np.ndarray] = None</code> to <code>StrategyContext</code></td>
+</tr>
+<tr>
+<td><code>pikaia/models/genetic_model.py</code></td>
+<td>Add <code>y: Optional[np.ndarray] = None</code> to <code>__init__</code>, store as <code>self._y</code></td>
+</tr>
+<tr>
+<td><code>pikaia/models/pikaia_model.py</code></td>
+<td>Pass <code>self._y</code> in <code>context_args</code> in <code>_calculate_deltas</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="files-modified-experiment-repo">Files Modified (Experiment Repo)<a class="headerlink" href="#files-modified-experiment-repo" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>genetic_importance_scores/experiments/enhanced_strategies/test_strategy2_orthogonality_gene.py</code></td>
+<td>Add supervised mode to OrthoGene</td>
+</tr>
+<tr>
+<td><code>genetic_importance_scores/experiments/enhanced_strategies/test_strategy3_partialcorr_gene.py</code></td>
+<td>Add supervised mode + fix precision matrix</td>
+</tr>
+<tr>
+<td><code>genetic_importance_scores/experiments/enhanced_strategies/test_strategy4_redundancy_gene.py</code></td>
+<td>Add supervised mode to RedPenalty</td>
+</tr>
+<tr>
+<td><code>genetic_importance_scores/experiments/enhanced_strategies/test_strategy5_entropy_gene.py</code></td>
+<td>Refactor to use <code>ctx.y</code> instead of <code>self._y</code></td>
+</tr>
+<tr>
+<td><code>genetic_importance_scores/experiments/enhanced_strategies/test_priority2_multi_moment_gene.py</code></td>
+<td>Refactor to use <code>ctx.y</code> instead of <code>strategy._y</code> hack</td>
+</tr>
+<tr>
+<td><code>genetic_importance_scores/pikaia_helpers_new.py</code></td>
+<td>Add <code>y</code> parameter to <code>run_pikaia</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="backward-compatibility-guarantee">Backward Compatibility Guarantee<a class="headerlink" href="#backward-compatibility-guarantee" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># ALL of these continue to work exactly as before:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># No y passed — unsupervised</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">pop</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># y explicitly None — unsupervised</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">pop</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Factory still works (no y argument)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">strat</span> <span class="o">=</span> <span class="n">GeneStrategyFactory</span><span class="o">.</span><span class="n">get_strategy</span><span class="p">(</span><span class="n">GeneStrategyEnum</span><span class="o">.</span><span class="n">DOMINANT</span><span class="p">)</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># StrategyContext still works (y defaults to None)</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">StrategyContext</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">pop</span><span class="p">,</span> <span class="n">org_fitness</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">gene_fitness</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span>  <span class="c1"># True</span>
+</code></pre></div>
+<p>No existing caller needs to change. The feature is purely opt-in.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.integrate", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
