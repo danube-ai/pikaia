@@ -261,6 +261,17 @@ All CI checks (ruff lint, ruff format, import ordering) run automatically on com
 
 ---
 
+## Pre-PR checklist
+
+Before opening a pull request, verify:
+
+- [ ] Version bumped in `pyproject.toml`
+- [ ] `uv lock` run after **any** change to `pyproject.toml` (deps, version, extras) and the updated `uv.lock` committed — CI runs `uv lock --locked` and will fail if the lockfile is stale
+- [ ] All unit tests pass: `uv run pytest tests/unit/`
+- [ ] Docs build cleanly: `uv run --extra docs mkdocs build`
+
+---
+
 ## Checklist for a new strategy
 
 - [ ] Implementation file in `gs_strategies/` or `os_strategies/`
