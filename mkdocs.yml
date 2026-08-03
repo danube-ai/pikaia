@@ -47,7 +47,6 @@ nav:
   - Home: index.md
   - Tutorial: tutorial.md
   - Overview: overview.md
-  - Adaptive Supervision: adaptive_supervision.md
   - Contributing: contributing.md
   - Reference: reference.md
 
