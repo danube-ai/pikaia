@@ -261,14 +261,27 @@ All CI checks (ruff lint, ruff format, import ordering) run automatically on com
 
 ---
 
+## Branching and releases
+
+pikaia uses a **single-branch (trunk-based)** model:
+
+- **`main`** is the only long-lived branch. Branch off it, open a PR into it, and merge with **squash or rebase** (`main` requires linear history).
+- Every merge to `main` publishes to **TestPyPI** and updates the `dev` docs automatically — no version bump needed for regular PRs.
+- **Production PyPI releases are cut by pushing a `v*` git tag**, gated by a manual approval on the `pypi` environment.
+
+The full step-by-step release process lives in the [Releasing guide](releasing.md).
+
+---
+
 ## Pre-PR checklist
 
 Before opening a pull request, verify:
 
-- [ ] Version bumped in `pyproject.toml`
 - [ ] `uv lock` run after **any** change to `pyproject.toml` (deps, version, extras) and the updated `uv.lock` committed — CI runs `uv lock --locked` and will fail if the lockfile is stale
 - [ ] All unit tests pass: `uv run pytest tests/unit/`
 - [ ] Docs build cleanly: `uv run --extra docs mkdocs build`
+
+> Bumping `project.version` is a **release** step, not a per-PR requirement — see the [Releasing guide](releasing.md).
 
 ---
 
