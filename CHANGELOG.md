@@ -5,6 +5,67 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-04
+
+### Changed
+
+- **Release process moved to a single-branch (trunk-based) model.** `main` is
+  now the only long-lived branch. Every merge to `main` publishes to TestPyPI
+  and updates the `dev` docs; **production PyPI releases are cut by pushing a
+  `v*` git tag**, gated by a manual approval on the `pypi` environment. This
+  replaces the previous GitFlow-style `develop → main` sync flow. See
+  [`docs/releasing.md`](docs/releasing.md).
+
+### Added
+
+- **`docs/releasing.md`** — maintainer release guide covering the day-to-day
+  contribution flow, cutting a release via a version tag, the `pypi` approval
+  gate, and the rationale for trunk-based over GitFlow. Added to the docs nav.
+
+### Removed
+
+- Retired the `develop` branch and the `develop → main` sync workflow.
+- Removed the CI `version-check` job (a per-PR version bump is no longer
+  required) and the `tag-release` job (tags are now created by maintainers, not
+  auto-generated), plus the now-unused `check_version.py`.
+
+> This release contains no functional changes to the `pikaia` package itself; it
+> marks the release-infrastructure overhaul.
+
+## [0.2.10] - 2026-08-03
+
+### Changed
+
+- Documentation deploy now redirects the site root URL to the latest released
+  version on `main` deploys (#29).
+
+## [0.2.9] - 2026-08-03
+
+### Changed
+
+- Cleaned up supervision documentation, corrected the strategy tables and
+  README, and added a supervised-mode note (#27).
+
+### Removed
+
+- `adaptive_supervision.md`, superseded by the consolidated supervision docs
+  (#26).
+
+## [0.2.8] - 2026-08-03
+
+### Changed
+
+- **Sell strategy relocated** from a gene strategy to an organism strategy
+  (`pikaia/strategies/os_strategies/sell_strategy.py`); strategy docstrings and
+  type annotations cleaned up across the package (#24).
+
+## [0.2.7] - 2026-08-03
+
+### Added
+
+- **MkDocs Material documentation site** with `mike` version management and
+  `mkdocstrings`-generated API reference, replacing the Sphinx build (#24).
+
 ## [0.2.6] - 2026-07-30
 
 ### Added
@@ -59,7 +120,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `d_matrix_comparison.py` and strategy documentation now reflect 8 gene
   strategies / 40 combinations (was 5 strategies / 25 combinations)
 
-## [Unreleased]
+## [0.2.4] - 2026-07-20
+
+### Added
+
+- **Adaptive supervision** — an optional target `y` is threaded through
+  `StrategyContext` and every strategy `kernel()`, enabling supervised strategy
+  behaviour while remaining fully optional for unsupervised use (#18).
+
+## [0.2.3] - 2026-07-20
+
+### Added
+
+- Groundwork for adaptive supervision, released together with 0.2.4 (#18).
+
+## [0.2.2] - 2026-05-29
+
+### Changed
+
+- Updated README status shields; version bump (#12).
+
+## [0.2.1] - 2026-05-29
+
+### Changed
+
+- Synced `main` with `develop`; version bump (#10).
+
+## [0.2.0] - 2026-05-29
 
 ### Added
 
@@ -128,9 +215,12 @@ Maintenance release.
 
 Initial public release.
 
-[Unreleased]: https://github.com/danube-ai/pikaia/compare/v0.2.4...HEAD
-[0.2.5]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.5
-[0.2.3]: https://github.com/danube-ai/pikaia/releases/tag/v0.2.3
+[0.3.0]: https://github.com/danube-ai/pikaia/compare/v0.2.10...v0.3.0
+[0.2.10]: https://github.com/danube-ai/pikaia/compare/v0.2.6...v0.2.10
+[0.2.6]: https://github.com/danube-ai/pikaia/compare/v0.2.4...v0.2.6
+[0.2.4]: https://github.com/danube-ai/pikaia/compare/v0.2.2...v0.2.4
+[0.2.2]: https://github.com/danube-ai/pikaia/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/danube-ai/pikaia/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/danube-ai/pikaia/releases/tag/v0.1.0
 [0.0.3]: https://github.com/danube-ai/pikaia/releases/tag/v0.0.3
 [0.0.2]: https://github.com/danube-ai/pikaia/releases/tag/v0.0.2
