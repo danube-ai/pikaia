@@ -98,3 +98,66 @@ pip install pikaia==0.3.0
 |---|---|---|---|
 | Merge PR to `main` | push to `main` | TestPyPI + `dev` docs | CI (tests) |
 | Push `v*` tag | tag push | PyPI + versioned docs | Manual approval on `pypi` environment |
+
+---
+
+## Why trunk-based, and not GitFlow?
+
+pikaia previously used a **GitFlow**-style model: a long-lived `develop` branch for
+integration and a separate `main` branch for releases, with periodic `develop → main`
+"sync" pull requests. We deliberately moved away from it. Here's the reasoning.
+
+### The problem with the two-branch model
+
+GitFlow keeps two permanent branches in sync by merging one into the other. In
+practice this is fragile:
+
+- **Persistent divergence.** Every `develop → main` sync merged through the GitHub UI
+  creates a *new* merge/squash commit on `main` with a SHA that `develop` has never
+  seen. The moment the sync lands, the branches have diverged again — so the *next*
+  sync starts with a conflict, and it compounds over time.
+- **Recurring merge conflicts.** Because the histories never truly converge, routine
+  syncs repeatedly conflict on the same files (e.g. docs, changelogs), and resolving
+  them on a protected, linear-history branch often forces awkward workarounds.
+- **Release ≠ merge.** Tying "publish to PyPI" to "merge into `main`" means the branch
+  topology *is* the release mechanism. Any merge accident becomes a publish accident,
+  and PyPI uploads are irreversible.
+- **Overhead with little benefit.** For a library with a linear release cadence (no
+  parallel maintenance of many released versions), the second long-lived branch adds
+  ceremony without buying isolation you actually use.
+
+Notably, GitFlow's own author added a
+[reflection note](https://nvie.com/posts/a-successful-git-branching-model/) recommending
+*against* it for teams doing continuous delivery of a single versioned product —
+exactly pikaia's situation.
+
+### The trunk-based model we adopted
+
+- **One long-lived branch (`main`).** Short-lived feature branches merge into it and are
+  deleted. There is no second branch to keep in sync, so the divergence/conflict cycle
+  simply cannot happen.
+- **Releases are tags, not merges.** A production release is an explicit, intentional act
+  — pushing a `v*` tag — decoupled from day-to-day merges. The tag is an immutable
+  pointer to an exact commit, which is a natural fit for "this is version X.Y.Z".
+- **Continuous validation.** Every merge to `main` still exercises the full build and
+  publishes to TestPyPI, so integration problems surface immediately rather than at
+  release time.
+- **A real gate where it matters.** The one irreversible step — uploading to production
+  PyPI — sits behind a manual approval on the `pypi` environment, instead of being an
+  implicit side effect of a branch merge.
+
+### This is the mainstream approach for Python libraries
+
+Major, widely used Python packages release from a **single branch + tags**, not GitFlow.
+For example [pydantic](https://github.com/pydantic/pydantic),
+[httpx](https://github.com/encode/httpx), [Flask](https://github.com/pallets/flask), and
+[requests](https://github.com/psf/requests) all develop on one trunk (`main`/`master`)
+and cut releases from tags; long-lived side branches, when they exist at all, are
+`x.y`-style **maintenance** branches for backporting fixes to *already-released* major
+versions — not a parallel integration branch. Tag-triggered publishing (e.g.
+`on: push: tags: ['v*']`) is the same pattern used by tooling like
+[uv](https://github.com/astral-sh/uv) and [ruff](https://github.com/astral-sh/ruff).
+
+If pikaia ever needs to support multiple released major versions simultaneously, the
+right addition is a `x.y`-maintenance branch for backports — **not** a return to a
+`develop` integration branch.
