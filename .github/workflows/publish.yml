@@ -3,13 +3,14 @@ name: Publish
 on:
   push:
     branches:
-      - main
       - develop
+    tags:
+      - "v*"
 
 permissions:
   contents: read
 
-# Serialize publishes per branch; never cancel an in-flight publish.
+# Serialize publishes per ref; never cancel an in-flight publish.
 concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
@@ -51,7 +52,8 @@ jobs:
       - name: Determine target index
         id: index
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          # Tag push (v*) -> production PyPI; branch push -> TestPyPI.
+          if [ "${{ github.ref_type }}" = "tag" ]; then
             echo "index=pypi" >> "$GITHUB_OUTPUT"
           else
             echo "index=testpypi" >> "$GITHUB_OUTPUT"
@@ -77,7 +79,7 @@ jobs:
   publish-testpypi:
     name: Publish to TestPyPI
     needs: build
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref_type == 'branch'
     runs-on: ubuntu-latest
     environment:
       name: testpypi
@@ -102,10 +104,11 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
-    # Configure required reviewers on this environment in repo Settings ->
-    # Environments -> "pypi" to enforce a manual approval gate before upload.
+    # A version tag (v*) is the release trigger. The "pypi" environment
+    # enforces a manual approval gate (Settings -> Environments -> pypi)
+    # before any upload to production PyPI.
     environment:
       name: pypi
       url: https://pypi.org/project/pikaia/
@@ -123,34 +126,3 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
           verbose: true
           print-hash: true
-
-  tag-release:
-    name: Tag Release
-    needs: publish-pypi
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Read version
-        id: version
-        run: |
-          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Create and push tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists; skipping."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
