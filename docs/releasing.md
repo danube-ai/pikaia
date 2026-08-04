@@ -148,14 +148,19 @@ exactly pikaia's situation.
 
 ### This is the mainstream approach for Python libraries
 
-Major, widely used Python packages release from a **single branch + tags**, not GitFlow.
-For example [pydantic](https://github.com/pydantic/pydantic),
-[httpx](https://github.com/encode/httpx), [Flask](https://github.com/pallets/flask), and
-[requests](https://github.com/psf/requests) all develop on one trunk (`main`/`master`)
-and cut releases from tags; long-lived side branches, when they exist at all, are
-`x.y`-style **maintenance** branches for backporting fixes to *already-released* major
-versions — not a parallel integration branch. Tag-triggered publishing (e.g.
-`on: push: tags: ['v*']`) is the same pattern used by tooling like
+The Python libraries pikaia takes as models all release from a **single branch + tags**,
+not GitFlow:
+
+- [**pydantic**](https://github.com/pydantic/pydantic) — trunk on `main`
+- [**FastAPI**](https://github.com/fastapi/fastapi) — trunk on `master`
+- [**Typer**](https://github.com/fastapi/typer) — trunk on `master`
+- [**SQLModel**](https://github.com/fastapi/sqlmodel) — trunk on `main`
+
+None of them keep a long-lived `develop` integration branch: feature branches merge
+straight into the trunk and releases are cut from tags. Where long-lived side branches
+exist at all, they are `x.y`-style **maintenance** branches for backporting fixes to
+*already-released* versions — not a parallel integration branch. Tag-triggered publishing
+(`on: push: tags: ['v*']`) is likewise the pattern used by tooling such as
 [uv](https://github.com/astral-sh/uv) and [ruff](https://github.com/astral-sh/ruff).
 
 If pikaia ever needs to support multiple released major versions simultaneously, the
