@@ -60,6 +60,10 @@ jobs:
           fi
 
       - name: Refuse to publish duplicate version
+        # Only a hard failure for production PyPI (irreversible). TestPyPI
+        # tolerates re-runs of an unbumped version via skip-existing below,
+        # so every merge to main can publish without failing the workflow.
+        if: steps.index.outputs.index == 'pypi'
         run: uv run --no-project .github/scripts/check_pypi_version.py "${{ steps.index.outputs.index }}" pyproject.toml
 
       - name: Build package
