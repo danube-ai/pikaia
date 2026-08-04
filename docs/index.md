@@ -12,7 +12,7 @@ Welcome to the documentation for **pikaia**, a Python package for data analysis 
 - Visualizes gene and organism fitness over time
 - Extensible and modular design
 
-New to pikaia? Start with the [Tutorial](tutorial.md). For a conceptual introduction, see the [Overview](overview.md).
+New to pikaia? Start with the [Tutorial](tutorial.md). For a conceptual introduction, see the [Overview](overview.md). For the full API, see the [Reference](reference.md). To add new strategies, see the [Contributor Guide](contributing.md).
 
 ## Quick Start
 

@@ -24,7 +24,7 @@ pikaia/
 ├── tests/
 │   └── unit/                 # One file per strategy family
 ├── examples/                 # Runnable scripts (example1.py … example6.py)
-└── docs/                     # Sphinx source (this file lives here)
+└── docs/                     # MkDocs source (this file lives here)
 ```
 
 ---

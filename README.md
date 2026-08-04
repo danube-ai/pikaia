@@ -193,7 +193,7 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 - Genetic AI does **not** use training data to 'learn', but instead autonomously analyzes a problem using evolutionary strategies that capture behaviors and correlations in the data.
 - This approach is useful for understanding complex datasets, optimization, and exploring emergent properties in data-driven systems.
 
-**Preprint:** [Genetic AI (arXiv)](http://arxiv.org/abs/2501.19113)
+**Preprint:** [Genetic AI (arXiv)](https://arxiv.org/abs/2501.19113)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
