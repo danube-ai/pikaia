@@ -16,7 +16,7 @@
         <link rel="prev" href="../overview/">
       
       
-        <link rel="next" href="../reference/">
+        <link rel="next" href="../releasing/">
       
       
         
@@ -295,6 +295,25 @@
     
   
   Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../releasing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Releasing
 
       </a>
     </li>
@@ -692,6 +711,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#branching-and-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branching and releases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pre-pr-checklist" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -717,6 +747,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1011,14 +1068,25 @@
 </code></pre></div>
 <p>All CI checks (ruff lint, ruff format, import ordering) run automatically on commit via pre-commit hooks. Fix issues flagged by the hook and re-commit.</p>
 <hr />
+<h2 id="branching-and-releases">Branching and releases<a class="headerlink" href="#branching-and-releases" title="Permanent link">&para;</a></h2>
+<p>pikaia uses a <strong>single-branch (trunk-based)</strong> model:</p>
+<ul>
+<li><strong><code>main</code></strong> is the only long-lived branch. Branch off it, open a PR into it, and merge with <strong>squash or rebase</strong> (<code>main</code> requires linear history).</li>
+<li>Every merge to <code>main</code> publishes to <strong>TestPyPI</strong> and updates the <code>dev</code> docs automatically — no version bump needed for regular PRs.</li>
+<li><strong>Production PyPI releases are cut by pushing a <code>v*</code> git tag</strong>, gated by a manual approval on the <code>pypi</code> environment.</li>
+</ul>
+<p>The full step-by-step release process lives in the <a href="../releasing/">Releasing guide</a>.</p>
+<hr />
 <h2 id="pre-pr-checklist">Pre-PR checklist<a class="headerlink" href="#pre-pr-checklist" title="Permanent link">&para;</a></h2>
 <p>Before opening a pull request, verify:</p>
 <ul>
-<li>[ ] Version bumped in <code>pyproject.toml</code></li>
 <li>[ ] <code>uv lock</code> run after <strong>any</strong> change to <code>pyproject.toml</code> (deps, version, extras) and the updated <code>uv.lock</code> committed — CI runs <code>uv lock --locked</code> and will fail if the lockfile is stale</li>
 <li>[ ] All unit tests pass: <code>uv run pytest tests/unit/</code></li>
 <li>[ ] Docs build cleanly: <code>uv run --extra docs mkdocs build</code></li>
 </ul>
+<blockquote>
+<p>Bumping <code>project.version</code> is a <strong>release</strong> step, not a per-PR requirement — see the <a href="../releasing/">Releasing guide</a>.</p>
+</blockquote>
 <hr />
 <h2 id="checklist-for-a-new-strategy">Checklist for a new strategy<a class="headerlink" href="#checklist-for-a-new-strategy" title="Permanent link">&para;</a></h2>
 <ul>
