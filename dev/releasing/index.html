@@ -665,6 +665,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#why-trunk-based-and-not-gitflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why trunk-based, and not GitFlow?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Why trunk-based, and not GitFlow?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem-with-the-two-branch-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The problem with the two-branch model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-trunk-based-model-we-adopted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The trunk-based model we adopted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#this-is-the-mainstream-approach-for-python-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        This is the mainstream approach for Python libraries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -808,6 +858,66 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="why-trunk-based-and-not-gitflow">Why trunk-based, and not GitFlow?<a class="headerlink" href="#why-trunk-based-and-not-gitflow" title="Permanent link">&para;</a></h2>
+<p>pikaia previously used a <strong>GitFlow</strong>-style model: a long-lived <code>develop</code> branch for
+integration and a separate <code>main</code> branch for releases, with periodic <code>develop → main</code>
+"sync" pull requests. We deliberately moved away from it. Here's the reasoning.</p>
+<h3 id="the-problem-with-the-two-branch-model">The problem with the two-branch model<a class="headerlink" href="#the-problem-with-the-two-branch-model" title="Permanent link">&para;</a></h3>
+<p>GitFlow keeps two permanent branches in sync by merging one into the other. In
+practice this is fragile:</p>
+<ul>
+<li><strong>Persistent divergence.</strong> Every <code>develop → main</code> sync merged through the GitHub UI
+  creates a <em>new</em> merge/squash commit on <code>main</code> with a SHA that <code>develop</code> has never
+  seen. The moment the sync lands, the branches have diverged again — so the <em>next</em>
+  sync starts with a conflict, and it compounds over time.</li>
+<li><strong>Recurring merge conflicts.</strong> Because the histories never truly converge, routine
+  syncs repeatedly conflict on the same files (e.g. docs, changelogs), and resolving
+  them on a protected, linear-history branch often forces awkward workarounds.</li>
+<li><strong>Release ≠ merge.</strong> Tying "publish to PyPI" to "merge into <code>main</code>" means the branch
+  topology <em>is</em> the release mechanism. Any merge accident becomes a publish accident,
+  and PyPI uploads are irreversible.</li>
+<li><strong>Overhead with little benefit.</strong> For a library with a linear release cadence (no
+  parallel maintenance of many released versions), the second long-lived branch adds
+  ceremony without buying isolation you actually use.</li>
+</ul>
+<p>Notably, GitFlow's own author added a
+<a href="https://nvie.com/posts/a-successful-git-branching-model/">reflection note</a> recommending
+<em>against</em> it for teams doing continuous delivery of a single versioned product —
+exactly pikaia's situation.</p>
+<h3 id="the-trunk-based-model-we-adopted">The trunk-based model we adopted<a class="headerlink" href="#the-trunk-based-model-we-adopted" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>One long-lived branch (<code>main</code>).</strong> Short-lived feature branches merge into it and are
+  deleted. There is no second branch to keep in sync, so the divergence/conflict cycle
+  simply cannot happen.</li>
+<li><strong>Releases are tags, not merges.</strong> A production release is an explicit, intentional act
+  — pushing a <code>v*</code> tag — decoupled from day-to-day merges. The tag is an immutable
+  pointer to an exact commit, which is a natural fit for "this is version X.Y.Z".</li>
+<li><strong>Continuous validation.</strong> Every merge to <code>main</code> still exercises the full build and
+  publishes to TestPyPI, so integration problems surface immediately rather than at
+  release time.</li>
+<li><strong>A real gate where it matters.</strong> The one irreversible step — uploading to production
+  PyPI — sits behind a manual approval on the <code>pypi</code> environment, instead of being an
+  implicit side effect of a branch merge.</li>
+</ul>
+<h3 id="this-is-the-mainstream-approach-for-python-libraries">This is the mainstream approach for Python libraries<a class="headerlink" href="#this-is-the-mainstream-approach-for-python-libraries" title="Permanent link">&para;</a></h3>
+<p>The Python libraries pikaia takes as models all release from a <strong>single branch + tags</strong>,
+not GitFlow:</p>
+<ul>
+<li><a href="https://github.com/pydantic/pydantic"><strong>pydantic</strong></a> — trunk on <code>main</code></li>
+<li><a href="https://github.com/fastapi/fastapi"><strong>FastAPI</strong></a> — trunk on <code>master</code></li>
+<li><a href="https://github.com/fastapi/typer"><strong>Typer</strong></a> — trunk on <code>master</code></li>
+<li><a href="https://github.com/fastapi/sqlmodel"><strong>SQLModel</strong></a> — trunk on <code>main</code></li>
+</ul>
+<p>None of them keep a long-lived <code>develop</code> integration branch: feature branches merge
+straight into the trunk and releases are cut from tags. Where long-lived side branches
+exist at all, they are <code>x.y</code>-style <strong>maintenance</strong> branches for backporting fixes to
+<em>already-released</em> versions — not a parallel integration branch. Tag-triggered publishing
+(<code>on: push: tags: ['v*']</code>) is likewise the pattern used by tooling such as
+<a href="https://github.com/astral-sh/uv">uv</a> and <a href="https://github.com/astral-sh/ruff">ruff</a>.</p>
+<p>If pikaia ever needs to support multiple released major versions simultaneously, the
+right addition is a <code>x.y</code>-maintenance branch for backports — <strong>not</strong> a return to a
+<code>develop</code> integration branch.</p>
 
 
 
