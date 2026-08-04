@@ -48,6 +48,7 @@ nav:
   - Tutorial: tutorial.md
   - Overview: overview.md
   - Contributing: contributing.md
+  - Releasing: releasing.md
   - Reference: reference.md
 
 markdown_extensions:
