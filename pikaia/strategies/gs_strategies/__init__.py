@@ -12,6 +12,7 @@ from .reward_easy_strategy import RewardEasyGeneStrategy
 from .reward_hard_strategy import RewardHardGeneStrategy
 from .selfish_strategy import SelfishGeneStrategy
 from .valuation_blend_strategy import ValuationBlendGeneStrategy
+from .variance_strategy import VarianceGeneStrategy
 
 __all__ = [
     "AltruisticGeneStrategy",
@@ -26,4 +27,5 @@ __all__ = [
     "RewardHardGeneStrategy",
     "SelfishGeneStrategy",
     "ValuationBlendGeneStrategy",
+    "VarianceGeneStrategy",
 ]
