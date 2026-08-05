@@ -23,6 +23,7 @@ from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
+from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
@@ -92,6 +93,36 @@ class TestDominantGeneStrategyKernel:
         pop, (D, _) = result
         x_bar = pop.matrix.mean(axis=0)
         expected = np.diag(4.0 * (x_bar - 0.5))
+        np.testing.assert_allclose(D, expected)
+
+    def test_D_shape(self, result):
+        pop, (D, _) = result
+        assert D.shape == (pop.M, pop.M)
+
+
+class TestVarianceGeneStrategyKernel:
+    @pytest.fixture
+    def result(self):
+        pop = _make_pop(11, 8, 4)
+        gs, os_, R = _make_sims(pop)
+        return pop, VarianceGeneStrategy().kernel(pop, gs, os_, R)
+
+    def test_returns_D_none_d(self, result):
+        _, (D, d) = result
+        assert D is not None
+        assert d is None
+
+    def test_D_is_diagonal(self, result):
+        pop, (D, _) = result
+        off = D - np.diag(np.diag(D))
+        assert np.allclose(off, 0), "Variance gene D must be diagonal"
+
+    def test_diagonal_formula(self, result):
+        pop, (D, _) = result
+        std = pop.matrix.std(axis=0, ddof=0)
+        s_hat = std / (std.max() + 1e-8)
+        x_bar = pop.matrix.mean(axis=0)
+        expected = np.diag(4.0 * s_hat * (x_bar - 0.5))
         np.testing.assert_allclose(D, expected)
 
     def test_D_shape(self, result):
@@ -596,6 +627,7 @@ ALL_STRATEGIES = [
     RewardHardGeneStrategy(),
     RewardEasyGeneStrategy(),
     ValuationBlendGeneStrategy(),
+    VarianceGeneStrategy(),
     SellOrgStrategy(),
     NoneGeneStrategy(),
     BalancedOrgStrategy(),

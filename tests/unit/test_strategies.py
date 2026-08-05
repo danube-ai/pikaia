@@ -19,6 +19,7 @@ from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
+from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
 from pikaia.strategies.mix_strategies.self_consistent_strategy import (
     SelfConsistentMixStrategy,
@@ -494,6 +495,74 @@ class TestValuationBlendGeneStrategy:
         ctx = _make_gene_context()
         result = ValuationBlendGeneStrategy(preference=0.5)(ctx)
         assert result == pytest.approx(0.0, abs=1e-10)
+
+
+class TestVarianceGeneStrategy:
+    """Tests for VarianceGeneStrategy."""
+
+    def test_name(self):
+        assert VarianceGeneStrategy().name == "Variance"
+
+    def test_call_returns_float(self):
+        ctx = _make_gene_context()
+        result = VarianceGeneStrategy()(ctx)
+        assert isinstance(result, float)
+        assert np.isfinite(result)
+
+    def test_call_deterministic(self):
+        ctx = _make_gene_context()
+        s = VarianceGeneStrategy()
+        assert s(ctx) == s(ctx)
+
+    def test_high_std_gene_larger_abs_delta(self):
+        """High-dispersion gene should get larger |delta| than near-constant gene."""
+        # Col 0 nearly constant; col 1 spans [0, 1]
+        matrix = np.array(
+            [
+                [0.50, 0.0],
+                [0.51, 0.5],
+                [0.49, 1.0],
+                [0.50, 0.25],
+                [0.50, 0.75],
+            ]
+        )
+        population = PikaiaPopulation(matrix)
+        gene_fitness = np.array([0.5, 0.5])
+        org_fitness = matrix @ gene_fitness
+        n, m = matrix.shape
+        org_similarity = np.eye(n)
+        gene_similarity = np.eye(m)
+        initial_org_fitness_range = float(org_fitness.max() - org_fitness.min())
+        s = VarianceGeneStrategy()
+        delta_low = s(
+            StrategyContext(
+                population=population,
+                org_fitness=org_fitness,
+                gene_fitness=gene_fitness,
+                org_similarity=org_similarity,
+                gene_similarity=gene_similarity,
+                initial_org_fitness_range=initial_org_fitness_range,
+                org_id=0,
+                gene_id=0,
+            )
+        )
+        delta_high = s(
+            StrategyContext(
+                population=population,
+                org_fitness=org_fitness,
+                gene_fitness=gene_fitness,
+                org_similarity=org_similarity,
+                gene_similarity=gene_similarity,
+                initial_org_fitness_range=initial_org_fitness_range,
+                org_id=0,
+                gene_id=1,
+            )
+        )
+        assert abs(delta_high) > abs(delta_low)
+
+    def test_factory_round_trip(self):
+        strategy = GeneStrategyFactory.get_strategy(GeneStrategyEnum.VARIANCE)
+        assert isinstance(strategy, VarianceGeneStrategy)
 
 
 class TestSelfishGeneStrategy:
