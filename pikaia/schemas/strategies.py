@@ -65,6 +65,9 @@ class GeneStrategyEnum(str, Enum):
     Suppresses features that are highly correlated with their peers.
     """
 
+    VARIANCE = "VARIANCE"
+    """Rewards genes with high cross-organism dispersion (column std)."""
+
     NONE = "NONE"
     """No specific strategy — zero contribution."""
 
