@@ -26,6 +26,7 @@ from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
 from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
     ValuationBlendGeneStrategy,
 )
+from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
 from pikaia.strategies.mix_strategies.self_consistent_strategy import (
     SelfConsistentMixStrategy,
@@ -60,6 +61,7 @@ class GeneStrategyFactory:
         GeneStrategyEnum.ORTHO_GENE: OrthoGeneStrategy,
         GeneStrategyEnum.PARTIAL_CORR: PartialCorrGeneStrategy,
         GeneStrategyEnum.REDUNDANCY_PENALTY: RedundancyPenaltyGeneStrategy,
+        GeneStrategyEnum.VARIANCE: VarianceGeneStrategy,
         GeneStrategyEnum.NONE: NoneGeneStrategy,
     }
 
