@@ -825,7 +825,7 @@
 <td>Rewards genes with high entropy; supports supervised mode</td>
 </tr>
 <tr>
-<td><code>ORTHOGONALITY</code></td>
+<td><code>ORTHO_GENE</code></td>
 <td>Rewards genes that are uncorrelated with each other; supports supervised mode</td>
 </tr>
 <tr>
@@ -887,7 +887,7 @@
 </tbody>
 </table>
 <h3 id="supervised-mode">Supervised mode<a class="headerlink" href="#supervised-mode" title="Permanent link">&para;</a></h3>
-<p>Four gene strategies (<code>ENTROPY_MAX</code>, <code>ORTHOGONALITY</code>, <code>PARTIAL_CORR</code>, <code>REDUNDANCY_PENALTY</code>) can optionally incorporate a target variable. Pass <code>y</code> to <code>PikaiaModel</code> and they blend it into their signal automatically — without <code>y</code> they run fully unsupervised:</p>
+<p>Four gene strategies (<code>ENTROPY_MAX</code>, <code>ORTHO_GENE</code>, <code>PARTIAL_CORR</code>, <code>REDUNDANCY_PENALTY</code>) can optionally incorporate a target variable. Pass <code>y</code> to <code>PikaiaModel</code> and they blend it into their signal automatically — without <code>y</code> they run fully unsupervised:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="n">gene_strategies</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="mixing-strategies-mixstrategy">Mixing strategies (<code>MixStrategy</code>)<a class="headerlink" href="#mixing-strategies-mixstrategy" title="Permanent link">&para;</a></h3>
@@ -925,7 +925,12 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </code></pre></div>
-<p>All built-in strategies support the D-matrix path — each implements <code>kernel()</code> returning at least one non-<code>None</code> term. The only combination that cannot use it is one where every active strategy returns <code>(None, None)</code> from <code>kernel()</code> (i.e. exclusively <code>NONE</code> strategies). Custom strategies must implement <code>kernel()</code> to participate; see the <a href="../contributing/">Contributor Guide</a>.</p>
+<p>Most built-in strategies support the D-matrix path — each implements <code>kernel()</code> returning at least one non-<code>None</code> term. Two categories are exceptions:</p>
+<ul>
+<li><strong><code>NONE</code> strategies</strong> return <code>(None, None)</code>; a combination of only <code>NONE</code> strategies has no kernel at all.</li>
+<li><strong>The trading buy strategies</strong> (<code>BUY_HARD</code>, <code>BUY_UNIFORM</code>, <code>BUY_EASY</code>) do <strong>not</strong> support the D-matrix path. Their per-organism delta (<code>buy_abs / γ_j</code>) depends on the current gene fitness <strong>γ</strong> in a way that cannot be captured by a static <code>(D, d)</code> kernel, so they only run correctly under the standard iterative loop. If you enable <code>use_d_matrix=True</code> with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.</li>
+</ul>
+<p>Custom strategies must implement <code>kernel()</code> to participate; see the <a href="../contributing/">Contributor Guide</a>.</p>
 <hr />
 <h2 id="key-classes">Key classes<a class="headerlink" href="#key-classes" title="Permanent link">&para;</a></h2>
 <table>
