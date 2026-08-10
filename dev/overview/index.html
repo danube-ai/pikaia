@@ -805,16 +805,20 @@
 <td>Altruistic within a similarity neighbourhood</td>
 </tr>
 <tr>
-<td><code>REWARD_HARD</code></td>
-<td>Rewards genes that are rarely expressed (high exclusiveness)</td>
+<td><code>SELL_HARD</code></td>
+<td>Drains value from rare genes (high exclusiveness); pair with <code>BUY_HARD</code> for full trading behaviour</td>
 </tr>
 <tr>
-<td><code>REWARD_EASY</code></td>
-<td>Rewards genes that are commonly expressed (low exclusiveness)</td>
+<td><code>SELL_UNIFORM</code></td>
+<td>Drains value uniformly regardless of gene difficulty; pair with <code>BUY_UNIFORM</code> for full trading behaviour</td>
 </tr>
 <tr>
-<td><code>VALUATION_BLEND</code></td>
-<td>Interpolates between REWARD_HARD and REWARD_EASY via a <code>preference</code> parameter</td>
+<td><code>SELL_EASY</code></td>
+<td>Drains value from common genes — inverse of <code>SELL_HARD</code>; pair with <code>BUY_EASY</code> for full trading behaviour</td>
+</tr>
+<tr>
+<td><code>VARIANCE</code></td>
+<td>Rewards genes with high cross-organism dispersion</td>
 </tr>
 <tr>
 <td><code>ENTROPY_MAX</code></td>
@@ -865,12 +869,16 @@
 <td>Selfish within a similarity neighbourhood</td>
 </tr>
 <tr>
-<td><code>SELL</code></td>
-<td>Drains value from genes proportional to their difficulty odds; pair with <code>BUY</code></td>
+<td><code>BUY_HARD</code></td>
+<td>Redistributes capital to easy genes the organism failed; pair with <code>SELL_HARD</code></td>
 </tr>
 <tr>
-<td><code>BUY</code></td>
-<td>Redistributes sell capital from high-performing organisms to genes they lack; pair with <code>SELL</code></td>
+<td><code>BUY_UNIFORM</code></td>
+<td>Redistributes capital to hard genes the organism failed; pair with <code>SELL_UNIFORM</code></td>
+</tr>
+<tr>
+<td><code>BUY_EASY</code></td>
+<td>Inverse redistribution — mirror of <code>BUY_HARD</code>; pair with <code>SELL_EASY</code></td>
 </tr>
 <tr>
 <td><code>NONE</code></td>

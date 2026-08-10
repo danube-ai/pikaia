@@ -7401,24 +7401,24 @@ Custom title for the plot. If None, a default title is used.</p>
 <a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Gene acts altruistically toward others.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19"></a>    <span class="n">SELL_HARD</span> <span class="o">=</span> <span class="s2">&quot;SELL_HARD&quot;</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Difficulty1 (&quot;fair&quot;) sell signal.</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading sell signal weighted by gene difficulty.</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21"></a>
 <a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    Hard genes (low mean expression) lose more value per unit of performance.</span>
 <a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    Pair with ``OrgStrategyEnum.BUY_HARD``.</span>
 <a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25"></a>
 <a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">SELL_UNIFORM</span> <span class="o">=</span> <span class="s2">&quot;SELL_UNIFORM&quot;</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Difficulty2 (&quot;inclusive&quot;) sell signal.</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading sell signal applied uniformly to all genes.</span>
 <a id="__codelineno-0-28" name="__codelineno-0-28"></a>
 <a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">    All genes lose value at the same rate, independent of difficulty.</span>
 <a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    Pair with ``OrgStrategyEnum.BUY_UNIFORM``.</span>
 <a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32"></a>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="n">SELL_EASY</span> <span class="o">=</span> <span class="s2">&quot;SELL_EASY&quot;</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Inverse sell signal.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading sell signal weighted by gene ease — the inverse of ``SELL_HARD``.</span>
 <a id="__codelineno-0-35" name="__codelineno-0-35"></a>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Easy genes (high mean expression) lose more value — the mirror of</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    ``SELL_HARD``.  Pair with ``OrgStrategyEnum.BUY_EASY``.</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Easy genes (high mean expression) lose more value.</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Pair with ``OrgStrategyEnum.BUY_EASY``.</span>
 <a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a>
 <a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="n">ENTROPY_MAX</span> <span class="o">=</span> <span class="s2">&quot;ENTROPY_MAX&quot;</span>
@@ -7695,9 +7695,9 @@ all other features.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Inverse sell signal.</p>
-<p>Easy genes (high mean expression) lose more value — the mirror of
-<code>SELL_HARD</code>.  Pair with <code>OrgStrategyEnum.BUY_EASY</code>.</p>
+        <p>Trading sell signal weighted by gene ease — the inverse of <code>SELL_HARD</code>.</p>
+<p>Easy genes (high mean expression) lose more value.
+Pair with <code>OrgStrategyEnum.BUY_EASY</code>.</p>
 
     </div>
 
@@ -7720,7 +7720,7 @@ all other features.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Difficulty1 ("fair") sell signal.</p>
+        <p>Trading sell signal weighted by gene difficulty.</p>
 <p>Hard genes (low mean expression) lose more value per unit of performance.
 Pair with <code>OrgStrategyEnum.BUY_HARD</code>.</p>
 
@@ -7745,7 +7745,7 @@ Pair with <code>OrgStrategyEnum.BUY_HARD</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Difficulty2 ("inclusive") sell signal.</p>
+        <p>Trading sell signal applied uniformly to all genes.</p>
 <p>All genes lose value at the same rate, independent of difficulty.
 Pair with <code>OrgStrategyEnum.BUY_UNIFORM</code>.</p>
 
@@ -7868,23 +7868,23 @@ Pair with <code>OrgStrategyEnum.BUY_UNIFORM</code>.</p>
 <a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Organism acts selfishly, promoting its own gene expression.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-87" name="__codelineno-0-87"></a>
 <a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="n">BUY_HARD</span> <span class="o">=</span> <span class="s2">&quot;BUY_HARD&quot;</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Difficulty1 (&quot;fair&quot;) buy-phase signal.</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading buy-phase paired with ``SELL_HARD``.</span>
 <a id="__codelineno-0-90" name="__codelineno-0-90"></a>
 <a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    Redistributes hard-gene sell capital to easy genes the organism failed.</span>
 <a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    Pair with ``GeneStrategyEnum.SELL_HARD``.</span>
 <a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-94" name="__codelineno-0-94"></a>
 <a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">BUY_UNIFORM</span> <span class="o">=</span> <span class="s2">&quot;BUY_UNIFORM&quot;</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Difficulty2 (&quot;inclusive&quot;) buy-phase signal.</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading buy-phase paired with ``SELL_UNIFORM``.</span>
 <a id="__codelineno-0-97" name="__codelineno-0-97"></a>
 <a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    Redistributes uniform sell capital to hard genes the organism failed.</span>
 <a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    Pair with ``GeneStrategyEnum.SELL_UNIFORM``.</span>
 <a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-101" name="__codelineno-0-101"></a>
 <a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="n">BUY_EASY</span> <span class="o">=</span> <span class="s2">&quot;BUY_EASY&quot;</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CalSim Inverse buy-phase signal.</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading buy-phase paired with ``SELL_EASY`` — mirror of ``BUY_HARD``.</span>
 <a id="__codelineno-0-104" name="__codelineno-0-104"></a>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    Mirror of ``BUY_HARD`` — redistributes with inverted sign.</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    Redistributes capital with inverted sign relative to ``BUY_HARD``.</span>
 <a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    Pair with ``GeneStrategyEnum.SELL_EASY``.</span>
 <a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-108" name="__codelineno-0-108"></a>
@@ -7966,8 +7966,8 @@ Pair with <code>OrgStrategyEnum.BUY_UNIFORM</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Inverse buy-phase signal.</p>
-<p>Mirror of <code>BUY_HARD</code> — redistributes with inverted sign.
+        <p>Trading buy-phase paired with <code>SELL_EASY</code> — mirror of <code>BUY_HARD</code>.</p>
+<p>Redistributes capital with inverted sign relative to <code>BUY_HARD</code>.
 Pair with <code>GeneStrategyEnum.SELL_EASY</code>.</p>
 
     </div>
@@ -7991,7 +7991,7 @@ Pair with <code>GeneStrategyEnum.SELL_EASY</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Difficulty1 ("fair") buy-phase signal.</p>
+        <p>Trading buy-phase paired with <code>SELL_HARD</code>.</p>
 <p>Redistributes hard-gene sell capital to easy genes the organism failed.
 Pair with <code>GeneStrategyEnum.SELL_HARD</code>.</p>
 
@@ -8016,7 +8016,7 @@ Pair with <code>GeneStrategyEnum.SELL_HARD</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>CalSim Difficulty2 ("inclusive") buy-phase signal.</p>
+        <p>Trading buy-phase paired with <code>SELL_UNIFORM</code>.</p>
 <p>Redistributes uniform sell capital to hard genes the organism failed.
 Pair with <code>GeneStrategyEnum.SELL_UNIFORM</code>.</p>
 
@@ -11199,7 +11199,7 @@ stored in <code>self.options</code>.</p>
 
 
 
-        <p>Gene strategy implementing the CalSim Difficulty1 sell signal.</p>
+        <p>Trading sell signal weighted by gene difficulty.</p>
 <p>Hard genes (low mean expression, high exclusiveness) lose more value per
 unit of performance — organisms that solved them "sell" at a premium.</p>
 <p>For organism <em>i</em>, gene <em>j</em>:</p>
@@ -11209,10 +11209,9 @@ unit of performance — organisms that solved them "sell" at a premium.</p>
     \cdot \frac{\text{excl}_j}{1 - \text{excl}_j + \varepsilon}
 \]</div>
 <p>Summed over all organisms this equals
-<code>-mean_j · excl_j / (1 - excl_j)</code>, which is the proportional sell loss
-in CalSim's Difficulty1 round.</p>
-<p>Pair with <code>BuyHardOrgStrategy</code> to reproduce a full CalSim Difficulty1
-("fair") recalibration round.</p>
+<code>-mean_j · excl_j / (1 - excl_j)</code>, the proportional sell loss
+weighted by gene difficulty.</p>
+<p>Pair with <code>BuyHardOrgStrategy</code> for the full hard-gene trading round.</p>
 
 
 
@@ -11273,10 +11272,9 @@ in CalSim's Difficulty1 round.</p>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellHardGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellHardGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Gene strategy implementing the CalSim Difficulty1 sell signal.</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Trading sell signal weighted by gene difficulty.</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    Hard genes (low mean expression, high exclusiveness) lose more value per</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    unit of performance — organisms that solved them &quot;sell&quot; at a premium.</span>
@@ -11290,42 +11288,41 @@ in CalSim's Difficulty1 round.</p>
 <a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    $$</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21"></a>
 <a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    Summed over all organisms this equals</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    ``-mean_j · excl_j / (1 - excl_j)``, which is the proportional sell loss</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    in CalSim&#39;s Difficulty1 round.</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    ``-mean_j · excl_j / (1 - excl_j)``, the proportional sell loss</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    weighted by gene difficulty.</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    Pair with `BuyHardOrgStrategy` to reproduce a full CalSim Difficulty1</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    (&quot;fair&quot;) recalibration round.</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="k">return</span> <span class="s2">&quot;SellHard&quot;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">N</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">sell_signal_j</span> <span class="o">=</span> <span class="n">excl_j</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl_j</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">*</span> <span class="n">sell_signal_j</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    Pair with `BuyHardOrgStrategy` for the full hard-gene trading round.</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>        <span class="k">return</span> <span class="s2">&quot;SellHard&quot;</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">N</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">sell_signal_j</span> <span class="o">=</span> <span class="n">excl_j</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl_j</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">*</span> <span class="n">sell_signal_j</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -11358,7 +11355,8 @@ in CalSim's Difficulty1 round.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>pikaia/strategies/gs_strategies/sell_hard_strategy.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-45">45</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
@@ -11370,21 +11368,20 @@ in CalSim's Difficulty1 round.</p>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -11416,7 +11413,7 @@ in CalSim's Difficulty1 round.</p>
 
 
 
-        <p>Gene strategy implementing the CalSim Difficulty2 sell signal.</p>
+        <p>Trading sell signal applied uniformly to all genes.</p>
 <p>All genes lose value at the same rate regardless of difficulty — organisms
 "sell" their solved genes uniformly.</p>
 <p>For organism <em>i</em>, gene <em>j</em>:</p>
@@ -11425,8 +11422,7 @@ in CalSim's Difficulty1 round.</p>
 \]</div>
 <p>Summed over all organisms this equals <code>-mean_j</code>, a uniform sell loss
 independent of gene difficulty.</p>
-<p>Pair with <code>BuyUniformOrgStrategy</code> to reproduce a full CalSim Difficulty2
-("inclusive") recalibration round.</p>
+<p>Pair with <code>BuyUniformOrgStrategy</code> for the full uniform trading round.</p>
 
 
 
@@ -11487,10 +11483,9 @@ independent of gene difficulty.</p>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellUniformGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellUniformGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Gene strategy implementing the CalSim Difficulty2 sell signal.</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Trading sell signal applied uniformly to all genes.</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    All genes lose value at the same rate regardless of difficulty — organisms</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    &quot;sell&quot; their solved genes uniformly.</span>
@@ -11504,42 +11499,41 @@ independent of gene difficulty.</p>
 <a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    Summed over all organisms this equals ``-mean_j``, a uniform sell loss</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    independent of gene difficulty.</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22"></a>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    Pair with `BuyUniformOrgStrategy` to reproduce a full CalSim Difficulty2</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    (&quot;inclusive&quot;) recalibration round.</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a>        <span class="k">return</span> <span class="s2">&quot;SellUniform&quot;</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">j</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="c1"># CalSim D2: vdeltaSell=0 when excl=0 (all solved) or excl=1 (none solved)</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="k">if</span> <span class="n">excl_j</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">or</span> <span class="n">excl_j</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">:</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>            <span class="k">return</span> <span class="mf">0.0</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j`` for non-trivial genes only.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">mean</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean</span> <span class="o">*</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    Pair with `BuyUniformOrgStrategy` for the full uniform trading round.</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>        <span class="k">return</span> <span class="s2">&quot;SellUniform&quot;</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">j</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="c1"># Skip genes with trivial exclusiveness: all-solved (excl≈0) or none-solved (excl≈1)</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="k">if</span> <span class="n">excl_j</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">or</span> <span class="n">excl_j</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">:</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>            <span class="k">return</span> <span class="mf">0.0</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j`` for non-trivial genes only.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">mean</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean</span> <span class="o">*</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -11572,7 +11566,8 @@ independent of gene difficulty.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>pikaia/strategies/gs_strategies/sell_uniform_strategy.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-45">45</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
@@ -11584,21 +11579,20 @@ independent of gene difficulty.</p>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j`` for non-trivial genes only.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">mean</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean</span> <span class="o">*</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = -mean_j`` for non-trivial genes only.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">mean</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean</span> <span class="o">*</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -11630,9 +11624,8 @@ independent of gene difficulty.</p>
 
 
 
-        <p>Gene strategy implementing the CalSim Inverse sell signal.</p>
-<p>Easy genes (high mean expression, low exclusiveness) lose more value —
-the sell signal is inverted relative to <code>SellHardGeneStrategy</code>.</p>
+        <p>Trading sell signal weighted by gene ease — the inverse of <code>SellHardGeneStrategy</code>.</p>
+<p>Easy genes (high mean expression, low exclusiveness) lose more value.</p>
 <p>For organism <em>i</em>, gene <em>j</em>:</p>
 <div class="arithmatex">\[
 \Delta_{\text{sell\_easy}}(i, j) =
@@ -11642,8 +11635,7 @@ the sell signal is inverted relative to <code>SellHardGeneStrategy</code>.</p>
 <p>Summed over all organisms this equals
 <code>+mean_j · excl_j / (1 - excl_j)</code>, the exact negation of the
 <code>SellHardGeneStrategy</code> signal.</p>
-<p>Pair with <code>BuyEasyOrgStrategy</code> to reproduce a full CalSim Inverse
-recalibration round.</p>
+<p>Pair with <code>BuyEasyOrgStrategy</code> for the full easy-gene trading round.</p>
 
 
 
@@ -11703,60 +11695,56 @@ recalibration round.</p>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellEasyGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">SellEasyGeneStrategy</span><span class="p">(</span><span class="n">GeneStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Gene strategy implementing the CalSim Inverse sell signal.</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Trading sell signal weighted by gene ease — the inverse of `SellHardGeneStrategy`.</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    Easy genes (high mean expression, low exclusiveness) lose more value —</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    the sell signal is inverted relative to `SellHardGeneStrategy`.</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="sd">    For organism *i*, gene *j*:</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">    $$</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">    \\Delta_{\\text{sell\\_easy}}(i, j) =</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">        +\\frac{x_{ij}}{N}</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">        \\cdot \\frac{\\text{excl}_j}{1 - \\text{excl}_j + \\varepsilon}</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    $$</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21"></a>
-<a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    Summed over all organisms this equals</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    ``+mean_j · excl_j / (1 - excl_j)``, the exact negation of the</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    ``SellHardGeneStrategy`` signal.</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    Pair with `BuyEasyOrgStrategy` to reproduce a full CalSim Inverse</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    recalibration round.</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="k">return</span> <span class="s2">&quot;SellEasy&quot;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">N</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">sell_signal_j</span> <span class="o">=</span> <span class="n">excl_j</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl_j</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">*</span> <span class="n">sell_signal_j</span><span class="p">)</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = +mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">d</span> <span class="o">=</span> <span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    Easy genes (high mean expression, low exclusiveness) lose more value.</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="sd">    For organism *i*, gene *j*:</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    $$</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">    \\Delta_{\\text{sell\\_easy}}(i, j) =</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">        +\\frac{x_{ij}}{N}</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">        \\cdot \\frac{\\text{excl}_j}{1 - \\text{excl}_j + \\varepsilon}</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">    $$</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    Summed over all organisms this equals</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    ``+mean_j · excl_j / (1 - excl_j)``, the exact negation of the</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    ``SellHardGeneStrategy`` signal.</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    Pair with `BuyEasyOrgStrategy` for the full easy-gene trading round.</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>        <span class="k">return</span> <span class="s2">&quot;SellEasy&quot;</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">N</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">N</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">mean_j</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">excl_j</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_j</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">sell_signal_j</span> <span class="o">=</span> <span class="n">excl_j</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl_j</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_id</span><span class="p">]</span> <span class="o">*</span> <span class="n">sell_signal_j</span><span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = +mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">d</span> <span class="o">=</span> <span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -11789,7 +11777,9 @@ recalibration round.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>pikaia/strategies/gs_strategies/sell_easy_strategy.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-45">45</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
@@ -11800,22 +11790,20 @@ recalibration round.</p>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = +mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">d</span> <span class="o">=</span> <span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="n">population</span><span class="p">:</span> <span class="n">PikaiaPopulation</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">gene_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="n">org_similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="n">initial_org_fitness_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear d-vector: ``d[j] = +mean_j · excl_j / (1 - excl_j + eps)``.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">mean_all</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">d</span> <span class="o">=</span> <span class="n">mean_all</span> <span class="o">*</span> <span class="n">sell_signal</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -21571,7 +21559,7 @@ as the similarity weight, flipping the sign for close kin.</p>
 
 
 
-        <p>Organism strategy implementing the CalSim Difficulty1 buy-phase signal.</p>
+        <p>Trading buy-phase paired with <code>SellHardGeneStrategy</code>.</p>
 <p>Each organism spends its sell capital (earned from hard genes) on genes it
 failed, weighted by how easy those genes are (<code>mean_j</code>).  Organisms that
 solved many hard genes accumulate more capital and redistribute it to the
@@ -21590,8 +21578,7 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \bar{x}_k
 \Delta_{\text{buy\_hard}}(i, j) =
     (1 - x_{ij}) \cdot \frac{C_i}{Z_i} \cdot \bar{x}_j
 \]</div>
-<p>Pair with <code>SellHardGeneStrategy</code> to reproduce a full CalSim Difficulty1
-("fair") recalibration round.</p>
+<p>Pair with <code>SellHardGeneStrategy</code> for the full hard-gene trading round.</p>
 
 
 
@@ -21658,12 +21645,9 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \bar{x}_k
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
-<span class="normal"><a href="#__codelineno-0-62">62</a></span>
-<span class="normal"><a href="#__codelineno-0-63">63</a></span>
-<span class="normal"><a href="#__codelineno-0-64">64</a></span>
-<span class="normal"><a href="#__codelineno-0-65">65</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyHardOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyHardOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Organism strategy implementing the CalSim Difficulty1 buy-phase signal.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Trading buy-phase paired with `SellHardGeneStrategy`.</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    Each organism spends its sell capital (earned from hard genes) on genes it</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    failed, weighted by how easy those genes are (``mean_j``).  Organisms that</span>
@@ -21690,37 +21674,34 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \bar{x}_k
 <a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\bar{x}_j</span>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">    $$</span>
 <a id="__codelineno-0-34" name="__codelineno-0-34"></a>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Pair with `SellHardGeneStrategy` to reproduce a full CalSim Difficulty1</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    (&quot;fair&quot;) recalibration round.</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="k">return</span> <span class="s2">&quot;BuyHard&quot;</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="c1"># Capital scales with current gene fitness, matching CalSim&#39;s currentValue weighting.</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_signal</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">excl_norm2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_all</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="k">if</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="c1"># Proportional delta = buy_abs / gamma_j.  At uniform start (gamma=1/M) this</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="c1"># equals the original constant formula; at equilibrium it reproduces CalSim&#39;s</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="c1"># fixed-point condition gamma_j * sell_signal_j * mean_j = buy_abs_j.</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Pair with `SellHardGeneStrategy` for the full hard-gene trading round.</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="s2">&quot;BuyHard&quot;</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_signal</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">excl_norm2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_all</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="k">if</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="c1"># Proportional delta: buy_abs / gamma_j keeps the replicator at the correct</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="c1"># fixed point where gamma_j * sell_signal_j * mean_j = buy_abs_j.</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -21762,7 +21743,7 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \bar{x}_k
 
 
 
-        <p>Organism strategy implementing the CalSim Difficulty2 buy-phase signal.</p>
+        <p>Trading buy-phase paired with <code>SellUniformGeneStrategy</code>.</p>
 <p>Each organism spends its uniform sell capital (proportional to average
 performance) on genes it failed, weighted by how hard those genes are
 (<code>excl_j</code>).  Unlike <code>BuyHardOrgStrategy</code>, easy organisms and hard genes
@@ -21780,8 +21761,7 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \text{excl}_k
 \Delta_{\text{buy\_uniform}}(i, j) =
     (1 - x_{ij}) \cdot \frac{C_i}{Z_i} \cdot \text{excl}_j
 \]</div>
-<p>Pair with <code>SellUniformGeneStrategy</code> to reproduce a full CalSim Difficulty2
-("inclusive") recalibration round.</p>
+<p>Pair with <code>SellUniformGeneStrategy</code> for the full uniform trading round.</p>
 
 
 
@@ -21846,10 +21826,9 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \text{excl}_k
 <span class="normal"><a href="#__codelineno-0-57">57</a></span>
 <span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
-<span class="normal"><a href="#__codelineno-0-60">60</a></span>
-<span class="normal"><a href="#__codelineno-0-61">61</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyUniformOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyUniformOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Organism strategy implementing the CalSim Difficulty2 buy-phase signal.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Trading buy-phase paired with `SellUniformGeneStrategy`.</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    Each organism spends its uniform sell capital (proportional to average</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    performance) on genes it failed, weighted by how hard those genes are</span>
@@ -21875,34 +21854,33 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \text{excl}_k
 <a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\text{excl}_j</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">    $$</span>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    Pair with `SellUniformGeneStrategy` to reproduce a full CalSim Difficulty2</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    (&quot;inclusive&quot;) recalibration round.</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">return</span> <span class="s2">&quot;BuyUniform&quot;</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="c1"># Capital only from genes that sell in CalSim D2: excl ∉ {0, 1}</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">sell_mask</span> <span class="o">=</span> <span class="p">((</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_mask</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">excl_norm</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">excl</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">if</span> <span class="n">excl_norm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">excl</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    Pair with `SellUniformGeneStrategy` for the full uniform trading round.</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="k">return</span> <span class="s2">&quot;BuyUniform&quot;</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="c1"># Capital only from genes with non-trivial exclusiveness: excl ∉ {0, 1}</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">sell_mask</span> <span class="o">=</span> <span class="p">((</span><span class="n">excl</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">excl</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-6</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_mask</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="n">excl_norm</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">excl</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="k">if</span> <span class="n">excl_norm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">excl</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -21944,12 +21922,12 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \text{excl}_k
 
 
 
-        <p>Organism strategy implementing the CalSim Inverse buy-phase signal.</p>
-<p>Capital is earned with a negative sign (from the Inverse sell signal),
+        <p>Trading buy-phase paired with <code>SellEasyGeneStrategy</code> — mirror of <code>BuyHardOrgStrategy</code>.</p>
+<p>Capital is earned with a negative sign (from the easy sell signal),
 so the redistribution flows in the opposite direction to <code>BuyHardOrgStrategy</code>:
 organisms that solved easy genes accumulate capital and redistribute it
 to genes they failed, weighted by how easy those genes are.</p>
-<p>For organism <em>i</em>, the (negative) capital from Inverse selling is:</p>
+<p>For organism <em>i</em>, the (negative) capital from easy selling is:</p>
 <div class="arithmatex">\[
 C_i = -\frac{1}{N} \sum_k x_{ik}
        \cdot \frac{\text{excl}_k}{1 - \text{excl}_k + \varepsilon}
@@ -21964,8 +21942,7 @@ Z_i = \sum_k (1 - x_{ik}) \cdot \bar{x}_k
     (1 - x_{ij}) \cdot \frac{C_i}{Z_i} \cdot \bar{x}_j
     = -\Delta_{\text{buy\_hard}}(i, j)
 \]</div>
-<p>Pair with <code>SellEasyGeneStrategy</code> to reproduce a full CalSim Inverse
-recalibration round.</p>
+<p>Pair with <code>SellEasyGeneStrategy</code> for the full easy-gene trading round.</p>
 
 
 
@@ -22032,17 +22009,16 @@ recalibration round.</p>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
-<span class="normal"><a href="#__codelineno-0-62">62</a></span>
-<span class="normal"><a href="#__codelineno-0-63">63</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyEasyOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">BuyEasyOrgStrategy</span><span class="p">(</span><span class="n">OrgStrategy</span><span class="p">):</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Organism strategy implementing the CalSim Inverse buy-phase signal.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Trading buy-phase paired with `SellEasyGeneStrategy` — mirror of `BuyHardOrgStrategy`.</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    Capital is earned with a negative sign (from the Inverse sell signal),</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    Capital is earned with a negative sign (from the easy sell signal),</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    so the redistribution flows in the opposite direction to `BuyHardOrgStrategy`:</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    organisms that solved easy genes accumulate capital and redistribute it</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="sd">    to genes they failed, weighted by how easy those genes are.</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14"></a>
-<a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    For organism *i*, the (negative) capital from Inverse selling is:</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    For organism *i*, the (negative) capital from easy selling is:</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16"></a>
 <a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">    $$</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">    C_i = -\\frac{1}{N} \\sum_k x_{ik}</span>
@@ -22063,34 +22039,33 @@ recalibration round.</p>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        = -\\Delta_{\\text{buy\\_hard}}(i, j)</span>
 <a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    $$</span>
 <a id="__codelineno-0-35" name="__codelineno-0-35"></a>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Pair with `SellEasyGeneStrategy` to reproduce a full CalSim Inverse</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    recalibration round.</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="k">return</span> <span class="s2">&quot;BuyEasy&quot;</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="c1"># Negative capital — Inverse sell earns the opposite sign.</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_signal</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">excl_norm2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_all</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="k">if</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean_all</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    Pair with `SellEasyGeneStrategy` for the full easy-gene trading round.</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="k">return</span> <span class="s2">&quot;BuyEasy&quot;</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">StrategyContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">X</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">matrix</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">gamma</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">gene_fitness</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">mean_all</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">excl</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="n">sell_signal</span> <span class="o">=</span> <span class="n">excl</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">excl</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="c1"># Negative capital — Inverse sell earns the opposite sign.</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="n">max_capital</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">sell_signal</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">excl_norm2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_all</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">org_id</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="k">if</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="n">buy_abs</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">max_capital</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">excl_norm2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean_all</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="k">return</span> <span class="n">buy_abs</span> <span class="o">/</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 

@@ -857,10 +857,10 @@
 <p>then normalises <strong>γ</strong> to sum to 1. The deltas <code>Δ(i, j)</code> come from two complementary strategy types.</p>
 <h3 id="gene-strategies-genestrategy">Gene strategies (<code>GeneStrategy</code>)<a class="headerlink" href="#gene-strategies-genestrategy" title="Permanent link">&para;</a></h3>
 <p>Called once per <em>(organism i, gene j)</em> pair. Return a <strong>scalar</strong> delta that drives gene <em>j</em>'s fitness up or down based on how organism <em>i</em> expressed it.</p>
-<p><strong>When to use:</strong> the effect of organism <em>i</em> on gene <em>j</em> depends only on <em>x_ij</em> and population-level statistics (e.g. gene means). Examples: <code>DominantGeneStrategy</code>, <code>RewardHardGeneStrategy</code>.</p>
+<p><strong>When to use:</strong> the effect of organism <em>i</em> on gene <em>j</em> depends only on <em>x_ij</em> and population-level statistics (e.g. gene means). Examples: <code>DominantGeneStrategy</code>, <code>SellHardGeneStrategy</code>.</p>
 <h3 id="organism-strategies-orgstrategy">Organism strategies (<code>OrgStrategy</code>)<a class="headerlink" href="#organism-strategies-orgstrategy" title="Permanent link">&para;</a></h3>
 <p>Called once per <strong>organism i</strong>. Return an <code>(M,)</code> array — the delta for every gene in one shot.</p>
-<p><strong>When to use:</strong> organism <em>i</em>'s contribution to gene <em>j</em> depends on <em>i</em>'s performance on other genes (cross-gene interaction). Examples: <code>BalancedOrgStrategy</code>, <code>BuyOrgStrategy</code>.</p>
+<p><strong>When to use:</strong> organism <em>i</em>'s contribution to gene <em>j</em> depends on <em>i</em>'s performance on other genes (cross-gene interaction). Examples: <code>BalancedOrgStrategy</code>, <code>BuyHardOrgStrategy</code>.</p>
 <h3 id="strategycontext"><code>StrategyContext</code><a class="headerlink" href="#strategycontext" title="Permanent link">&para;</a></h3>
 <p>Both strategy types receive a <code>StrategyContext</code> dataclass:</p>
 <table>
@@ -1037,7 +1037,7 @@
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="c1"># return (D, d) or (None, None) if no kernel</span>
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 </code></pre></div>
-<p>See <code>BuyOrgStrategy</code> in <code>pikaia/strategies/os_strategies/buy_strategy.py</code> for a real example where the kernel computes a linear <code>d</code>-vector from a cross-organism redistribution.</p>
+<p>See <code>BuyHardOrgStrategy</code> in <code>pikaia/strategies/os_strategies/buy_hard_strategy.py</code> for a real example where the kernel computes a linear <code>d</code>-vector from a cross-organism redistribution.</p>
 <hr />
 <h2 id="the-d-matrix-fast-path">The D-matrix fast path<a class="headerlink" href="#the-d-matrix-fast-path" title="Permanent link">&para;</a></h2>
 <p>When <code>PikaiaModel(use_d_matrix=True)</code>, the model precomputes kernels once and then runs cheap <code>O(M²)</code> updates each iteration instead of the full <code>O(N·M²)</code> loop. This is typically 30–80× faster for large populations.</p>
