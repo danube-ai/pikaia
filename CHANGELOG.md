@@ -9,27 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **CalSim strategy multi-iteration accuracy.** All three strategy pairs now
-  reproduce CalSim output exactly across many iterations, not just the first:
+- **Trading strategy multi-iteration accuracy.** All three sell/buy pairs now
+  hold their intended dynamics across many iterations, not just the first:
   - **BuyHard / BuyUniform / BuyEasy** now return a *proportional* delta
     (`buy_abs / γ_j`) instead of an absolute one.  Without this, the
-    multiplicative replicator diverges from CalSim's additive dynamics after a
-    single iteration, collapsing genes to extrema by k ≈ 10.
-  - **SellUniform** now applies CalSim Difficulty2's condition: sell signal is 0
-    for genes where `excl_j ≈ 0` (all organisms solved it) or `excl_j ≈ 1`
-    (none solved it), matching `vdeltaSell = 0` in CalSim's `calculateDelta`.
+    multiplicative replicator diverges from the intended additive dynamics after
+    a single iteration, collapsing genes to extrema by k ≈ 10.
+  - **SellUniform** now zeroes its sell signal for genes where `excl_j ≈ 0`
+    (all organisms solved it) or `excl_j ≈ 1` (none solved it), so trivially
+    solved/failed genes no longer drain value.
   - **BuyUniform** capital now excludes genes with trivial exclusiveness (same
-    mask as SellUniform), so per-organism capital ratios match CalSim exactly.
+    mask as SellUniform), keeping per-organism capital ratios correct.
 
 ### Added
 
-- **100-iteration CalSim convergence tests** for all three strategy pairs:
-  - `SellHard + BuyHard` (Difficulty1): exact match at k = 1 … 100 (atol 1e-5).
-  - `SellUniform + BuyUniform` (Difficulty2): exact match at k = 1 … 100
-    (atol 1e-5).
-  - `SellEasy + BuyEasy` (Inverse): exact match at k = 1 … 10 (rtol 1e-4);
-    capped at k = 10 because CalSim Inverse is inherently divergent (values grow
-    exponentially, CalSim itself crashes at ~k = 26).
+- **100-iteration convergence tests** for all three trading pairs:
+  - `SellHard + BuyHard`: stable match at k = 1 … 100 (atol 1e-5).
+  - `SellUniform + BuyUniform`: stable match at k = 1 … 100 (atol 1e-5).
+  - `SellEasy + BuyEasy`: match at k = 1 … 10 (rtol 1e-4); capped at k = 10
+    because this inverse pair is inherently divergent (values grow
+    exponentially).
 
 ## [0.3.1] - 2026-08-07
 
@@ -135,15 +134,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Trading strategies** (RewardHard, RewardEasy, ValuationBlend) — three new
-  `GeneStrategy` implementations ported from
-  `experiments/tgeneticai/calsim.py`:
+  `GeneStrategy` implementations:
   - **RewardHard** (`REWARD_HARD`) — rewards features that are hard to achieve
-    (low mean expression), equivalent to the CalSim "Difficulty1" sell strategy
+    (low mean expression)
   - **RewardEasy** (`REWARD_EASY`) — the exact inverse of RewardHard, rewards
-    easy-to-express features, equivalent to the CalSim "Inverse" sell strategy
+    easy-to-express features
   - **ValuationBlend** (`VALUATION_BLEND`) — blends between RewardHard and
-    RewardEasy via a `preference` parameter in `[0, 1]`, equivalent to the
-    CalSim "Mixed" sell strategy
+    RewardEasy via a `preference` parameter in `[0, 1]`
 - Registered all three strategies in `GeneStrategyEnum` and
   `GeneStrategyFactory`, with unit tests (name, call, kernel, edge cases,
   integration) and example in `examples/example6.py`

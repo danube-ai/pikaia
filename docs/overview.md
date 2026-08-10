@@ -52,7 +52,7 @@ Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j*
 | `SELL_EASY` | Drains value from common genes — inverse of `SELL_HARD`; pair with `BUY_EASY` for full trading behaviour |
 | `VARIANCE` | Rewards genes with high cross-organism dispersion |
 | `ENTROPY_MAX` | Rewards genes with high entropy; supports supervised mode |
-| `ORTHOGONALITY` | Rewards genes that are uncorrelated with each other; supports supervised mode |
+| `ORTHO_GENE` | Rewards genes that are uncorrelated with each other; supports supervised mode |
 | `PARTIAL_CORR` | Rewards genes with low partial correlation to others; supports supervised mode |
 | `REDUNDANCY_PENALTY` | Penalises genes that are redundant with the rest; supports supervised mode |
 | `NONE` | No contribution |
@@ -74,7 +74,7 @@ Called once per organism *i*. Returns an array of shape (M,) — the delta for e
 
 ### Supervised mode
 
-Four gene strategies (`ENTROPY_MAX`, `ORTHOGONALITY`, `PARTIAL_CORR`, `REDUNDANCY_PENALTY`) can optionally incorporate a target variable. Pass `y` to `PikaiaModel` and they blend it into their signal automatically — without `y` they run fully unsupervised:
+Four gene strategies (`ENTROPY_MAX`, `ORTHO_GENE`, `PARTIAL_CORR`, `REDUNDANCY_PENALTY`) can optionally incorporate a target variable. Pass `y` to `PikaiaModel` and they blend it into their signal automatically — without `y` they run fully unsupervised:
 
 ```python
 model = PikaiaModel(population=population, gene_strategies=gene_strategies, y=labels)
@@ -113,7 +113,12 @@ model = PikaiaModel(
 )
 ```
 
-All built-in strategies support the D-matrix path — each implements `kernel()` returning at least one non-`None` term. The only combination that cannot use it is one where every active strategy returns `(None, None)` from `kernel()` (i.e. exclusively `NONE` strategies). Custom strategies must implement `kernel()` to participate; see the [Contributor Guide](contributing.md).
+Most built-in strategies support the D-matrix path — each implements `kernel()` returning at least one non-`None` term. Two categories are exceptions:
+
+- **`NONE` strategies** return `(None, None)`; a combination of only `NONE` strategies has no kernel at all.
+- **The trading buy strategies** (`BUY_HARD`, `BUY_UNIFORM`, `BUY_EASY`) do **not** support the D-matrix path. Their per-organism delta (`buy_abs / γ_j`) depends on the current gene fitness **γ** in a way that cannot be captured by a static `(D, d)` kernel, so they only run correctly under the standard iterative loop. If you enable `use_d_matrix=True` with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.
+
+Custom strategies must implement `kernel()` to participate; see the [Contributor Guide](contributing.md).
 
 ---
 

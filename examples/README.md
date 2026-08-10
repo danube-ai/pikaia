@@ -29,7 +29,7 @@ uv sync --extra examples
 | [`example9_archetypal_organisms.py`](example9_archetypal_organisms.py) | **Archetypal organism detection** — Pikaia-SELFISH organism fitness retrieving dominant/archetypal samples from a synthetic dataset, with recall comparison against mean-row and random baselines. |
 | [`paper_example.py`](paper_example.py) | Reference implementation matching the results reported in the Genetic AI preprint. |
 | [`arxiv_example.py`](arxiv_example.py) | Standalone script reproducing figures from the arXiv paper. |
-| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 64 strategy combinations** (8 gene × 8 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. Gene strategies: Dominant, Altruistic, Selfish, KinAltruistic, SellHard, SellUniform, SellEasy, None. Org strategies include Balanced, Altruistic, KinSelfish, Selfish, BuyHard, BuyUniform, BuyEasy, None. |
+| [`d_matrix_comparison.py`](d_matrix_comparison.py) | **All 40 strategy combinations** (8 gene × 5 org strategies) with runtime benchmarks comparing standard iterative vs. D-matrix accelerated modes and an analytical fix-point baseline. Only D-matrix-capable strategies are benchmarked; the trading buy strategies are excluded (they require standard iterative mode). |
 
 ---
 
@@ -58,20 +58,12 @@ The `artefacts/` directory is used as the default output location for generated 
 
 ## Strategy Combinations Benchmark
 
-`d_matrix_comparison.py` is the most comprehensive example. It covers all 64 combinations of:
+`d_matrix_comparison.py` is the most comprehensive example. It benchmarks every combination of these two independent lists (8 gene × 5 org = 40 combinations):
 
-| Gene strategies | Org strategies |
-|-----------------|---------------|
-| `DominantGeneStrategy` | `BalancedOrgStrategy` |
-| `AltruisticGeneStrategy` | `AltruisticOrgStrategy` |
-| `SelfishGeneStrategy` | `SelfishOrgStrategy` |
-| `KinAltruisticGeneStrategy` | `KinSelfishOrgStrategy` |
-| `SellHardGeneStrategy` | `BuyHardOrgStrategy` |
-| `SellUniformGeneStrategy` | `BuyUniformOrgStrategy` |
-| `SellEasyGeneStrategy` | `BuyEasyOrgStrategy` |
-| `NoneGeneStrategy` | `NoneOrgStrategy` |
+- **Gene strategies:** `DominantGeneStrategy`, `AltruisticGeneStrategy`, `SelfishGeneStrategy`, `KinAltruisticGeneStrategy`, `SellHardGeneStrategy`, `SellUniformGeneStrategy`, `SellEasyGeneStrategy`, `NoneGeneStrategy`
+- **Org strategies:** `BalancedOrgStrategy`, `AltruisticOrgStrategy`, `KinSelfishOrgStrategy`, `SelfishOrgStrategy`, `NoneOrgStrategy`
 
-Trading strategies (`SellHard`/`SellUniform`/`SellEasy`) are designed to be used with their matched buy counterpart (`BuyHard`/`BuyUniform`/`BuyEasy`). The full grid is included here for performance benchmarking only.
+The grid deliberately mixes gene and org strategies freely to benchmark the D-matrix mechanism — the rows above are **not** matched pairs. Only strategies that implement `kernel()` are included, so the trading buy strategies (`BuyHardOrgStrategy`, `BuyUniformOrgStrategy`, `BuyEasyOrgStrategy`) are excluded; they run only under the standard iterative loop. To see the full trading pairs (each sell strategy with its matching buy strategy), run [`example6.py`](example6.py).
 
 Three fit modes are compared for each valid combination:
 
