@@ -794,11 +794,17 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git tag v0.3.0  ──push──▶  PyPI + versioned docs   (manual approval gate)
 </code></pre></div>
 <h3 id="1-bump-the-version">1. Bump the version<a class="headerlink" href="#1-bump-the-version" title="Permanent link">&para;</a></h3>
-<p>Open a PR that bumps <code>project.version</code> in <code>pyproject.toml</code> and run <code>uv lock</code> so the lockfile stays in sync (CI enforces <code>uv lock --locked</code>).</p>
+<p>Open a PR that:</p>
+<ol>
+<li>Bumps <code>project.version</code> in <code>pyproject.toml</code>.</li>
+<li>Runs <code>uv lock</code> so the lockfile stays in sync (CI enforces <code>uv lock --locked</code>).</li>
+<li>Adds a <code>## [X.Y.Z] - YYYY-MM-DD</code> section to <code>CHANGELOG.md</code> summarising what changed, and appends a comparison link at the bottom (e.g. <code>[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z</code>).</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>release/0.3.0
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># edit pyproject.toml: version = &quot;0.3.0&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>uv<span class="w"> </span>lock
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>git<span class="w"> </span>commit<span class="w"> </span>-am<span class="w"> </span><span class="s2">&quot;chore: bump version to 0.3.0&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># edit CHANGELOG.md: add [0.3.0] section and comparison link</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>uv<span class="w"> </span>lock
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>git<span class="w"> </span>commit<span class="w"> </span>-am<span class="w"> </span><span class="s2">&quot;chore: bump version to 0.3.0&quot;</span>
 </code></pre></div>
 <p>Open the PR, get it reviewed, and merge into <code>main</code>.</p>
 <h3 id="2-verify-on-testpypi">2. Verify on TestPyPI<a class="headerlink" href="#2-verify-on-testpypi" title="Permanent link">&para;</a></h3>
