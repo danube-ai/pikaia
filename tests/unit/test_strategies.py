@@ -13,11 +13,11 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
-from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
-from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
-from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
-    ValuationBlendGeneStrategy,
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
+from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
+from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
+    SellUniformGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
@@ -422,79 +422,96 @@ class TestKinAltruisticGeneStrategy:
         assert np.isfinite(result)
 
 
-class TestRewardHardGeneStrategy:
-    """Tests for RewardHardGeneStrategy."""
+class TestSellHardGeneStrategy:
+    """Tests for SellHardGeneStrategy."""
 
     def test_name(self):
-        assert RewardHardGeneStrategy().name == "RewardHard"
+        assert SellHardGeneStrategy().name == "SellHard"
 
     def test_call_returns_float(self):
         ctx = _make_gene_context()
-        result = RewardHardGeneStrategy()(ctx)
+        result = SellHardGeneStrategy()(ctx)
         assert isinstance(result, float)
         assert np.isfinite(result)
 
-    def test_call_deterministic(self):
-        ctx = _make_gene_context()
-        s = RewardHardGeneStrategy()
-        assert s(ctx) == s(ctx)
+    def test_sell_hard_sign(self):
+        """When x_ij > 0, SELL_HARD delta < 0; when x_ij = 0, delta = 0."""
+        rng = np.random.default_rng(7)
+        matrix = rng.random((4, 3))
+        population = PikaiaPopulation(matrix)
+        s = SellHardGeneStrategy()
+        for i in range(4):
+            for j in range(3):
+                ctx = StrategyContext(
+                    population=population,
+                    org_fitness=np.ones(4) / 4,
+                    gene_fitness=np.ones(3) / 3,
+                    org_similarity=np.eye(4),
+                    gene_similarity=np.eye(3),
+                    initial_org_fitness_range=1.0,
+                    org_id=i,
+                    gene_id=j,
+                )
+                delta = s(ctx)
+                if matrix[i, j] > 0:
+                    assert delta <= 0
+                else:
+                    assert np.isclose(delta, 0.0, atol=1e-12)
 
 
-class TestRewardEasyGeneStrategy:
-    """Tests for RewardEasyGeneStrategy."""
+class TestSellUniformGeneStrategy:
+    """Tests for SellUniformGeneStrategy."""
 
     def test_name(self):
-        assert RewardEasyGeneStrategy().name == "RewardEasy"
+        assert SellUniformGeneStrategy().name == "SellUniform"
 
     def test_call_returns_float(self):
         ctx = _make_gene_context()
-        result = RewardEasyGeneStrategy()(ctx)
+        result = SellUniformGeneStrategy()(ctx)
         assert isinstance(result, float)
         assert np.isfinite(result)
 
-    def test_call_inverse_of_reward_hard(self):
-        """RewardEasy delta should be the negation of RewardHard delta."""
+    def test_sell_uniform_formula(self):
+        """delta = -(1/N)*x_ij."""
+        rng = np.random.default_rng(8)
+        matrix = rng.random((5, 4))
+        population = PikaiaPopulation(matrix)
+        s = SellUniformGeneStrategy()
+        N = 5
+        for i in range(N):
+            for j in range(4):
+                ctx = StrategyContext(
+                    population=population,
+                    org_fitness=np.ones(N) / N,
+                    gene_fitness=np.ones(4) / 4,
+                    org_similarity=np.eye(N),
+                    gene_similarity=np.eye(4),
+                    initial_org_fitness_range=1.0,
+                    org_id=i,
+                    gene_id=j,
+                )
+                expected = -(1.0 / N) * matrix[i, j]
+                assert np.isclose(s(ctx), expected, atol=1e-14)
+
+
+class TestSellEasyGeneStrategy:
+    """Tests for SellEasyGeneStrategy."""
+
+    def test_name(self):
+        assert SellEasyGeneStrategy().name == "SellEasy"
+
+    def test_call_returns_float(self):
         ctx = _make_gene_context()
-        hard_delta = RewardHardGeneStrategy()(ctx)
-        easy_delta = RewardEasyGeneStrategy()(ctx)
+        result = SellEasyGeneStrategy()(ctx)
+        assert isinstance(result, float)
+        assert np.isfinite(result)
+
+    def test_sell_easy_negates_sell_hard(self):
+        """SELL_EASY delta == -SELL_HARD delta at every (org, gene)."""
+        ctx = _make_gene_context()
+        hard_delta = SellHardGeneStrategy()(ctx)
+        easy_delta = SellEasyGeneStrategy()(ctx)
         assert easy_delta == pytest.approx(-hard_delta)
-
-
-class TestValuationBlendGeneStrategy:
-    """Tests for ValuationBlendGeneStrategy."""
-
-    def test_name(self):
-        assert ValuationBlendGeneStrategy().name == "ValuationBlend"
-
-    def test_init_stores_preference(self):
-        s = ValuationBlendGeneStrategy(preference=0.3)
-        assert s.options["preference"] == 0.3
-
-    def test_call_returns_float(self):
-        ctx = _make_gene_context()
-        result = ValuationBlendGeneStrategy()(ctx)
-        assert isinstance(result, float)
-        assert np.isfinite(result)
-
-    def test_p_zero_equals_reward_easy(self):
-        """preference=0.0 should produce same delta as RewardEasy."""
-        ctx = _make_gene_context()
-        easy_delta = RewardEasyGeneStrategy()(ctx)
-        blend_delta = ValuationBlendGeneStrategy(preference=0.0)(ctx)
-        assert blend_delta == pytest.approx(easy_delta)
-
-    def test_p_one_equals_reward_hard(self):
-        """preference=1.0 should produce same delta as RewardHard."""
-        ctx = _make_gene_context()
-        hard_delta = RewardHardGeneStrategy()(ctx)
-        blend_delta = ValuationBlendGeneStrategy(preference=1.0)(ctx)
-        assert blend_delta == pytest.approx(hard_delta)
-
-    def test_p_half_near_zero(self):
-        """preference=0.5 → sign=0 → delta should be near zero."""
-        ctx = _make_gene_context()
-        result = ValuationBlendGeneStrategy(preference=0.5)(ctx)
-        assert result == pytest.approx(0.0, abs=1e-10)
 
 
 class TestVarianceGeneStrategy:
@@ -749,123 +766,14 @@ class TestSelfishOrgStrategy:
 
 
 # ---------------------------------------------------------------------------
-# Edge case tests for valuation strategies
-# ---------------------------------------------------------------------------
-
-
-def _make_uniform_context(column_idx, value, n_orgs=5, n_genes=3):
-    """Create a context where one column is entirely uniform (all values equal)."""
-    rng = np.random.default_rng(42)
-    matrix = rng.random((n_orgs, n_genes))
-    matrix[:, column_idx] = value
-    population = PikaiaPopulation(matrix)
-    org_fitness = rng.random(n_orgs) + 0.1
-    gene_fitness = rng.random(n_genes) + 0.1
-    org_similarity = rng.random((n_orgs, n_orgs))
-    gene_similarity = rng.random((n_genes, n_genes))
-    np.fill_diagonal(gene_similarity, 1.0)
-    np.fill_diagonal(org_similarity, 1.0)
-    return StrategyContext(
-        population=population,
-        org_fitness=org_fitness,
-        gene_fitness=gene_fitness,
-        org_similarity=org_similarity,
-        gene_similarity=gene_similarity,
-        initial_org_fitness_range=0.5,
-        org_id=0,
-        gene_id=column_idx,  # type: ignore[arg-type]
-    )
-
-
-class TestRewardHardEdgeCases:
-    def test_single_gene(self):
-        """With one gene, difficulty is well-defined and delta is finite."""
-        ctx = _make_gene_context(n_genes=1)
-        result = RewardHardGeneStrategy()(ctx)
-        assert np.isfinite(result)
-
-    def test_all_easy_column(self):
-        """Column with all values = 1.0 → difficulty ≈ 0 → small delta."""
-        ctx = _make_uniform_context(column_idx=0, value=1.0, n_genes=3)
-        result = RewardHardGeneStrategy()(ctx)
-        assert np.isfinite(result)
-        assert abs(result) < 0.01
-
-    def test_all_hard_column(self):
-        """Column with all values = 0.0 → difficulty ≈ 1 → normal delta."""
-        ctx = _make_uniform_context(column_idx=0, value=0.0, n_genes=3)
-        result = RewardHardGeneStrategy()(ctx)
-        assert np.isfinite(result)
-
-
-class TestRewardEasyEdgeCases:
-    def test_single_gene(self):
-        """With one gene, difficulty is well-defined and delta is finite."""
-        ctx = _make_gene_context(n_genes=1)
-        result = RewardEasyGeneStrategy()(ctx)
-        assert np.isfinite(result)
-
-    def test_all_easy_column(self):
-        """Column with all values = 1.0 → difficulty ≈ 0 → small delta."""
-        ctx = _make_uniform_context(column_idx=0, value=1.0, n_genes=3)
-        result = RewardEasyGeneStrategy()(ctx)
-        assert np.isfinite(result)
-        assert abs(result) < 0.01
-
-    def test_all_hard_column(self):
-        """Column with all values = 0.0 → difficulty ≈ 1 → normal delta."""
-        ctx = _make_uniform_context(column_idx=0, value=0.0, n_genes=3)
-        result = RewardEasyGeneStrategy()(ctx)
-        assert np.isfinite(result)
-
-
-class TestValuationBlendEdgeCases:
-    def test_preference_negative_warns(self, caplog):
-        """preference < 0 should emit a warning via the logger."""
-        import logging
-
-        s = ValuationBlendGeneStrategy(preference=-0.5)
-        assert s.options["preference"] == -0.5
-        with caplog.at_level(logging.WARNING):
-            ctx = _make_gene_context()
-            s(ctx)
-        assert "preference=-0.5" in caplog.text
-
-    def test_preference_over_one_warns(self, caplog):
-        """preference > 1 should emit a warning via the logger."""
-        import logging
-
-        s = ValuationBlendGeneStrategy(preference=1.5)
-        assert s.options["preference"] == 1.5
-        with caplog.at_level(logging.WARNING):
-            ctx = _make_gene_context()
-            s(ctx)
-        assert "preference=1.5" in caplog.text
-
-    def test_preference_single_gene(self):
-        """With one gene, difficulty is well-defined and delta is finite."""
-        ctx = _make_gene_context(n_genes=1)
-        result = ValuationBlendGeneStrategy(preference=0.3)(ctx)
-        assert np.isfinite(result)
-
-    def test_preference_extreme_values_stable(self):
-        """preference=-1 and preference=2 should produce stable (finite) results."""
-        ctx = _make_gene_context(n_genes=3)
-        for pref in [-1.0, 2.0, -0.5, 1.5]:
-            result = ValuationBlendGeneStrategy(preference=pref)(ctx)
-            assert np.isfinite(result)
-
-
-# ---------------------------------------------------------------------------
 # Integration tests — PikaiaModel.fit() end-to-end
 # ---------------------------------------------------------------------------
 
 
-class TestValuationStrategyIntegration:
-    """End-to-end tests running PikaiaModel.fit() with valuation strategies."""
+class TestCalSimStrategyIntegration:
+    """End-to-end tests running PikaiaModel.fit() with calsim-style strategies."""
 
     def setup_method(self):
-        """Create a small test population with controlled difficulty."""
         np.random.seed(42)
         data = np.zeros((8, 3))
         data[:, 0] = np.random.uniform(0.85, 1.0, 8)  # easy
@@ -879,38 +787,32 @@ class TestValuationStrategyIntegration:
         data_scaled = preprocessor.fit_transform(data)
         self.population = PikaiaPopulation(data_scaled)
 
-    def test_reward_hard_converges(self):
-        """REWARD_HARD fits without error and produces valid fitness."""
+    def test_sell_hard_converges(self):
         model = PikaiaModel(
             population=self.population,
             gene_strategies=[
-                GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD),
+                GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_HARD)
             ],
-            org_strategies=[
-                OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED),
-            ],
+            org_strategies=[OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_HARD)],
             gene_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
             org_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
             max_iter=32,
         )
         model.fit()
-        # shape[0] = initial state + iterations = 33 for max_iter=32
         assert model.gene_fitness_history.shape[0] == 33
         assert np.all(np.isfinite(model.gene_fitness_history))
-        # Gene fitness should have changed from initial uniform
-        initial = model.gene_fitness_history[0]
-        final = model.gene_fitness_history[-1]
-        assert not np.allclose(initial, final)
+        assert not np.allclose(
+            model.gene_fitness_history[0], model.gene_fitness_history[-1]
+        )
 
-    def test_reward_easy_converges(self):
-        """REWARD_EASY fits without error and produces valid fitness."""
+    def test_sell_uniform_converges(self):
         model = PikaiaModel(
             population=self.population,
             gene_strategies=[
-                GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY),
+                GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_UNIFORM)
             ],
             org_strategies=[
-                OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED),
+                OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_UNIFORM)
             ],
             gene_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
             org_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
@@ -919,29 +821,21 @@ class TestValuationStrategyIntegration:
         model.fit()
         assert model.gene_fitness_history.shape[0] == 33
         assert np.all(np.isfinite(model.gene_fitness_history))
-        initial = model.gene_fitness_history[0]
-        final = model.gene_fitness_history[-1]
-        assert not np.allclose(initial, final)
+        assert not np.allclose(
+            model.gene_fitness_history[0], model.gene_fitness_history[-1]
+        )
 
-    def test_valuation_blend_converges(self):
-        """VALUATION_BLEND fits without error for all preference values."""
-        for pref in [0.0, 0.3, 0.5, 0.7, 1.0]:
-            model = PikaiaModel(
-                population=self.population,
-                gene_strategies=[
-                    GeneStrategyFactory.get_strategy(
-                        GeneStrategyEnum.VALUATION_BLEND, preference=pref
-                    )
-                ],
-                org_strategies=[
-                    OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED),
-                ],
-                gene_mix_strategy=MixStrategyFactory.get_strategy(
-                    MixStrategyEnum.FIXED
-                ),
-                org_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
-                max_iter=32,
-            )
-            model.fit()
-            assert model.gene_fitness_history.shape[0] == 33
-            assert np.all(np.isfinite(model.gene_fitness_history))
+    def test_sell_easy_converges(self):
+        model = PikaiaModel(
+            population=self.population,
+            gene_strategies=[
+                GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_EASY)
+            ],
+            org_strategies=[OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_EASY)],
+            gene_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
+            org_mix_strategy=MixStrategyFactory.get_strategy(MixStrategyEnum.FIXED),
+            max_iter=32,
+        )
+        model.fit()
+        assert model.gene_fitness_history.shape[0] == 33
+        assert np.all(np.isfinite(model.gene_fitness_history))
