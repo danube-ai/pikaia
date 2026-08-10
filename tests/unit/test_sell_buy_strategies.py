@@ -294,7 +294,7 @@ def test_sell_uniform_kernel_formula():
     pop = _pop()
     mean_j = PERF.mean(axis=0)
     excl_j = 1.0 - mean_j
-    # CalSim D2: sell=0 for trivially-solved (excl=0) or trivially-failed (excl=1) genes
+    # Uniform sell=0 for trivially-solved (excl=0) or trivially-failed (excl=1) genes
     mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
     expected = -mean_j * mask.astype(float)
     _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)

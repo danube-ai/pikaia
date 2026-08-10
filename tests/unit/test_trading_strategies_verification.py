@@ -1,18 +1,17 @@
-"""Verification: new pikaia strategies reproduce calsim output."""
+"""Verification: the trading sell/buy strategy pairs reproduce the reference model.
 
-import sys
+The ground truth is :func:`fixtures.trading_reference.trading_recalibrate`, a
+self-contained port of the original trading simulator (no external dependency).
+Each pikaia pair is checked against its reference sell strategy:
+
+    SellHard    + BuyHard    <->  "hard"
+    SellUniform + BuyUniform <->  "uniform"
+    SellEasy    + BuyEasy    <->  "easy"
+"""
 
 import numpy as np
 import pytest
-
-sys.path.insert(0, "/Users/uziel/Development/DanubeAI/experiments/tgeneticai")
-
-try:
-    import calsim
-
-    CALSIM_AVAILABLE = True
-except ImportError:
-    CALSIM_AVAILABLE = False
+from fixtures.trading_reference import trading_recalibrate_k
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models import PikaiaModel
@@ -25,10 +24,6 @@ from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
 from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
 from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 
-pytestmark = pytest.mark.skipif(
-    not CALSIM_AVAILABLE, reason="calsim module not available"
-)
-
 PERF = np.array(
     [
         [1.0, 0.0, 1.0, 1.0],
@@ -40,30 +35,10 @@ N, M = PERF.shape
 START_VALUES = [5.0, 5.0, 5.0, 5.0]
 
 
-def _calsim_one_iter(strategy_name, start_values):
-    params = calsim.Params(sellStrategy=strategy_name)
-    exes = [
-        calsim.Exercise(
-            params=params, index=i, startvalue=start_values[i], maxvalue=20.0, nprobs=N
-        )
-        for i in range(M)
-    ]
-    probs = [
-        calsim.Proband(
-            params=params, id=i, value=list(start_values), performance=PERF[i]
-        )
-        for i in range(N)
-    ]
-    test = calsim.Test(params=params, exerciseList=exes, probandsList=probs)
-    test.recalibrateAll()
-    return np.array(test.currentValues)
-
-
-def _calsim_k_iters(strategy_name, k):
-    values = list(START_VALUES)
-    for _ in range(k):
-        values = list(_calsim_one_iter(strategy_name, values))
-    return np.array(values)
+def _reference_gene_fitness(sell_strategy, k):
+    """Reference per-gene values after ``k`` rounds, normalised to sum 1."""
+    values = trading_recalibrate_k(PERF, START_VALUES, sell_strategy, k)
+    return values / values.sum()
 
 
 def _pikaia_one_iter(gene_strat, org_strat):
@@ -91,38 +66,28 @@ def _pikaia_k_iters(gene_strat_cls, org_strat_cls, k):
 
 
 # ---------------------------------------------------------------------------
-# SELL_HARD delta matches calsim Difficulty1
+# SELL_HARD delta matches the reference "hard" sell signal
 # ---------------------------------------------------------------------------
 
 
-def test_sell_hard_delta_matches_calsim_difficulty1():
-    # calsim Difficulty1 sell loss per unit: exclusiveness / (1 - exclusiveness) / N
-    # pikaia SELL_HARD kernel d[j] = -mean_j * excl_j / (1 - excl_j + eps)
-    # proportional sell loss = d[j] / start_value = -excl_j / (1-excl_j) / N (from calsim formula)
+def test_sell_hard_delta_formula():
+    # Reference "hard" sell loss per unit: exclusiveness / (1 - exclusiveness) / N.
+    # pikaia SELL_HARD kernel d[j] = -mean_j * excl_j / (1 - excl_j + eps).
     mean_j = PERF.mean(axis=0)
     excl = 1.0 - mean_j
-
-    # pikaia SELL_HARD summed delta over all organisms
-    pikaia_sell_d = -mean_j * excl / (1.0 - excl + 1e-8)
-
-    # They match up to the eps correction
-    np.testing.assert_allclose(
-        pikaia_sell_d, -mean_j * excl / (1.0 - excl + 1e-8), atol=1e-10
-    )
+    expected_d = -mean_j * excl / (1.0 - excl + 1e-8)
 
     pop = PikaiaPopulation(PERF)
-    from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
-
     _, d = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
     assert d is not None
-    np.testing.assert_allclose(d, pikaia_sell_d, atol=1e-10)
+    np.testing.assert_allclose(d, expected_d, atol=1e-10)
 
 
-def test_buy_hard_delta_matches_calsim_difficulty1():
-    # BUY_HARD: C_i = sum_k x_ik * sell_signal_k / N
-    # Z_i = sum_k (1-x_ik) * mean_k
-    # __call__ returns proportional delta = buy_abs / gamma_j
-    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+def test_buy_hard_delta_formula():
+    # BUY_HARD: C_i = sum_k x_ik * sell_signal_k / N,  Z_i = sum_k (1-x_ik) * mean_k.
+    # __call__ returns a proportional delta = buy_abs / gamma_j; at uniform
+    # gamma = 1/M the 1/gamma_j factor cancels the 1/M capital scaling, so the
+    # summed __call__ equals the buy_abs vector.
     from pikaia.strategies.base_strategies import StrategyContext
 
     X = PERF
@@ -150,48 +115,39 @@ def test_buy_hard_delta_matches_calsim_difficulty1():
             org_id=i,
         )
         call_sum += strat(ctx)
-    # At uniform gamma = 1/M: max_capital is scaled by 1/M (from gamma),
-    # and the 1/gamma_j factor in the return cancels it.
-    # So __call__ sum at uniform gamma equals the original kernel d-vector.
     np.testing.assert_allclose(call_sum, expected, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
-# One-iteration exact match: Difficulty1
+# One-iteration exact match: SellHard + BuyHard
 # ---------------------------------------------------------------------------
 
 
-def test_one_iteration_exact_match_difficulty1():
-    calsim_values = _calsim_one_iter("Difficulty1", START_VALUES)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_one_iteration_exact_match_hard():
+    reference = _reference_gene_fitness("hard", 1)
     pikaia_gf = _pikaia_one_iter(SellHardGeneStrategy(), BuyHardOrgStrategy())
-
-    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+    np.testing.assert_allclose(pikaia_gf, reference, atol=1e-6)
 
 
 # ---------------------------------------------------------------------------
-# One-iteration exact match: Difficulty2 (SellUniform+BuyUniform)
+# One-iteration exact match: SellUniform + BuyUniform
 # ---------------------------------------------------------------------------
 
 
-def test_one_iteration_exact_match_difficulty2():
-    calsim_values = _calsim_one_iter("Difficulty2", START_VALUES)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_one_iteration_exact_match_uniform():
+    reference = _reference_gene_fitness("uniform", 1)
     pikaia_gf = _pikaia_one_iter(SellUniformGeneStrategy(), BuyUniformOrgStrategy())
-
-    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+    np.testing.assert_allclose(pikaia_gf, reference, atol=1e-6)
 
 
 # ---------------------------------------------------------------------------
-# SELL_UNIFORM delta matches calsim Difficulty2
+# SELL_UNIFORM delta matches the reference "uniform" sell signal
 # ---------------------------------------------------------------------------
 
 
-def test_sell_uniform_delta_matches_calsim_difficulty2():
-    # CalSim D2: vdeltaSell_j = startValue/N if excl ∉ {0,1} else 0
-    # pikaia SELL_UNIFORM d[j] = -mean_j for 0 < excl_j < 1, else 0
+def test_sell_uniform_delta_formula():
+    # Reference "uniform": vdeltaSell_j = startValue/N when 0 < excl_j < 1, else 0.
+    # pikaia SELL_UNIFORM d[j] = -mean_j for 0 < excl_j < 1, else 0.
     mean_j = PERF.mean(axis=0)
     excl_j = 1.0 - mean_j
     mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
@@ -203,11 +159,10 @@ def test_sell_uniform_delta_matches_calsim_difficulty2():
     np.testing.assert_allclose(d, expected_d, atol=1e-10)
 
 
-def test_buy_uniform_delta_matches_calsim_difficulty2():
-    # BUY_UNIFORM: C_i = sum_{k: 0<excl_k<1} x_ik * gamma_k / N
-    # Z_i = sum_k (1-x_ik) * excl_k
-    # __call__ returns proportional delta = buy_abs / gamma_j
-    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+def test_buy_uniform_delta_formula():
+    # BUY_UNIFORM: C_i = sum_{k: 0<excl_k<1} x_ik * gamma_k / N,
+    # Z_i = sum_k (1-x_ik) * excl_k. __call__ returns proportional delta;
+    # at uniform gamma = 1/M, sum_i __call__ * gamma = buy_abs.
     from pikaia.strategies.base_strategies import StrategyContext
 
     X = PERF
@@ -235,14 +190,11 @@ def test_buy_uniform_delta_matches_calsim_difficulty2():
             org_id=i,
         )
         call_sum += strat(ctx)
-    # At uniform gamma = 1/M: sum of proportional deltas × gamma = buy_abs summed.
     np.testing.assert_allclose(call_sum * gamma, expected, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
-# Long-run convergence: SellHard+BuyHard produces valid gene fitness
-# (Rankings can diverge from calsim after iter>1 because pikaia normalizes
-# gene_fitness while calsim tracks absolute values — the mappings decouple.)
+# Long-run validity: SellHard + BuyHard stays finite and well-formed
 # ---------------------------------------------------------------------------
 
 
@@ -260,85 +212,73 @@ def test_many_iterations_sell_hard_buy_hard_valid():
     assert gf.shape == (M,)
     assert np.all(np.isfinite(gf))
     assert np.isclose(gf.sum(), 1.0, atol=1e-10)
-    # Gene 3 (solved by org 0 and 2, while org 1 has hard gene 1) should rank above gene 2
+    # Gene 3 (solved by orgs 0 and 2) should rank above gene 2 (solved only by 0, 1).
     assert gf[3] > gf[2]
 
 
 # ---------------------------------------------------------------------------
-# Multi-iteration convergence: pikaia matches calsim at k > 1
-# This verifies the proportional delta fix (buy_abs / gamma) correctly
-# reproduces CalSim's additive dynamics under replicator normalisation.
+# Multi-iteration convergence: pikaia matches the reference at k > 1.
+# This verifies the proportional buy delta (buy_abs / gamma) correctly
+# reproduces the reference's additive dynamics under replicator normalisation.
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
-def test_multi_iter_convergence_difficulty1(k):
-    """Pikaia SellHard+BuyHard matches CalSim Difficulty1 at many iterations."""
-    calsim_values = _calsim_k_iters("Difficulty1", k)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_multi_iter_convergence_hard(k):
+    """SellHard + BuyHard matches the reference "hard" model at many iterations."""
+    reference = _reference_gene_fitness("hard", k)
     pikaia_gf = _pikaia_k_iters(SellHardGeneStrategy, BuyHardOrgStrategy, k)
-
     np.testing.assert_allclose(
         pikaia_gf,
-        calsim_normalized,
+        reference,
         atol=1e-5,
-        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, reference={reference}",
     )
 
 
 @pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
-def test_multi_iter_convergence_difficulty2(k):
-    """Pikaia SellUniform+BuyUniform matches CalSim Difficulty2 at many iterations."""
-    calsim_values = _calsim_k_iters("Difficulty2", k)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_multi_iter_convergence_uniform(k):
+    """SellUniform + BuyUniform matches the reference "uniform" model."""
+    reference = _reference_gene_fitness("uniform", k)
     pikaia_gf = _pikaia_k_iters(SellUniformGeneStrategy, BuyUniformOrgStrategy, k)
-
     np.testing.assert_allclose(
         pikaia_gf,
-        calsim_normalized,
+        reference,
         atol=1e-5,
-        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, reference={reference}",
     )
 
 
 # ---------------------------------------------------------------------------
-# One-iteration exact match: Inverse (SellEasy+BuyEasy)
+# One-iteration exact match: SellEasy + BuyEasy
 # ---------------------------------------------------------------------------
 
 
-def test_one_iteration_exact_match_inverse():
-    calsim_values = _calsim_one_iter("Inverse", START_VALUES)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_one_iteration_exact_match_easy():
+    reference = _reference_gene_fitness("easy", 1)
     pikaia_gf = _pikaia_one_iter(SellEasyGeneStrategy(), BuyEasyOrgStrategy())
-
-    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+    np.testing.assert_allclose(pikaia_gf, reference, atol=1e-6)
 
 
 # ---------------------------------------------------------------------------
-# Multi-iteration convergence: Inverse (SellEasy+BuyEasy)
+# Multi-iteration convergence: SellEasy + BuyEasy.
 #
-# CalSim "Inverse" is inherently divergent — easy genes grow without bound,
-# hard genes go negative, and CalSim itself crashes at ~k=26 (ZeroDivisionError
-# in its own special-case handler).  Both pikaia and CalSim show the same
-# exponential growth, so absolute tolerance is meaningless at large k.
-# We use rtol and cap at k=10 (well before CalSim becomes unstable).
+# The "easy" (inverse) pair is inherently divergent — easy genes grow without
+# bound while hard genes go negative, so per-gene values grow exponentially and
+# an absolute tolerance is meaningless at large k. We compare the normalised
+# vectors with a relative tolerance and cap at k=10, where the dynamics are
+# still numerically well-conditioned.
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("k", [1, 5, 10])
-def test_multi_iter_convergence_inverse(k):
-    """Pikaia SellEasy+BuyEasy matches CalSim Inverse up to k=10 (rtol=1e-4)."""
-    calsim_values = _calsim_k_iters("Inverse", k)
-    calsim_normalized = calsim_values / calsim_values.sum()
-
+def test_multi_iter_convergence_easy(k):
+    """SellEasy + BuyEasy matches the reference "easy" model up to k=10 (rtol=1e-4)."""
+    reference = _reference_gene_fitness("easy", k)
     pikaia_gf = _pikaia_k_iters(SellEasyGeneStrategy, BuyEasyOrgStrategy, k)
-
     np.testing.assert_allclose(
         pikaia_gf,
-        calsim_normalized,
+        reference,
         rtol=1e-4,
-        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, reference={reference}",
     )

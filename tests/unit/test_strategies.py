@@ -770,8 +770,8 @@ class TestSelfishOrgStrategy:
 # ---------------------------------------------------------------------------
 
 
-class TestCalSimStrategyIntegration:
-    """End-to-end tests running PikaiaModel.fit() with calsim-style strategies."""
+class TestTradingStrategyIntegration:
+    """End-to-end tests running PikaiaModel.fit() with the trading strategy pairs."""
 
     def setup_method(self):
         np.random.seed(42)
