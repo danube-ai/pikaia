@@ -19,9 +19,6 @@ strategy      pikaia pair                              per-gene sell signal
 ``"uniform"`` ``SellUniform`` + ``BuyUniform``         uniform across genes
 ``"easy"``    ``SellEasy`` + ``BuyEasy``               weighted by ease (inverse)
 ============  =======================================  ==========================
-
-The three strings map onto the original simulator's ``"Difficulty1"``,
-``"Difficulty2"`` and ``"Inverse"`` sell strategies respectively.
 """
 
 from __future__ import annotations
