@@ -825,12 +825,17 @@
 <p>The tag push starts the <strong>Publish</strong> workflow. The production <code>pypi</code> environment has a <strong>required-reviewer gate</strong>: the workflow pauses at the "Publish to PyPI" job until a maintainer approves it in the GitHub Actions run. This is the last checkpoint before an irreversible upload — nothing reaches production PyPI without it.</p>
 <p>Approve it, and the workflow:</p>
 <ul>
-<li>publishes <code>0.3.0</code> to production PyPI, and</li>
-<li>deploys the versioned docs (<code>mike deploy 0.3.0 latest</code>) and sets <code>latest</code> as the default.</li>
+<li>publishes <code>0.3.0</code> to production PyPI,</li>
+<li>deploys the versioned docs (<code>mike deploy 0.3.0 latest</code>) and sets <code>latest</code> as the default, and</li>
+<li><strong>creates the GitHub Release automatically</strong> — a <code>Create GitHub Release</code> job reads the matching <code>## [0.3.0]</code> section from <code>CHANGELOG.md</code> and publishes it as the release notes for the <code>v0.3.0</code> tag.</li>
 </ul>
+<blockquote>
+<p><strong>Do not create the GitHub Release by hand.</strong> Pushing the tag is the single trigger; the release is generated from the changelog so every release is consistent. If a release object already exists for the tag (e.g. someone created it in the UI), the job <strong>reconciles</strong> its notes from the changelog rather than failing — but the tag push, not the UI, is the canonical way to cut a release.</p>
+</blockquote>
 <h3 id="5-verify-production">5. Verify production<a class="headerlink" href="#5-verify-production" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">pikaia</span><span class="o">==</span><span class="m">0</span>.3.0
 </code></pre></div>
+<p>Confirm the <a href="https://github.com/danube-ai/pikaia/releases">GitHub Releases page</a> shows <code>v0.3.0</code> with the changelog notes.</p>
 <hr />
 <h2 id="version-numbers-and-tags">Version numbers and tags<a class="headerlink" href="#version-numbers-and-tags" title="Permanent link">&para;</a></h2>
 <ul>
@@ -859,11 +864,13 @@
 <tr>
 <td>Push <code>v*</code> tag</td>
 <td>tag push</td>
-<td>PyPI + versioned docs</td>
+<td>PyPI + versioned docs + GitHub Release</td>
 <td>Manual approval on <code>pypi</code> environment</td>
 </tr>
 </tbody>
 </table>
+<p>The GitHub Release is created automatically from the <code>CHANGELOG.md</code> section once the
+PyPI publish succeeds — there is no manual "draft a release" step.</p>
 <hr />
 <h2 id="why-trunk-based-and-not-gitflow">Why trunk-based, and not GitFlow?<a class="headerlink" href="#why-trunk-based-and-not-gitflow" title="Permanent link">&para;</a></h2>
 <p>pikaia previously used a <strong>GitFlow</strong>-style model: a long-lived <code>develop</code> branch for
