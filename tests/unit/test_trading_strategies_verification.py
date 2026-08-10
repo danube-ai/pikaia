@@ -112,6 +112,7 @@ def test_sell_hard_delta_matches_calsim_difficulty1():
     from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
 
     _, d = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
     np.testing.assert_allclose(d, pikaia_sell_d, atol=1e-10)
 
 
@@ -131,6 +132,7 @@ def test_buy_hard_delta_matches_calsim_difficulty1():
 
     pop = PikaiaPopulation(PERF)
     _, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
     np.testing.assert_allclose(d, expected, atol=1e-10)
 
 
@@ -181,6 +183,7 @@ def test_sell_uniform_delta_matches_calsim_difficulty2():
 
     pop = PikaiaPopulation(PERF)
     _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
     np.testing.assert_allclose(d, expected_d, atol=1e-10)
 
 
@@ -199,6 +202,7 @@ def test_buy_uniform_delta_matches_calsim_difficulty2():
 
     pop = PikaiaPopulation(PERF)
     _, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
     np.testing.assert_allclose(d, expected, atol=1e-10)
 
 
