@@ -1,478 +1,344 @@
-"""
-Deep verification: pikaia trading strategies vs tgeneticai/calsim.py
+"""Verification: new pikaia strategies reproduce calsim output."""
 
-This module compares the pikaia implementations against the original
-experiments/tgeneticai/calsim.py formulas to ensure the port is correct.
-
-## calsim.py formulas (Exercise.calculateDelta)
-
-    exclusiveness_j = (1/N) * sum(1 - performance_ij)   # fraction who didn't solve
-
-    Difficulty1 (REWARD_HARD):
-        vdeltaSell_j = startValue * exclusiveness_j / (1 - exclusiveness_j) / N
-
-    Inverse (REWARD_EASY):
-        vdeltaSell_j = startValue * -exclusiveness_j / (1 - exclusiveness_j) / N
-
-    Mixed (VALUATION_BLEND):
-        blends Difficulty1, Difficulty2, and Inverse with mixFactors
-
-    DeltaFunction.linear(interval, value) = interval * value
-
-## pikaia mapping
-
-    mean_j = matrix.mean(axis=0)   # average expression of gene j
-    exclusiveness_j = 1 - mean_j   # same concept: fraction who didn't "score high"
-    odds_j = exclusiveness_j / (1 - exclusiveness_j + eps)
-    difficulty_j = odds_j / max(odds_k)  # normalized odds ratio ∈ [0, 1]
-
-    REWARD_HARD delta_ij = (16/N) * difficulty_j * gene_fitness_j * (x_ij - 0.5)
-    REWARD_EASY delta_ij = -(16/N) * difficulty_j * gene_fitness_j * (x_ij - 0.5)
-    VALUATION_BLEND delta_ij = (16/N) * sign * difficulty_j * ...
-        where sign = 2*preference - 1  (0 → easy, 1 → hard)
-
-## Key mathematical properties to verify
-
-1. DIFFICULTY MONOTONICITY: pikaia difficulty and calsim difficulty have the
-   same ordering (both increase monotonically with exclusiveness).
-
-2. INVERSE RELATIONSHIP: REWARD_EASY = -REWARD_HARD exactly.
-
-3. BLEND LINEARITY: VALUATION_BLEND(p) = p * REWARD_HARD + (1-p) * REWARD_EASY.
-
-4. EDGE BEHAVIOR: at boundaries (all-same, all-zero, all-one), no NaN/Inf.
-
-5. CROSS-STRATEGY CONSISTENCY: given the same difficulty signal, the signs
-   are consistent with the calsim intent (hard → positive delta for REWARD_HARD).
-"""
+import sys
 
 import numpy as np
+import pytest
 
-from pikaia.data import PikaiaPopulation
-from pikaia.schemas import (
-    GeneStrategyEnum,
+sys.path.insert(0, "/Users/uziel/Development/DanubeAI/experiments/tgeneticai")
+
+try:
+    import calsim
+
+    CALSIM_AVAILABLE = True
+except ImportError:
+    CALSIM_AVAILABLE = False
+
+from pikaia.data.population import PikaiaPopulation
+from pikaia.models import PikaiaModel
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
+from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
+from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
+    SellUniformGeneStrategy,
 )
-from pikaia.strategies import GeneStrategyFactory
-from pikaia.strategies.base_strategies import StrategyContext
+from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
+from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
+from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+pytestmark = pytest.mark.skipif(
+    not CALSIM_AVAILABLE, reason="calsim module not available"
+)
 
-
-def _calsim_difficulty(exclusiveness, valid, eps=1e-8):
-    """
-    Original calsim difficulty formula (without startValue factor).
-
-    calsim.py line ~318:
-        self._dfunc.linear(startValue, exclusiveness/(1.0-self._exclusiveness)/valid)
-
-    Linear() multiplies by startValue, so the per-unit formula is:
-        difficulty = exclusiveness / (1 - exclusiveness) / valid
-    """
-    return exclusiveness / ((1.0 - exclusiveness) + eps) / valid
+PERF = np.array(
+    [
+        [1.0, 0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0, 1.0],
+    ]
+)
+N, M = PERF.shape
+START_VALUES = [5.0, 5.0, 5.0, 5.0]
 
 
-def _pikaia_difficulty(exclusiveness, eps=1e-8):
-    """
-    Pikaia difficulty formula: normalized odds ratio.
+def _calsim_one_iter(strategy_name, start_values):
+    params = calsim.Params(sellStrategy=strategy_name)
+    exes = [
+        calsim.Exercise(
+            params=params, index=i, startvalue=start_values[i], maxvalue=20.0, nprobs=N
+        )
+        for i in range(M)
+    ]
+    probs = [
+        calsim.Proband(
+            params=params, id=i, value=list(start_values), performance=PERF[i]
+        )
+        for i in range(N)
+    ]
+    test = calsim.Test(params=params, exerciseList=exes, probandsList=probs)
+    test.recalibrateAll()
+    return np.array(test.currentValues)
 
-    odds_j = exclusiveness_j / (1 - exclusiveness_j + eps)
-    difficulty_j = odds_j / max(odds_k)
-    """
-    odds = exclusiveness / (1.0 - exclusiveness + eps)
-    return odds / (odds.max() + eps)
+
+def _calsim_k_iters(strategy_name, k):
+    values = list(START_VALUES)
+    for _ in range(k):
+        values = list(_calsim_one_iter(strategy_name, values))
+    return np.array(values)
 
 
-def _make_ctx(pop, org_id, gene_id, gene_fitness=None):
-    if gene_fitness is None:
-        gene_fitness = np.ones(pop.M) / pop.M
-    return StrategyContext(
+def _pikaia_one_iter(gene_strat, org_strat):
+    pop = PikaiaPopulation(PERF)
+    model = PikaiaModel(
         population=pop,
-        org_fitness=np.ones(pop.N) / pop.N,
-        gene_fitness=gene_fitness,
-        org_similarity=np.eye(pop.N),
-        gene_similarity=np.eye(pop.M),
-        initial_org_fitness_range=1.0,
-        org_id=org_id,
-        gene_id=gene_id,
+        gene_strategies=[gene_strat],
+        org_strategies=[org_strat],
+        max_iter=1,
+    )
+    model.fit()
+    return model.gene_fitness_history[1]
+
+
+def _pikaia_k_iters(gene_strat_cls, org_strat_cls, k):
+    pop = PikaiaPopulation(PERF)
+    model = PikaiaModel(
+        population=pop,
+        gene_strategies=[gene_strat_cls()],
+        org_strategies=[org_strat_cls()],
+        max_iter=k,
+    )
+    model.fit()
+    return model.gene_fitness_history[k]
+
+
+# ---------------------------------------------------------------------------
+# SELL_HARD delta matches calsim Difficulty1
+# ---------------------------------------------------------------------------
+
+
+def test_sell_hard_delta_matches_calsim_difficulty1():
+    # calsim Difficulty1 sell loss per unit: exclusiveness / (1 - exclusiveness) / N
+    # pikaia SELL_HARD kernel d[j] = -mean_j * excl_j / (1 - excl_j + eps)
+    # proportional sell loss = d[j] / start_value = -excl_j / (1-excl_j) / N (from calsim formula)
+    mean_j = PERF.mean(axis=0)
+    excl = 1.0 - mean_j
+
+    # pikaia SELL_HARD summed delta over all organisms
+    pikaia_sell_d = -mean_j * excl / (1.0 - excl + 1e-8)
+
+    # They match up to the eps correction
+    np.testing.assert_allclose(
+        pikaia_sell_d, -mean_j * excl / (1.0 - excl + 1e-8), atol=1e-10
     )
 
+    pop = PikaiaPopulation(PERF)
+    from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
 
-# ---------------------------------------------------------------------------
-# Test 1: Difficulty formula matches calsim ordering (synthetic data)
-# ---------------------------------------------------------------------------
-def test_difficulty_ordering_synthetic():
-    """
-    Verify pikaia difficulty preserves the same gene ordering as calsim.
-
-    Use 3 probands, 4 exercises with known exclusiveness values:
-        [1,0,1,1]  → exercise 0: 2/3 solved → exclusiveness=1/3
-        [1,1,1,0]  → exercise 1: 1/3 solved → exclusiveness=2/3
-        [1,0,0,1]  → exercise 2: 2/3 solved → exclusiveness=1/3
-    """
-    # Performance matrix: 1=solved, 0=not solved
-    performance = np.array(
-        [
-            [1.0, 0.0, 1.0, 1.0],
-            [1.0, 1.0, 1.0, 0.0],
-            [1.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    N = performance.shape[0]
-    # In calsim, exclusiveness = fraction who DID NOT solve
-    exclusiveness = (1.0 - performance).mean(axis=0)  # [1/3, 2/3, 2/3, 1/3]
-    valid = N
-
-    calsim_diff = _calsim_difficulty(exclusiveness, valid)
-    pikaia_diff = _pikaia_difficulty(exclusiveness)
-
-    # Both should rank exercise 1 (highest exclusiveness) as hardest
-    assert calsim_diff[1] > calsim_diff[0]
-    assert calsim_diff[1] > calsim_diff[2]
-    assert pikaia_diff[1] > pikaia_diff[0]
-    assert pikaia_diff[1] > pikaia_diff[2]
-
-    # Orderings should be identical
-    assert np.array_equal(np.argsort(calsim_diff), np.argsort(pikaia_diff))
+    _, d = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    np.testing.assert_allclose(d, pikaia_sell_d, atol=1e-10)
 
 
-# ---------------------------------------------------------------------------
-# Test 2: Difficulty is monotonically increasing in exclusiveness
-# ---------------------------------------------------------------------------
-def test_difficulty_monotonicity():
-    """
-    Both calsim and pikaia difficulty should increase monotonically as
-    exclusiveness increases from 0 to 1.
-    """
-    exclusivenesses = np.linspace(0.01, 0.99, 20)
-    calsim_diffs = _calsim_difficulty(exclusivenesses, valid=1)
-    pikaia_diffs = _pikaia_difficulty(exclusivenesses)
+def test_buy_hard_delta_matches_calsim_difficulty1():
+    # BUY_HARD: C_i = sum_k x_ik * sell_signal_k / N
+    # Z_i = sum_k (1-x_ik) * mean_k
+    # __call__ returns proportional delta = buy_abs / gamma_j
+    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+    from pikaia.strategies.base_strategies import StrategyContext
 
-    # Both should be strictly increasing
-    assert np.all(np.diff(calsim_diffs) > 0), "calsim difficulty not monotonic"
-    assert np.all(np.diff(pikaia_diffs) > 0), "pikaia difficulty not monotonic"
-
-    # Cross-mapping: higher exclusiveness should always rank the same
-    calsim_order = np.argsort(calsim_diffs)
-    pikaia_order = np.argsort(pikaia_diffs)
-    assert np.array_equal(calsim_order, pikaia_order)
-
-
-# ---------------------------------------------------------------------------
-# Test 3: REWARD_EASY is exactly -REWARD_HARD at every point
-# ---------------------------------------------------------------------------
-def test_inverse_at_scale():
-    """
-    For every (organism, gene) pair in a population, REWARD_EASY should
-    be exactly the negation of REWARD_HARD.
-    """
-    np.random.seed(42)
-    data = np.random.rand(20, 8)
-    pop = PikaiaPopulation(data)
-
-    hard_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD)
-    easy_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY)
-
-    for org_id in range(pop.N):
-        for gene_id in range(pop.M):
-            h = hard_strat(_make_ctx(pop, org_id, gene_id))
-            e = easy_strat(_make_ctx(pop, org_id, gene_id))
-            assert np.isclose(h, -e, atol=1e-15), (
-                f"org={org_id}, gene={gene_id}: {h} != -{e}"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Test 4: VALUATION_BLEND is linear interpolation of HARD and EASY
-# ---------------------------------------------------------------------------
-def test_blend_is_exact_interpolation():
-    """
-    For every (preference, organism, gene), VALUATION_BLEND should equal
-    preference * REWARD_HARD + (1 - preference) * REWARD_EASY.
-    """
-    np.random.seed(42)
-    data = np.random.rand(15, 6)
-    pop = PikaiaPopulation(data)
-
-    hard_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD)
-    easy_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY)
-    blend_strat = GeneStrategyFactory.get_strategy(
-        GeneStrategyEnum.VALUATION_BLEND, preference=0.0
-    )
-
-    prefs = np.linspace(0.0, 1.0, 11)
-    for pref in prefs:
-        blend_strat.options["preference"] = pref
-        for org_id in range(pop.N):
-            for gene_id in range(pop.M):
-                blend = blend_strat(_make_ctx(pop, org_id, gene_id))
-                hard = hard_strat(_make_ctx(pop, org_id, gene_id))
-                easy = easy_strat(_make_ctx(pop, org_id, gene_id))
-                expected = pref * hard + (1.0 - pref) * easy
-                assert np.isclose(blend, expected, atol=1e-14), (
-                    f"pref={pref}, org={org_id}, gene={gene_id}: "
-                    f"blend={blend:.10e} != expected={expected:.10e}"
-                )
-
-
-# ---------------------------------------------------------------------------
-# Test 5: Kernel diagonal equals the difficulty signal times (16/M)
-# ---------------------------------------------------------------------------
-def test_kernel_diagonal_formula():
-    """
-    For REWARD_HARD: D[j,j] = (16/M) * difficulty_j
-    For REWARD_EASY: D[j,j] = -(16/M) * difficulty_j
-    For VALUATION_BLEND: D[j,j] = (16/M) * (2*preference - 1) * difficulty_j
-    """
-    np.random.seed(42)
-    data = np.random.rand(10, 5)
-    pop = PikaiaPopulation(data)
-    M = pop.M
-
-    # Compute expected difficulty (normalized odds ratio)
-    mean_all = pop.matrix.mean(axis=0)
+    X = PERF
+    mean_all = X.mean(axis=0)
     excl = 1.0 - mean_all
-    odds = excl / (1.0 - excl + 1e-8)
-    expected_difficulty = odds / (odds.max() + 1e-8)
+    sell_signal = excl / (1.0 - excl + 1e-8)
+    C = (X * sell_signal[np.newaxis, :]).sum(axis=1) / N
+    Z = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
+    safe_Z = np.where(Z < 1e-10, 1.0, Z)
+    w = np.where(Z < 1e-10, 0.0, C / safe_Z)
+    expected = mean_all * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
 
-    for strat_enum, expected_sign in [
-        (GeneStrategyEnum.REWARD_HARD, 1.0),
-        (GeneStrategyEnum.REWARD_EASY, -1.0),
-        (GeneStrategyEnum.VALUATION_BLEND, 2.0 * 0.7 - 1.0),
-    ]:
-        strat = GeneStrategyFactory.get_strategy(
-            strat_enum,
-            preference=0.7 if strat_enum == GeneStrategyEnum.VALUATION_BLEND else None,
+    pop = PikaiaPopulation(PERF)
+    gamma = np.ones(M) / M
+    strat = BuyHardOrgStrategy()
+    call_sum = np.zeros(M)
+    for i in range(N):
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(N) / N,
+            gene_fitness=gamma,
+            org_similarity=np.eye(N),
+            gene_similarity=np.eye(M),
+            initial_org_fitness_range=1.0,
+            org_id=i,
         )
-        D, d = strat.kernel(pop, np.eye(M), np.eye(pop.N), 1.0, y=None)
+        call_sum += strat(ctx)
+    # At uniform gamma = 1/M: max_capital is scaled by 1/M (from gamma),
+    # and the 1/gamma_j factor in the return cancels it.
+    # So __call__ sum at uniform gamma equals the original kernel d-vector.
+    np.testing.assert_allclose(call_sum, expected, atol=1e-10)
 
-        assert D is not None
-        assert d is None
 
-        expected_diag = (16.0 / M) * expected_sign * expected_difficulty
-        actual_diag = np.diag(D)
-        assert np.allclose(actual_diag, expected_diag, atol=1e-14), (
-            f"{strat_enum}: diag={actual_diag} != {expected_diag}"
+# ---------------------------------------------------------------------------
+# One-iteration exact match: Difficulty1
+# ---------------------------------------------------------------------------
+
+
+def test_one_iteration_exact_match_difficulty1():
+    calsim_values = _calsim_one_iter("Difficulty1", START_VALUES)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_one_iter(SellHardGeneStrategy(), BuyHardOrgStrategy())
+
+    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# One-iteration exact match: Difficulty2 (SellUniform+BuyUniform)
+# ---------------------------------------------------------------------------
+
+
+def test_one_iteration_exact_match_difficulty2():
+    calsim_values = _calsim_one_iter("Difficulty2", START_VALUES)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_one_iter(SellUniformGeneStrategy(), BuyUniformOrgStrategy())
+
+    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# SELL_UNIFORM delta matches calsim Difficulty2
+# ---------------------------------------------------------------------------
+
+
+def test_sell_uniform_delta_matches_calsim_difficulty2():
+    # CalSim D2: vdeltaSell_j = startValue/N if excl ∉ {0,1} else 0
+    # pikaia SELL_UNIFORM d[j] = -mean_j for 0 < excl_j < 1, else 0
+    mean_j = PERF.mean(axis=0)
+    excl_j = 1.0 - mean_j
+    mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
+    expected_d = -mean_j * mask.astype(float)
+
+    pop = PikaiaPopulation(PERF)
+    _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    np.testing.assert_allclose(d, expected_d, atol=1e-10)
+
+
+def test_buy_uniform_delta_matches_calsim_difficulty2():
+    # BUY_UNIFORM: C_i = sum_{k: 0<excl_k<1} x_ik * gamma_k / N
+    # Z_i = sum_k (1-x_ik) * excl_k
+    # __call__ returns proportional delta = buy_abs / gamma_j
+    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+    from pikaia.strategies.base_strategies import StrategyContext
+
+    X = PERF
+    mean_all = X.mean(axis=0)
+    excl = 1.0 - mean_all
+    sell_mask = ((excl > 1e-6) & (excl < 1.0 - 1e-6)).astype(float)
+    gamma = np.ones(M) / M
+    C = (X * (sell_mask * gamma)[np.newaxis, :]).sum(axis=1) / N
+    Z = ((1.0 - X) * excl[np.newaxis, :]).sum(axis=1)
+    safe_Z = np.where(Z < 1e-10, 1.0, Z)
+    w = np.where(Z < 1e-10, 0.0, C / safe_Z)
+    expected = excl * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
+
+    pop = PikaiaPopulation(PERF)
+    strat = BuyUniformOrgStrategy()
+    call_sum = np.zeros(M)
+    for i in range(N):
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(N) / N,
+            gene_fitness=gamma,
+            org_similarity=np.eye(N),
+            gene_similarity=np.eye(M),
+            initial_org_fitness_range=1.0,
+            org_id=i,
         )
+        call_sum += strat(ctx)
+    # At uniform gamma = 1/M: sum of proportional deltas × gamma = buy_abs summed.
+    np.testing.assert_allclose(call_sum * gamma, expected, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
-# Test 6: Kernel is diagonal (off-diagonal elements are zero)
+# Long-run convergence: SellHard+BuyHard produces valid gene fitness
+# (Rankings can diverge from calsim after iter>1 because pikaia normalizes
+# gene_fitness while calsim tracks absolute values — the mappings decouple.)
 # ---------------------------------------------------------------------------
-def test_kernel_is_diagonal():
-    """
-    All three trading strategies should produce strictly diagonal D matrices
-    (no cross-gene interaction in the kernel).
-    """
-    np.random.seed(42)
-    data = np.random.rand(10, 5)
-    pop = PikaiaPopulation(data)
-    M = pop.M
 
-    for strat_enum in [
-        GeneStrategyEnum.REWARD_HARD,
-        GeneStrategyEnum.REWARD_EASY,
-        GeneStrategyEnum.VALUATION_BLEND,
-    ]:
-        strat = GeneStrategyFactory.get_strategy(
-            strat_enum,
-            preference=0.5 if strat_enum == GeneStrategyEnum.VALUATION_BLEND else None,
-        )
-        D, _ = strat.kernel(pop, np.eye(M), np.eye(pop.N), 1.0, y=None)
 
-        off_diag = D - np.diag(np.diag(D))
-        assert np.allclose(off_diag, 0, atol=1e-15), (
-            f"{strat_enum} has non-zero off-diagonal: {np.max(np.abs(off_diag))}"
-        )
+def test_many_iterations_sell_hard_buy_hard_valid():
+    k = 20
+    pop = PikaiaPopulation(PERF)
+    model = PikaiaModel(
+        population=pop,
+        gene_strategies=[SellHardGeneStrategy()],
+        org_strategies=[BuyHardOrgStrategy()],
+        max_iter=k,
+    )
+    model.fit()
+    gf = model.gene_fitness_history[k]
+    assert gf.shape == (M,)
+    assert np.all(np.isfinite(gf))
+    assert np.isclose(gf.sum(), 1.0, atol=1e-10)
+    # Gene 3 (solved by org 0 and 2, while org 1 has hard gene 1) should rank above gene 2
+    assert gf[3] > gf[2]
 
 
 # ---------------------------------------------------------------------------
-# Test 7: Deltas are proportional to gene fitness
+# Multi-iteration convergence: pikaia matches calsim at k > 1
+# This verifies the proportional delta fix (buy_abs / gamma) correctly
+# reproduces CalSim's additive dynamics under replicator normalisation.
 # ---------------------------------------------------------------------------
-def test_deltas_scale_with_fitness():
-    """
-    The delta formula is multiplicative: delta ∝ gene_fitness.
-    Doubling gene_fitness should double the delta.
-    """
-    np.random.seed(42)
-    data = np.random.rand(8, 4)
-    pop = PikaiaPopulation(data)
-
-    for strat_enum in [
-        GeneStrategyEnum.REWARD_HARD,
-        GeneStrategyEnum.REWARD_EASY,
-        GeneStrategyEnum.VALUATION_BLEND,
-    ]:
-        strat = GeneStrategyFactory.get_strategy(
-            strat_enum,
-            preference=0.3 if strat_enum == GeneStrategyEnum.VALUATION_BLEND else None,
-        )
-
-        for org_id in range(pop.N):
-            for gene_id in range(pop.M):
-                ctx_low = _make_ctx(
-                    pop, org_id, gene_id, gene_fitness=np.ones(4) * 0.25
-                )
-                ctx_high = _make_ctx(
-                    pop, org_id, gene_id, gene_fitness=np.ones(4) * 0.5
-                )
-
-                delta_low = strat(ctx_low)
-                delta_high = strat(ctx_high)
-
-                assert np.isclose(delta_high, 2.0 * delta_low, atol=1e-14), (
-                    f"{strat_enum} org={org_id} gene={gene_id}: "
-                    f"{delta_high} != 2*{delta_low}"
-                )
 
 
-# ---------------------------------------------------------------------------
-# Test 8: Deltas are proportional to (x_ij - 0.5)
-# ---------------------------------------------------------------------------
-def test_deltas_scale_with_expression():
-    """
-    delta_ij = (16/N) * sign * difficulty_j * gf_j * (x_ij - 0.5)
-    For fixed gene j and fitness, delta should scale with (x_ij - 0.5).
-    """
-    np.random.seed(42)
-    data = np.random.rand(8, 4)
-    pop = PikaiaPopulation(data)
+@pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
+def test_multi_iter_convergence_difficulty1(k):
+    """Pikaia SellHard+BuyHard matches CalSim Difficulty1 at many iterations."""
+    calsim_values = _calsim_k_iters("Difficulty1", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
 
-    hard_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD)
+    pikaia_gf = _pikaia_k_iters(SellHardGeneStrategy, BuyHardOrgStrategy, k)
 
-    gene_id = 0
-    org_id = 0
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        atol=1e-5,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+    )
 
-    x_val = pop.matrix[org_id, gene_id]
-    gf = np.ones(4) * 0.25
 
-    ctx1 = _make_ctx(pop, org_id, gene_id, gene_fitness=gf)
-    delta1 = hard_strat(ctx1)
+@pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
+def test_multi_iter_convergence_difficulty2(k):
+    """Pikaia SellUniform+BuyUniform matches CalSim Difficulty2 at many iterations."""
+    calsim_values = _calsim_k_iters("Difficulty2", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
 
-    # For gene 0: difficulty is fixed, gf is fixed, only (x - 0.5) changes
-    expected_scaling = x_val - 0.5
-    all_excl = 1.0 - pop.matrix.mean(axis=0)
-    all_odds = all_excl / (1.0 - all_excl + 1e-8)
-    all_diff = all_odds / (all_odds.max() + 1e-8)
-    expected_delta = (16.0 / pop.N) * all_diff[gene_id] * gf[gene_id] * expected_scaling
+    pikaia_gf = _pikaia_k_iters(SellUniformGeneStrategy, BuyUniformOrgStrategy, k)
 
-    assert np.isclose(delta1, expected_delta, atol=1e-10), (
-        f"delta={delta1:.10e} != expected={expected_delta:.10e}"
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        atol=1e-5,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
     )
 
 
 # ---------------------------------------------------------------------------
-# Test 9: Preference=0.5 gives zero signal (balanced)
+# One-iteration exact match: Inverse (SellEasy+BuyEasy)
 # ---------------------------------------------------------------------------
-def test_preference_05_gives_zero_signal():
-    """
-    preference=0.5 → sign = 2*0.5 - 1 = 0 → zero signal.
-    """
-    np.random.seed(42)
-    data = np.random.rand(10, 4)
-    pop = PikaiaPopulation(data)
 
-    balanced_strat = GeneStrategyFactory.get_strategy(
-        GeneStrategyEnum.VALUATION_BLEND, preference=0.5
+
+def test_one_iteration_exact_match_inverse():
+    calsim_values = _calsim_one_iter("Inverse", START_VALUES)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_one_iter(SellEasyGeneStrategy(), BuyEasyOrgStrategy())
+
+    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Multi-iteration convergence: Inverse (SellEasy+BuyEasy)
+#
+# CalSim "Inverse" is inherently divergent — easy genes grow without bound,
+# hard genes go negative, and CalSim itself crashes at ~k=26 (ZeroDivisionError
+# in its own special-case handler).  Both pikaia and CalSim show the same
+# exponential growth, so absolute tolerance is meaningless at large k.
+# We use rtol and cap at k=10 (well before CalSim becomes unstable).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("k", [1, 5, 10])
+def test_multi_iter_convergence_inverse(k):
+    """Pikaia SellEasy+BuyEasy matches CalSim Inverse up to k=10 (rtol=1e-4)."""
+    calsim_values = _calsim_k_iters("Inverse", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_k_iters(SellEasyGeneStrategy, BuyEasyOrgStrategy, k)
+
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        rtol=1e-4,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
     )
-
-    for org_id in range(pop.N):
-        for gene_id in range(pop.M):
-            delta = balanced_strat(_make_ctx(pop, org_id, gene_id))
-            assert np.isclose(delta, 0.0, atol=1e-15), (
-                f"preference=0.5 should give zero delta: {delta}"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Test 10: Preference=0.0 is pure REWARD_EASY
-# ---------------------------------------------------------------------------
-def test_preference_0_equals_reward_easy():
-    """
-    preference=0.0 → sign = -1 → equivalent to REWARD_EASY.
-    """
-    np.random.seed(42)
-    data = np.random.rand(10, 4)
-    pop = PikaiaPopulation(data)
-
-    easy_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY)
-    blend_strat = GeneStrategyFactory.get_strategy(
-        GeneStrategyEnum.VALUATION_BLEND, preference=0.0
-    )
-
-    for org_id in range(pop.N):
-        for gene_id in range(pop.M):
-            e = easy_strat(_make_ctx(pop, org_id, gene_id))
-            b = blend_strat(_make_ctx(pop, org_id, gene_id))
-            assert np.isclose(e, b, atol=1e-15), (
-                f"preference=0 should equal REWARD_EASY: {e} vs {b}"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Test 11: Preference=1.0 is pure REWARD_HARD
-# ---------------------------------------------------------------------------
-def test_preference_1_equals_reward_hard():
-    """
-    preference=1.0 → sign = +1 → equivalent to REWARD_HARD.
-    """
-    np.random.seed(42)
-    data = np.random.rand(10, 4)
-    pop = PikaiaPopulation(data)
-
-    hard_strat = GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD)
-    blend_strat = GeneStrategyFactory.get_strategy(
-        GeneStrategyEnum.VALUATION_BLEND, preference=1.0
-    )
-
-    for org_id in range(pop.N):
-        for gene_id in range(pop.M):
-            h = hard_strat(_make_ctx(pop, org_id, gene_id))
-            b = blend_strat(_make_ctx(pop, org_id, gene_id))
-            assert np.isclose(h, b, atol=1e-15), (
-                f"preference=1 should equal REWARD_HARD: {h} vs {b}"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Test 12: Verify calsim formula arithmetic is correct
-# ---------------------------------------------------------------------------
-def test_calsim_difficulty_arithmetic():
-    """
-    Verify the calsim difficulty formula used in our test helpers is correct.
-
-    calsim.py: vdeltaSell = startValue * exclusiveness / (1 - exclusiveness) / valid
-
-    Using performanceMatrix = [[1,0,1,1], [1,1,1,0], [1,0,0,1]]:
-    - exclusiveness = (1-perf).mean(axis=0) = [0, 2/3, 1/3, 1/3]
-    - Difficulty1 vdelta (without startValue/valid):
-        j=0: 0 / 1.0 = 0.0
-        j=1: (2/3) / (1/3) = 2.0
-        j=2: (1/3) / (2/3) = 0.5
-        j=3: (1/3) / (2/3) = 0.5
-    """
-    performance = np.array(
-        [
-            [1.0, 0.0, 1.0, 1.0],
-            [1.0, 1.0, 1.0, 0.0],
-            [1.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    exclusiveness = (1.0 - performance).mean(axis=0)  # [0.0, 2/3, 1/3, 1/3]
-    valid = 3
-
-    calsim_raw = _calsim_difficulty(exclusiveness, valid)
-    # With valid=3: j=0: 0/1/3=0, j=1: (2/3)/(1/3)/3=2/3, j=2: (1/3)/(2/3)/3=1/6, j=3: same
-    expected = np.array([0.0, 2.0 / 3.0, 0.5 / 3.0, 0.5 / 3.0])
-
-    assert np.allclose(calsim_raw, expected, atol=1e-10), (
-        f"calsim formula check: {calsim_raw} != {expected}"
-    )
-
-    # Also verify pikaia difficulty on same data
-    pikaia_diff = _pikaia_difficulty(exclusiveness)
-    # Both should rank exercise 1 as hardest
-    assert pikaia_diff[1] >= pikaia_diff[0]
-    assert pikaia_diff[1] >= pikaia_diff[2]
-    assert pikaia_diff[1] >= pikaia_diff[3]

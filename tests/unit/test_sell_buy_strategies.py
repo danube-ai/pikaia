@@ -1,20 +1,3 @@
-"""
-Tests for SellOrgStrategy and BuyOrgStrategy.
-
-The pair implements a market-recalibration signal within pikaia's replicator
-framework, mirroring CalSim's proband.sellAll() / proband.buyAll() design.
-Tests verify:
-
-1. Structural properties of each strategy in isolation.
-2. Mathematical formula correctness (no external dependency).
-3. Kernel (d-vector) consistency with the __call__ loop sum.
-4. Capital conservation (sell total + buy total ≈ 0).
-5. Cross-organism redistribution: genes 2 and 3 in PERF have identical means
-   but different organism patterns, so only BuyOrgStrategy (not a diagonal gene
-   strategy) can separate them.
-6. Regression: expected gene-fitness values on the canonical dataset.
-"""
-
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -22,22 +5,23 @@ from pikaia.models import PikaiaModel
 from pikaia.schemas import GeneStrategyEnum, OrgStrategyEnum
 from pikaia.strategies import GeneStrategyFactory, OrgStrategyFactory
 from pikaia.strategies.base_strategies import StrategyContext
-from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
-from pikaia.strategies.os_strategies.sell_strategy import SellOrgStrategy
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
+from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
+from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
+    SellUniformGeneStrategy,
+)
+from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
+from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
+from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 
 # ---------------------------------------------------------------------------
-# Shared fixtures
+# Canonical 3×4 dataset
+# Gene 0: mean=1.0  (all solve it)
+# Gene 1: mean=1/3  (hard)
+# Gene 2: mean=2/3
+# Gene 3: mean=2/3  (same mean as gene 2 but different organisms)
 # ---------------------------------------------------------------------------
 
-# Canonical 3×4 dataset.
-# Gene 0: mean=1.0  (all solve it) — no sell/buy signal
-# Gene 1: mean=1/3  (rare, hard)   — high sell odds; heavy drain
-# Gene 2: mean=2/3  (org 0+1 solve)
-# Gene 3: mean=2/3  (org 0+2 solve)  ← same mean as gene 2 but different organisms
-#
-# Genes 2 and 3 have identical means so any diagonal strategy treats them equally.
-# BuyOrgStrategy separates them: org 2 (high capital from gene 1) lacks gene 2
-# but has gene 3, so it redistributes capital to gene 2.
 PERF = np.array(
     [
         [1.0, 0.0, 1.0, 1.0],
@@ -46,26 +30,28 @@ PERF = np.array(
     ]
 )
 N, M = PERF.shape
-UNIFORM = 1.0 / M
-
-# Expected normalised gene-fitness after one SELL+BUY iteration from uniform
-# start with both strategies as OrgStrategy (equal mixing weights 0.5 each).
-#
-# Derivation:
-#   sell_d[j] = -mean_j * excl_j / (1 - excl_j)  → [0, -2/3, -1/3, -1/3]
-#   buy_d[j]  = mean_j * Σ_i (1-x_ij) * C_i / Z_i → [0, 7/18, 1/9, 5/6]
-#   net_d[j]  = 0.5*sell_d + 0.5*buy_d            → [0, -5/36, -1/9, 1/4]
-#   γ_new = γ_0 * (1 + net_d), normalised
-#         → [1/4, 31/144, 2/9, 5/16]
-#         ≈ [0.2500, 0.2153, 0.2222, 0.3125]
-EXPECTED_GF = np.array([0.25, 31.0 / 144, 2.0 / 9, 5.0 / 16])
 
 
 def _pop():
     return PikaiaPopulation(PERF)
 
 
-def _make_ctx(pop, org_id, gene_id=None, gene_fitness=None):
+def _make_ctx(pop, org_id, gene_fitness=None):
+    if gene_fitness is None:
+        gene_fitness = np.ones(pop.M) / pop.M
+    return StrategyContext(
+        population=pop,
+        org_fitness=np.ones(pop.N) / pop.N,
+        gene_fitness=gene_fitness,
+        org_similarity=np.eye(pop.N),
+        gene_similarity=np.eye(pop.M),
+        initial_org_fitness_range=1.0,
+        org_id=org_id,
+        gene_id=None,
+    )
+
+
+def _make_gene_ctx(pop, org_id, gene_id, gene_fitness=None):
     if gene_fitness is None:
         gene_fitness = np.ones(pop.M) / pop.M
     return StrategyContext(
@@ -80,260 +66,393 @@ def _make_ctx(pop, org_id, gene_id=None, gene_fitness=None):
     )
 
 
-def _pikaia_round_sell_buy() -> np.ndarray:
-    """Run one SELL+BUY iteration from uniform start; return normalised gene fitness."""
-    pop = _pop()
-    model = PikaiaModel(
-        population=pop,
-        gene_strategies=[],
-        org_strategies=[
-            OrgStrategyFactory.get_strategy(OrgStrategyEnum.SELL),
-            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY),
-        ],
-        max_iter=1,
-    )
-    model.fit()
-    return model.gene_fitness_history[1]
-
-
-def _pikaia_round(gene_strat_enum, org_strat_enum) -> np.ndarray:
-    """Run one iteration with the given GS+OS pair; return normalised gene fitness."""
-    pop = _pop()
-    model = PikaiaModel(
-        population=pop,
-        gene_strategies=[GeneStrategyFactory.get_strategy(gene_strat_enum)],
-        org_strategies=[OrgStrategyFactory.get_strategy(org_strat_enum)],
-        max_iter=1,
-    )
-    model.fit()
-    return model.gene_fitness_history[1]
-
-
 # ---------------------------------------------------------------------------
-# 1. SellOrgStrategy structural tests
+# 1. Structural tests — shape, dtype, finite
 # ---------------------------------------------------------------------------
 
 
-class TestSellOrgStrategy:
-    def test_returns_array_of_shape_M(self):
-        """__call__ must return an (M,) array."""
-        pop = _pop()
-        strat = SellOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=0))
-        assert result.shape == (M,)
+class TestSellHardStructure:
+    def test_name(self):
+        assert SellHardGeneStrategy().name == "SellHard"
 
-    def test_returns_nonpositive_for_solved_gene(self):
-        """Organism that solved a gene (x=1) produces a negative sell delta."""
+    def test_call_returns_float(self):
         pop = _pop()
-        strat = SellOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=0))
-        # org 0: x=[1,0,1,1]; gene 0 excl=0 so delta=0; genes 2,3 solved → negative
-        assert result[2] < 0
-        assert result[3] < 0
+        result = SellHardGeneStrategy()(_make_gene_ctx(pop, 0, 2))
+        assert isinstance(result, float)
+        assert np.isfinite(result)
 
-    def test_returns_zero_for_unsolved_gene(self):
-        """Organism that did not solve a gene (x=0) contributes nothing to sell."""
+    def test_call_finite_all_orgs_genes(self):
         pop = _pop()
-        strat = SellOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=1))
-        # org 1: x=[1,1,1,0]; gene 3 unsolved → zero
-        assert np.isclose(result[3], 0.0, atol=1e-12)
-
-    def test_zero_exclusiveness_gives_zero_delta(self):
-        """Gene solved by everyone (excl=0) has zero sell signal for all organisms."""
-        pop = _pop()
-        strat = SellOrgStrategy()
-        for org_id in range(pop.N):
-            result = strat(_make_ctx(pop, org_id=org_id))
-            assert np.isclose(result[0], 0.0, atol=1e-12)
-
-    def test_sum_over_organisms_matches_formula(self):
-        """Sum of __call__ over all organisms equals -mean_j * excl_j / (1-excl_j)."""
-        pop = _pop()
-        strat = SellOrgStrategy()
-        mean_all = PERF.mean(axis=0)
-        excl = 1.0 - mean_all
-        expected_total = -mean_all * excl / (1.0 - excl + 1e-8)
-
-        total = np.zeros(M)
+        s = SellHardGeneStrategy()
         for i in range(N):
-            total += strat(_make_ctx(pop, org_id=i))
-        np.testing.assert_allclose(total, expected_total, atol=1e-10)
+            for j in range(M):
+                assert np.isfinite(s(_make_gene_ctx(pop, i, j)))
 
-    def test_harder_gene_sells_more(self):
-        """Harder gene (higher excl) has larger sell signal magnitude via kernel d."""
+    def test_kernel_returns_none_d(self):
         pop = _pop()
-        strat = SellOrgStrategy()
-        _, d = strat.kernel(pop, np.eye(M), np.eye(N), 1.0)
-        assert d is not None
-        assert abs(d[1]) > abs(d[2]), "Rare gene 1 should drain more than gene 2"
-        assert abs(d[1]) > abs(d[3]), "Rare gene 1 should drain more than gene 3"
-
-    def test_kernel_d_vector_matches_call_sum(self):
-        """Kernel d-vector must equal the sum of __call__ over all organisms."""
-        pop = _pop()
-        strat = SellOrgStrategy()
-        _, d = strat.kernel(pop, np.eye(M), np.eye(N), 1.0)
-        assert d is not None
-
-        call_sum = np.zeros(M)
-        for i in range(N):
-            call_sum += strat(_make_ctx(pop, org_id=i))
-        np.testing.assert_allclose(d, call_sum, atol=1e-10)
-
-    def test_kernel_D_is_none(self):
-        """SellOrgStrategy has no bilinear D term."""
-        pop = _pop()
-        D, _ = SellOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        D, d = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert D is None
-
-
-# ---------------------------------------------------------------------------
-# 2. BuyOrgStrategy structural tests
-# ---------------------------------------------------------------------------
-
-
-class TestBuyOrgStrategy:
-    def test_returns_array_of_shape_M(self):
-        """__call__ must return (M,) array."""
-        pop = _pop()
-        strat = BuyOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=0))
-        assert result.shape == (M,)
-
-    def test_buy_zero_for_solved_gene(self):
-        """Organism does not buy a gene it already solved (x=1)."""
-        pop = _pop()
-        strat = BuyOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=0))
-        assert np.isclose(result[0], 0.0, atol=1e-12)
-
-    def test_buy_positive_for_unsolved_gene(self):
-        """Organism buys genes it did not solve (x=0), so delta must be ≥ 0."""
-        pop = _pop()
-        strat = BuyOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=1))
-        assert result[3] >= 0.0
-
-    def test_kernel_d_vector_matches_call_sum(self):
-        """Kernel d-vector must equal the sum of __call__ over all organisms."""
-        pop = _pop()
-        strat = BuyOrgStrategy()
-        _, d = strat.kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert d is not None
+        assert d.shape == (M,)
+        assert np.all(np.isfinite(d))
 
-        call_sum = np.zeros(M)
-        for i in range(N):
-            call_sum += strat(_make_ctx(pop, org_id=i))
-        np.testing.assert_allclose(d, call_sum, atol=1e-10)
 
-    def test_kernel_D_is_none(self):
-        """BuyOrgStrategy has no bilinear D term."""
+class TestSellUniformStructure:
+    def test_name(self):
+        assert SellUniformGeneStrategy().name == "SellUniform"
+
+    def test_call_returns_float(self):
         pop = _pop()
-        D, _ = BuyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        result = SellUniformGeneStrategy()(_make_gene_ctx(pop, 0, 2))
+        assert isinstance(result, float)
+        assert np.isfinite(result)
+
+    def test_kernel_returns_none_d(self):
+        pop = _pop()
+        D, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert D is None
+        assert d is not None
+        assert d.shape == (M,)
+        assert np.all(np.isfinite(d))
 
-    def test_perfect_organism_contributes_nothing(self):
-        """An organism that solved everything has zero excl_norm2 → zero buy."""
-        data = np.array([[1.0, 1.0, 1.0], [0.5, 0.5, 0.5]])
-        pop = PikaiaPopulation(data)
-        strat = BuyOrgStrategy()
-        result = strat(_make_ctx(pop, org_id=0))
-        assert np.allclose(result, 0.0, atol=1e-12)
+
+class TestSellEasyStructure:
+    def test_name(self):
+        assert SellEasyGeneStrategy().name == "SellEasy"
+
+    def test_call_returns_float(self):
+        pop = _pop()
+        result = SellEasyGeneStrategy()(_make_gene_ctx(pop, 0, 2))
+        assert isinstance(result, float)
+        assert np.isfinite(result)
+
+    def test_kernel_returns_none_d(self):
+        pop = _pop()
+        D, d = SellEasyGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        assert D is None
+        assert d is not None
+        assert d.shape == (M,)
+        assert np.all(np.isfinite(d))
+
+
+class TestBuyHardStructure:
+    def test_name(self):
+        assert BuyHardOrgStrategy().name == "BuyHard"
+
+    def test_call_returns_array_M(self):
+        pop = _pop()
+        result = BuyHardOrgStrategy()(_make_ctx(pop, 0))
+        assert result.shape == (M,)
+        assert np.all(np.isfinite(result))
+
+    def test_kernel_fallback_base_class(self):
+        pop = _pop()
+        D, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        assert D is None
+        assert d is None
+
+
+class TestBuyUniformStructure:
+    def test_name(self):
+        assert BuyUniformOrgStrategy().name == "BuyUniform"
+
+    def test_call_returns_array_M(self):
+        pop = _pop()
+        result = BuyUniformOrgStrategy()(_make_ctx(pop, 0))
+        assert result.shape == (M,)
+        assert np.all(np.isfinite(result))
+
+    def test_kernel_fallback_base_class(self):
+        pop = _pop()
+        D, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        assert D is None
+        assert d is None
+
+
+class TestBuyEasyStructure:
+    def test_name(self):
+        assert BuyEasyOrgStrategy().name == "BuyEasy"
+
+    def test_call_returns_array_M(self):
+        pop = _pop()
+        result = BuyEasyOrgStrategy()(_make_ctx(pop, 0))
+        assert result.shape == (M,)
+        assert np.all(np.isfinite(result))
+
+    def test_kernel_fallback_base_class(self):
+        pop = _pop()
+        D, d = BuyEasyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+        assert D is None
+        assert d is None
 
 
 # ---------------------------------------------------------------------------
-# 3. Sell+Buy together: capital conservation
+# 2. Sign tests
 # ---------------------------------------------------------------------------
 
 
-def test_sell_plus_buy_net_delta_sums_to_zero():
-    """
-    The total value is conserved: what is sold is bought back.
-    The combined net delta summed over all genes must be ≈ 0.
-    """
+def test_sell_hard_delta_nonpositive_when_xij_positive():
     pop = _pop()
-    sell_strat = SellOrgStrategy()
-    buy_strat = BuyOrgStrategy()
-
-    sell_total = np.zeros(M)
-    buy_total = np.zeros(M)
+    s = SellHardGeneStrategy()
     for i in range(N):
-        sell_total += sell_strat(_make_ctx(pop, org_id=i))
-        buy_total += buy_strat(_make_ctx(pop, org_id=i))
-
-    net = sell_total + buy_total
-    assert np.isclose(net.sum(), 0.0, atol=1e-10), (
-        f"Capital not conserved: net.sum()={net.sum():.2e}"
-    )
+        for j in range(M):
+            if PERF[i, j] > 0:
+                assert s(_make_gene_ctx(pop, i, j)) <= 0
 
 
-# ---------------------------------------------------------------------------
-# 4. Cross-organism redistribution
-# ---------------------------------------------------------------------------
-
-
-def test_buy_separates_genes_with_equal_means():
-    """
-    Genes 2 and 3 have identical means (2/3) and identical exclusiveness (1/3),
-    so any diagonal strategy treats them identically.  BuyOrgStrategy must produce
-    different buy deltas for them because they are held by *different* organisms.
-    """
+def test_sell_hard_delta_zero_when_xij_zero():
     pop = _pop()
-    strat = BuyOrgStrategy()
-    _, d = strat.kernel(pop, np.eye(M), np.eye(N), 1.0)
+    s = SellHardGeneStrategy()
+    for i in range(N):
+        for j in range(M):
+            if PERF[i, j] == 0.0:
+                assert np.isclose(s(_make_gene_ctx(pop, i, j)), 0.0, atol=1e-12)
+
+
+def test_sell_uniform_delta_nonpositive_when_xij_positive():
+    pop = _pop()
+    s = SellUniformGeneStrategy()
+    for i in range(N):
+        for j in range(M):
+            if PERF[i, j] > 0:
+                assert s(_make_gene_ctx(pop, i, j)) <= 0
+
+
+def test_buy_hard_delta_nonnegative():
+    pop = _pop()
+    s = BuyHardOrgStrategy()
+    for i in range(N):
+        result = s(_make_ctx(pop, i))
+        assert np.all(result >= -1e-12)
+
+
+def test_buy_uniform_delta_nonnegative():
+    pop = _pop()
+    s = BuyUniformOrgStrategy()
+    for i in range(N):
+        result = s(_make_ctx(pop, i))
+        assert np.all(result >= -1e-12)
+
+
+# ---------------------------------------------------------------------------
+# 3. Kernel consistency: d == sum of __call__ over all organisms
+# ---------------------------------------------------------------------------
+
+
+def test_sell_hard_kernel_matches_call_sum():
+    pop = _pop()
+    s = SellHardGeneStrategy()
+    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
     assert d is not None
-    assert d[2] != d[3], (
-        "BuyOrgStrategy must distinguish genes 2 and 3 despite equal means"
+    call_sum = np.zeros(M)
+    for i in range(N):
+        for j in range(M):
+            call_sum[j] += s(_make_gene_ctx(pop, i, j))
+    np.testing.assert_allclose(d, call_sum, atol=1e-10)
+
+
+def test_sell_uniform_kernel_matches_call_sum():
+    pop = _pop()
+    s = SellUniformGeneStrategy()
+    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    call_sum = np.zeros(M)
+    for i in range(N):
+        for j in range(M):
+            call_sum[j] += s(_make_gene_ctx(pop, i, j))
+    np.testing.assert_allclose(d, call_sum, atol=1e-10)
+
+
+def test_sell_easy_kernel_matches_call_sum():
+    pop = _pop()
+    s = SellEasyGeneStrategy()
+    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    call_sum = np.zeros(M)
+    for i in range(N):
+        for j in range(M):
+            call_sum[j] += s(_make_gene_ctx(pop, i, j))
+    np.testing.assert_allclose(d, call_sum, atol=1e-10)
+
+
+# ---------------------------------------------------------------------------
+# 4. Formula correctness
+# ---------------------------------------------------------------------------
+
+
+def test_sell_hard_kernel_formula():
+    pop = _pop()
+    mean_j = PERF.mean(axis=0)
+    excl_j = 1.0 - mean_j
+    expected = -mean_j * excl_j / (1.0 - excl_j + 1e-8)
+    _, d = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    np.testing.assert_allclose(d, expected, atol=1e-10)
+
+
+def test_sell_uniform_kernel_formula():
+    pop = _pop()
+    mean_j = PERF.mean(axis=0)
+    excl_j = 1.0 - mean_j
+    # CalSim D2: sell=0 for trivially-solved (excl=0) or trivially-failed (excl=1) genes
+    mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
+    expected = -mean_j * mask.astype(float)
+    _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    np.testing.assert_allclose(d, expected, atol=1e-10)
+
+
+def test_sell_easy_kernel_formula():
+    pop = _pop()
+    mean_j = PERF.mean(axis=0)
+    excl_j = 1.0 - mean_j
+    expected = mean_j * excl_j / (1.0 - excl_j + 1e-8)
+    _, d = SellEasyGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d is not None
+    np.testing.assert_allclose(d, expected, atol=1e-10)
+
+
+def test_buy_hard_no_d_matrix_kernel():
+    # Buy strategies cannot be expressed in D-matrix form (capital depends on gamma).
+    # kernel() falls back to base class returning (None, None).
+    pop = _pop()
+    D, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
+
+
+def test_buy_uniform_no_d_matrix_kernel():
+    pop = _pop()
+    D, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
+
+
+def test_buy_easy_no_d_matrix_kernel():
+    pop = _pop()
+    D, d = BuyEasyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
+
+
+# ---------------------------------------------------------------------------
+# 5. SELL_EASY = -SELL_HARD
+# ---------------------------------------------------------------------------
+
+
+def test_sell_easy_negates_sell_hard_kernel():
+    pop = _pop()
+    _, d_hard = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    _, d_easy = SellEasyGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d_hard is not None
+    assert d_easy is not None
+    np.testing.assert_allclose(d_easy, -d_hard, atol=1e-10)
+
+
+def test_sell_easy_negates_sell_hard_call():
+    pop = _pop()
+    sh = SellHardGeneStrategy()
+    se = SellEasyGeneStrategy()
+    for i in range(N):
+        for j in range(M):
+            ctx = _make_gene_ctx(pop, i, j)
+            np.testing.assert_allclose(se(ctx), -sh(ctx), atol=1e-14)
+
+
+# ---------------------------------------------------------------------------
+# 7. BUY_EASY = -BUY_HARD
+# ---------------------------------------------------------------------------
+
+
+def test_buy_easy_negates_buy_hard_call():
+    pop = _pop()
+    bh = BuyHardOrgStrategy()
+    be = BuyEasyOrgStrategy()
+    for i in range(N):
+        ctx = _make_ctx(pop, i)
+        np.testing.assert_allclose(be(ctx), -bh(ctx), atol=1e-14)
+
+
+# ---------------------------------------------------------------------------
+# 8. End-to-end PikaiaModel run
+# ---------------------------------------------------------------------------
+
+
+def test_end_to_end_sell_hard_buy_hard():
+    pop = _pop()
+    model = PikaiaModel(
+        population=pop,
+        gene_strategies=[SellHardGeneStrategy()],
+        org_strategies=[BuyHardOrgStrategy()],
+        max_iter=1,
     )
+    model.fit()
+    gf = model.gene_fitness_history[1]
+    assert gf.shape == (M,)
+    assert np.all(np.isfinite(gf))
+    assert np.isclose(gf.sum(), 1.0, atol=1e-10)
 
 
-def test_sell_buy_separates_genes_2_and_3_in_full_iteration():
-    """
-    After one SELL+BUY iteration, gene 3 should rank above gene 2 despite both
-    having the same mean expression.  A pure diagonal strategy (REWARD_HARD)
-    cannot achieve this separation.
-    """
-    gf_sb = _pikaia_round_sell_buy()
-    gf_rh = _pikaia_round(GeneStrategyEnum.REWARD_HARD, OrgStrategyEnum.BALANCED)
-
-    assert gf_sb[3] > gf_sb[2], (
-        f"SELL+BUY should rank gene 3 > gene 2; got {gf_sb[2]:.6f} vs {gf_sb[3]:.6f}"
+def test_end_to_end_sell_uniform_buy_uniform():
+    pop = _pop()
+    model = PikaiaModel(
+        population=pop,
+        gene_strategies=[SellUniformGeneStrategy()],
+        org_strategies=[BuyUniformOrgStrategy()],
+        max_iter=1,
     )
-    assert np.isclose(gf_rh[2], gf_rh[3], atol=1e-10), (
-        "REWARD_HARD (diagonal) must treat genes 2 and 3 identically"
+    model.fit()
+    gf = model.gene_fitness_history[1]
+    assert gf.shape == (M,)
+    assert np.all(np.isfinite(gf))
+    assert np.isclose(gf.sum(), 1.0, atol=1e-10)
+
+
+def test_end_to_end_sell_easy_buy_easy():
+    pop = _pop()
+    model = PikaiaModel(
+        population=pop,
+        gene_strategies=[SellEasyGeneStrategy()],
+        org_strategies=[BuyEasyOrgStrategy()],
+        max_iter=1,
     )
+    model.fit()
+    gf = model.gene_fitness_history[1]
+    assert gf.shape == (M,)
+    assert np.all(np.isfinite(gf))
+    assert np.isclose(gf.sum(), 1.0, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
-# 5. Regression: expected gene-fitness values on canonical dataset
+# Factory round-trips
 # ---------------------------------------------------------------------------
 
 
-def test_canonical_gene_fitness_regression():
-    """
-    Regression guard for the exact SELL+BUY output on the canonical 3×4 dataset.
-
-    Both strategies run as OrgStrategy with equal mixing weights (0.5 each):
-      net_d = 0.5*sell_d + 0.5*buy_d
-      γ_new = γ_0 * (1 + net_d), normalised → [1/4, 31/144, 2/9, 5/16]
-    """
-    gf = _pikaia_round_sell_buy()
-    np.testing.assert_allclose(gf, EXPECTED_GF, atol=1e-4, rtol=0)
+def test_factory_roundtrip_sell_hard():
+    s = GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_HARD)
+    assert isinstance(s, SellHardGeneStrategy)
 
 
-# ---------------------------------------------------------------------------
-# 6. Enum and factory round-trip
-# ---------------------------------------------------------------------------
+def test_factory_roundtrip_sell_uniform():
+    s = GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_UNIFORM)
+    assert isinstance(s, SellUniformGeneStrategy)
 
 
-def test_enum_factory_roundtrip_sell():
-    strat = OrgStrategyFactory.get_strategy(OrgStrategyEnum.SELL)
-    assert isinstance(strat, SellOrgStrategy)
-    assert strat.name == "Sell"
+def test_factory_roundtrip_sell_easy():
+    s = GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_EASY)
+    assert isinstance(s, SellEasyGeneStrategy)
 
 
-def test_enum_factory_roundtrip_buy():
-    strat = OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY)
-    assert isinstance(strat, BuyOrgStrategy)
-    assert strat.name == "Buy"
+def test_factory_roundtrip_buy_hard():
+    s = OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_HARD)
+    assert isinstance(s, BuyHardOrgStrategy)
+
+
+def test_factory_roundtrip_buy_uniform():
+    s = OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_UNIFORM)
+    assert isinstance(s, BuyUniformOrgStrategy)
+
+
+def test_factory_roundtrip_buy_easy():
+    s = OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_EASY)
+    assert isinstance(s, BuyEasyOrgStrategy)

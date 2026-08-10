@@ -16,27 +16,25 @@ class GeneStrategyEnum(str, Enum):
     ALTRUISTIC = "ALTRUISTIC"
     """Gene acts altruistically toward others."""
 
-    REWARD_HARD = "REWARD_HARD"
-    """Rewards features that are hard to achieve.
+    SELL_HARD = "SELL_HARD"
+    """CalSim Difficulty1 ("fair") sell signal.
 
-    Port of tgeneticai CalSim ``"Difficulty1"``.  Features with low average
-    expression receive a positive delta boost.
+    Hard genes (low mean expression) lose more value per unit of performance.
+    Pair with ``OrgStrategyEnum.BUY_HARD``.
     """
 
-    REWARD_EASY = "REWARD_EASY"
-    """Rewards features that are easy to achieve.
+    SELL_UNIFORM = "SELL_UNIFORM"
+    """CalSim Difficulty2 ("inclusive") sell signal.
 
-    Port of tgeneticai CalSim ``"Inverse"``.  The exact inverse of
-    ``REWARD_HARD`` — features with high average expression receive a positive
-    delta boost.
+    All genes lose value at the same rate, independent of difficulty.
+    Pair with ``OrgStrategyEnum.BUY_UNIFORM``.
     """
 
-    VALUATION_BLEND = "VALUATION_BLEND"
-    """Blends between REWARD_HARD and REWARD_EASY via a ``preference`` parameter.
+    SELL_EASY = "SELL_EASY"
+    """CalSim Inverse sell signal.
 
-    Port of tgeneticai CalSim ``"Mixed"``.  ``preference=0.0`` → pure
-    REWARD_EASY, ``preference=0.5`` → balanced, ``preference=1.0`` → pure
-    REWARD_HARD.
+    Easy genes (high mean expression) lose more value — the mirror of
+    ``SELL_HARD``.  Pair with ``OrgStrategyEnum.BUY_EASY``.
     """
 
     ENTROPY_MAX = "ENTROPY_MAX"
@@ -87,18 +85,25 @@ class OrgStrategyEnum(str, Enum):
     SELFISH = "SELFISH"
     """Organism acts selfishly, promoting its own gene expression."""
 
-    SELL = "SELL"
-    """CalSim sell-phase signal.
+    BUY_HARD = "BUY_HARD"
+    """CalSim Difficulty1 ("fair") buy-phase signal.
 
-    Drains value from commonly-expressed genes proportional to their difficulty
-    odds.  Pair with ``OrgStrategyEnum.BUY`` to reproduce a full CalSim round.
+    Redistributes hard-gene sell capital to easy genes the organism failed.
+    Pair with ``GeneStrategyEnum.SELL_HARD``.
     """
 
-    BUY = "BUY"
-    """CalSim buy-phase signal.
+    BUY_UNIFORM = "BUY_UNIFORM"
+    """CalSim Difficulty2 ("inclusive") buy-phase signal.
 
-    Redistributes sell capital from high-performing organisms to genes they
-    lack.  Pair with ``OrgStrategyEnum.SELL`` to reproduce a full CalSim round.
+    Redistributes uniform sell capital to hard genes the organism failed.
+    Pair with ``GeneStrategyEnum.SELL_UNIFORM``.
+    """
+
+    BUY_EASY = "BUY_EASY"
+    """CalSim Inverse buy-phase signal.
+
+    Mirror of ``BUY_HARD`` — redistributes with inverted sign.
+    Pair with ``GeneStrategyEnum.SELL_EASY``.
     """
 
     NONE = "NONE"

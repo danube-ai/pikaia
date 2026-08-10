@@ -8,10 +8,10 @@ from .none_strategy import NoneGeneStrategy
 from .orthogonality_strategy import OrthoGeneStrategy
 from .partial_corr_strategy import PartialCorrGeneStrategy
 from .redundancy_penalty_strategy import RedundancyPenaltyGeneStrategy
-from .reward_easy_strategy import RewardEasyGeneStrategy
-from .reward_hard_strategy import RewardHardGeneStrategy
 from .selfish_strategy import SelfishGeneStrategy
-from .valuation_blend_strategy import ValuationBlendGeneStrategy
+from .sell_easy_strategy import SellEasyGeneStrategy
+from .sell_hard_strategy import SellHardGeneStrategy
+from .sell_uniform_strategy import SellUniformGeneStrategy
 from .variance_strategy import VarianceGeneStrategy
 
 __all__ = [
@@ -23,9 +23,9 @@ __all__ = [
     "OrthoGeneStrategy",
     "PartialCorrGeneStrategy",
     "RedundancyPenaltyGeneStrategy",
-    "RewardEasyGeneStrategy",
-    "RewardHardGeneStrategy",
+    "SellEasyGeneStrategy",
+    "SellHardGeneStrategy",
+    "SellUniformGeneStrategy",
     "SelfishGeneStrategy",
-    "ValuationBlendGeneStrategy",
     "VarianceGeneStrategy",
 ]

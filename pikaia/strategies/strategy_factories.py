@@ -20,11 +20,11 @@ from pikaia.strategies.gs_strategies.partial_corr_strategy import (
 from pikaia.strategies.gs_strategies.redundancy_penalty_strategy import (
     RedundancyPenaltyGeneStrategy,
 )
-from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
-from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
-from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
-    ValuationBlendGeneStrategy,
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
+from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
+from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
+    SellUniformGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
@@ -33,11 +33,12 @@ from pikaia.strategies.mix_strategies.self_consistent_strategy import (
 )
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
-from pikaia.strategies.os_strategies.buy_strategy import BuyOrgStrategy
+from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
+from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
+from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
-from pikaia.strategies.os_strategies.sell_strategy import SellOrgStrategy
 
 
 class GeneStrategyFactory:
@@ -54,9 +55,9 @@ class GeneStrategyFactory:
         GeneStrategyEnum.ALTRUISTIC: AltruisticGeneStrategy,
         GeneStrategyEnum.KIN_ALTRUISTIC: KinAltruisticGeneStrategy,
         GeneStrategyEnum.SELFISH: SelfishGeneStrategy,
-        GeneStrategyEnum.REWARD_HARD: RewardHardGeneStrategy,
-        GeneStrategyEnum.REWARD_EASY: RewardEasyGeneStrategy,
-        GeneStrategyEnum.VALUATION_BLEND: ValuationBlendGeneStrategy,
+        GeneStrategyEnum.SELL_HARD: SellHardGeneStrategy,
+        GeneStrategyEnum.SELL_UNIFORM: SellUniformGeneStrategy,
+        GeneStrategyEnum.SELL_EASY: SellEasyGeneStrategy,
         GeneStrategyEnum.ENTROPY_MAX: EntropyMaxGeneStrategy,
         GeneStrategyEnum.ORTHO_GENE: OrthoGeneStrategy,
         GeneStrategyEnum.PARTIAL_CORR: PartialCorrGeneStrategy,
@@ -103,8 +104,9 @@ class OrgStrategyFactory:
         OrgStrategyEnum.ALTRUISTIC: AltruisticOrgStrategy,
         OrgStrategyEnum.KIN_SELFISH: KinSelfishOrgStrategy,
         OrgStrategyEnum.SELFISH: SelfishOrgStrategy,
-        OrgStrategyEnum.SELL: SellOrgStrategy,
-        OrgStrategyEnum.BUY: BuyOrgStrategy,
+        OrgStrategyEnum.BUY_HARD: BuyHardOrgStrategy,
+        OrgStrategyEnum.BUY_UNIFORM: BuyUniformOrgStrategy,
+        OrgStrategyEnum.BUY_EASY: BuyEasyOrgStrategy,
         OrgStrategyEnum.NONE: NoneOrgStrategy,
     }
 
