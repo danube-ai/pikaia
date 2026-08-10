@@ -5,7 +5,7 @@ from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 class BuyHardOrgStrategy(OrgStrategy):
     """
-    Organism strategy implementing the CalSim Difficulty1 buy-phase signal.
+    Trading buy-phase paired with `SellHardGeneStrategy`.
 
     Each organism spends its sell capital (earned from hard genes) on genes it
     failed, weighted by how easy those genes are (``mean_j``).  Organisms that
@@ -32,8 +32,7 @@ class BuyHardOrgStrategy(OrgStrategy):
         (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\bar{x}_j
     $$
 
-    Pair with `SellHardGeneStrategy` to reproduce a full CalSim Difficulty1
-    ("fair") recalibration round.
+    Pair with `SellHardGeneStrategy` for the full hard-gene trading round.
     """
 
     def __init__(self, **kwargs):
@@ -51,7 +50,6 @@ class BuyHardOrgStrategy(OrgStrategy):
         excl = 1.0 - mean_all
         sell_signal = excl / (1.0 - excl + 1e-8)
 
-        # Capital scales with current gene fitness, matching CalSim's currentValue weighting.
         max_capital = (X * (sell_signal * gamma)[np.newaxis, :]).sum(axis=1) / N
         excl_norm2 = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
 
@@ -59,7 +57,6 @@ class BuyHardOrgStrategy(OrgStrategy):
         if excl_norm2[i] < 1e-10:
             return np.zeros(M)
         buy_abs = (1.0 - X[i, :]) * max_capital[i] / excl_norm2[i] * mean_all
-        # Proportional delta = buy_abs / gamma_j.  At uniform start (gamma=1/M) this
-        # equals the original constant formula; at equilibrium it reproduces CalSim's
-        # fixed-point condition gamma_j * sell_signal_j * mean_j = buy_abs_j.
+        # Proportional delta: buy_abs / gamma_j keeps the replicator at the correct
+        # fixed point where gamma_j * sell_signal_j * mean_j = buy_abs_j.
         return buy_abs / (gamma + 1e-10)

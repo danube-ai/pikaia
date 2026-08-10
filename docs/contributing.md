@@ -45,13 +45,13 @@ then normalises **γ** to sum to 1. The deltas `Δ(i, j)` come from two compleme
 
 Called once per *(organism i, gene j)* pair. Return a **scalar** delta that drives gene *j*'s fitness up or down based on how organism *i* expressed it.
 
-**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `RewardHardGeneStrategy`.
+**When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `SellHardGeneStrategy`.
 
 ### Organism strategies (`OrgStrategy`)
 
 Called once per **organism i**. Return an `(M,)` array — the delta for every gene in one shot.
 
-**When to use:** organism *i*'s contribution to gene *j* depends on *i*'s performance on other genes (cross-gene interaction). Examples: `BalancedOrgStrategy`, `BuyOrgStrategy`.
+**When to use:** organism *i*'s contribution to gene *j* depends on *i*'s performance on other genes (cross-gene interaction). Examples: `BalancedOrgStrategy`, `BuyHardOrgStrategy`.
 
 ### `StrategyContext`
 
@@ -219,7 +219,7 @@ class MyOrgStrategy(OrgStrategy):
         return None, None
 ```
 
-See `BuyOrgStrategy` in `pikaia/strategies/os_strategies/buy_strategy.py` for a real example where the kernel computes a linear `d`-vector from a cross-organism redistribution.
+See `BuyHardOrgStrategy` in `pikaia/strategies/os_strategies/buy_hard_strategy.py` for a real example where the kernel computes a linear `d`-vector from a cross-organism redistribution.
 
 ---
 

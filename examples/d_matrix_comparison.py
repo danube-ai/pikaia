@@ -19,10 +19,15 @@ Three fit modes
      Requires at least one strategy to implement kernel().
      Fails for NoneGeneStrategy + NoneOrgStrategy (no kernel).
 
-All 8 x 5 = 40 combinations are run:
+All 8 x 8 = 64 combinations are run:
   Gene strategies : Dominant, Altruistic, Selfish, KinAltruistic,
-                    RewardHard, RewardEasy, ValuationBlend, None
-  Org  strategies : Balanced, Altruistic, KinSelfish, Selfish,   None
+                    SellHard, SellUniform, SellEasy, None
+  Org  strategies : Balanced, Altruistic, KinSelfish, Selfish,
+                    BuyHard, BuyUniform, BuyEasy, None
+
+  Note: trading strategies are designed to be used as matched pairs
+  (SellHard+BuyHard, SellUniform+BuyUniform, SellEasy+BuyEasy).
+  The full grid is included here for performance benchmarking only.
 
 D-matrix is skipped for NoneGene+NoneOrg (raises ValueError -- no kernel).
 Fix-point is the same analytical baseline for all combos (Dom+Bal formula).
@@ -47,14 +52,17 @@ from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
     KinAltruisticGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
-from pikaia.strategies.gs_strategies.reward_easy_strategy import RewardEasyGeneStrategy
-from pikaia.strategies.gs_strategies.reward_hard_strategy import RewardHardGeneStrategy
 from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
-from pikaia.strategies.gs_strategies.valuation_blend_strategy import (
-    ValuationBlendGeneStrategy,
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
+from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
+from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
+    SellUniformGeneStrategy,
 )
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
+from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
+from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
+from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
@@ -120,9 +128,9 @@ GENE_STRATEGIES = [
     ("Altruistic", lambda: AltruisticGeneStrategy()),
     ("Selfish", lambda: SelfishGeneStrategy()),
     ("KinAltruistic", lambda: KinAltruisticGeneStrategy()),
-    ("RewardHard", lambda: RewardHardGeneStrategy()),
-    ("RewardEasy", lambda: RewardEasyGeneStrategy()),
-    ("ValuationBlend", lambda: ValuationBlendGeneStrategy(preference=0.3)),
+    ("SellHard", lambda: SellHardGeneStrategy()),
+    ("SellUniform", lambda: SellUniformGeneStrategy()),
+    ("SellEasy", lambda: SellEasyGeneStrategy()),
     ("None", lambda: NoneGeneStrategy()),
 ]
 ORG_STRATEGIES = [
@@ -130,6 +138,9 @@ ORG_STRATEGIES = [
     ("Altruistic", AltruisticOrgStrategy),
     ("KinSelfish", KinSelfishOrgStrategy),
     ("Selfish", SelfishOrgStrategy),
+    ("BuyHard", BuyHardOrgStrategy),
+    ("BuyUniform", BuyUniformOrgStrategy),
+    ("BuyEasy", BuyEasyOrgStrategy),
     ("None", NoneOrgStrategy),
 ]
 GENE_NAMES = [g for g, _ in GENE_STRATEGIES]
@@ -501,7 +512,7 @@ ax.set_title(
     f"(max_iter={MAX_ITER}, epsilon={EPSILON}, N={N}, M={M})"
 )
 ax.legend(fontsize=9)
-ax.set_xlim(-0.7, 24.7)
+ax.set_xlim(-0.7, n_genes * n_orgs - 0.3)
 plt.tight_layout()
 out3 = f"{OUT_DIR}/runtime_all_combos.png"
 plt.savefig(out3, dpi=150)

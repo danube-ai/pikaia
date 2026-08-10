@@ -6,10 +6,9 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 class SellEasyGeneStrategy(GeneStrategy):
     """
-    Gene strategy implementing the CalSim Inverse sell signal.
+    Trading sell signal weighted by gene ease — the inverse of `SellHardGeneStrategy`.
 
-    Easy genes (high mean expression, low exclusiveness) lose more value —
-    the sell signal is inverted relative to `SellHardGeneStrategy`.
+    Easy genes (high mean expression, low exclusiveness) lose more value.
 
     For organism *i*, gene *j*:
 
@@ -23,8 +22,7 @@ class SellEasyGeneStrategy(GeneStrategy):
     ``+mean_j · excl_j / (1 - excl_j)``, the exact negation of the
     ``SellHardGeneStrategy`` signal.
 
-    Pair with `BuyEasyOrgStrategy` to reproduce a full CalSim Inverse
-    recalibration round.
+    Pair with `BuyEasyOrgStrategy` for the full easy-gene trading round.
     """
 
     def __init__(self, **kwargs):

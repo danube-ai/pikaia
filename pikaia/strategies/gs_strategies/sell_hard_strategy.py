@@ -6,7 +6,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 class SellHardGeneStrategy(GeneStrategy):
     """
-    Gene strategy implementing the CalSim Difficulty1 sell signal.
+    Trading sell signal weighted by gene difficulty.
 
     Hard genes (low mean expression, high exclusiveness) lose more value per
     unit of performance — organisms that solved them "sell" at a premium.
@@ -20,11 +20,10 @@ class SellHardGeneStrategy(GeneStrategy):
     $$
 
     Summed over all organisms this equals
-    ``-mean_j · excl_j / (1 - excl_j)``, which is the proportional sell loss
-    in CalSim's Difficulty1 round.
+    ``-mean_j · excl_j / (1 - excl_j)``, the proportional sell loss
+    weighted by gene difficulty.
 
-    Pair with `BuyHardOrgStrategy` to reproduce a full CalSim Difficulty1
-    ("fair") recalibration round.
+    Pair with `BuyHardOrgStrategy` for the full hard-gene trading round.
     """
 
     def __init__(self, **kwargs):

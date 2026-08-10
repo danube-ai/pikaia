@@ -5,7 +5,7 @@ from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 class BuyUniformOrgStrategy(OrgStrategy):
     """
-    Organism strategy implementing the CalSim Difficulty2 buy-phase signal.
+    Trading buy-phase paired with `SellUniformGeneStrategy`.
 
     Each organism spends its uniform sell capital (proportional to average
     performance) on genes it failed, weighted by how hard those genes are
@@ -31,8 +31,7 @@ class BuyUniformOrgStrategy(OrgStrategy):
         (1 - x_{ij}) \\cdot \\frac{C_i}{Z_i} \\cdot \\text{excl}_j
     $$
 
-    Pair with `SellUniformGeneStrategy` to reproduce a full CalSim Difficulty2
-    ("inclusive") recalibration round.
+    Pair with `SellUniformGeneStrategy` for the full uniform trading round.
     """
 
     def __init__(self, **kwargs):
@@ -49,7 +48,7 @@ class BuyUniformOrgStrategy(OrgStrategy):
         mean_all = X.mean(axis=0)
         excl = 1.0 - mean_all
 
-        # Capital only from genes that sell in CalSim D2: excl ∉ {0, 1}
+        # Capital only from genes with non-trivial exclusiveness: excl ∉ {0, 1}
         sell_mask = ((excl > 1e-6) & (excl < 1.0 - 1e-6)).astype(float)
         max_capital = (X * (sell_mask * gamma)[np.newaxis, :]).sum(axis=1) / N
         excl_norm = ((1.0 - X) * excl[np.newaxis, :]).sum(axis=1)

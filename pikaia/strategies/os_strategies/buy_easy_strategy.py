@@ -5,14 +5,14 @@ from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 class BuyEasyOrgStrategy(OrgStrategy):
     """
-    Organism strategy implementing the CalSim Inverse buy-phase signal.
+    Trading buy-phase paired with `SellEasyGeneStrategy` — mirror of `BuyHardOrgStrategy`.
 
-    Capital is earned with a negative sign (from the Inverse sell signal),
+    Capital is earned with a negative sign (from the easy sell signal),
     so the redistribution flows in the opposite direction to `BuyHardOrgStrategy`:
     organisms that solved easy genes accumulate capital and redistribute it
     to genes they failed, weighted by how easy those genes are.
 
-    For organism *i*, the (negative) capital from Inverse selling is:
+    For organism *i*, the (negative) capital from easy selling is:
 
     $$
     C_i = -\\frac{1}{N} \\sum_k x_{ik}
@@ -33,8 +33,7 @@ class BuyEasyOrgStrategy(OrgStrategy):
         = -\\Delta_{\\text{buy\\_hard}}(i, j)
     $$
 
-    Pair with `SellEasyGeneStrategy` to reproduce a full CalSim Inverse
-    recalibration round.
+    Pair with `SellEasyGeneStrategy` for the full easy-gene trading round.
     """
 
     def __init__(self, **kwargs):

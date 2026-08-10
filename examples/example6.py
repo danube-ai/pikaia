@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
 """
-Example 6: Valuation Strategies — Reward Hard vs Reward Easy vs Blend vs Sell+Buy
+Example 6: Trading Strategies — three matched sell+buy pairs
 
-This script demonstrates the valuation strategies ported from the tgeneticai
-CalSim framework (experiments/tgeneticai/calsim.py):
+This script demonstrates the three trading strategy pairs:
 
-  - REWARD_HARD   — rewards features that are hard to achieve (high difficulty)
-  - REWARD_EASY   — rewards features that are easy to achieve (low difficulty)
-  - VALUATION_BLEND — interpolates between the two via a preference parameter
-  - SELL + BUY    — full CalSim market recalibration round reproduced inside
-                    the replicator framework.  Both are organism strategies:
-                    SELL drains value from commonly-expressed genes;
-                    BUY redistributes capital from high-performers to genes
-                    they lack.
-
-The original CalSim used these as "sellStrategy" settings:
-  "Difficulty1" → SELL (org) + BUY (org)
+  - SELL_HARD + BUY_HARD     — sell signal weighted by gene difficulty;
+                                redistribute capital to easy genes the organism failed
+  - SELL_UNIFORM + BUY_UNIFORM — uniform sell signal;
+                                  redistribute capital to hard genes the organism failed
+  - SELL_EASY + BUY_EASY     — sell signal weighted by gene ease (inverse of SELL_HARD);
+                                redistribute capital mirroring BUY_HARD
 
 We use a synthetic dataset with one easy, one hard, and two medium-difficulty
 features so the strategies produce visibly different fitness trajectories.
@@ -41,7 +35,7 @@ from pikaia.strategies import (
     OrgStrategyFactory,
 )
 
-print("=== Example 6: Valuation Strategies ===\n")
+print("=== Example 6: Trading Strategies ===\n")
 
 # ---------------------------------------------------------------------------
 # Data — synthetic 10x4 with controlled difficulty levels
@@ -94,49 +88,41 @@ gene_mix_strategy = org_mix_strategy = MixStrategyFactory.get_strategy(
     MixStrategyEnum.FIXED
 )
 
-_balanced = [OrgStrategyFactory.get_strategy(OrgStrategyEnum.BALANCED)]
-
 runs = [
     {
-        "label": "REWARD_HARD",
+        "label": "SELL_HARD + BUY_HARD",
         "gene_strategies": [
-            GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_HARD),
+            GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_HARD),
         ],
-        "org_strategies": _balanced,
-        "description": "Harder features gain fitness",
-    },
-    {
-        "label": "REWARD_EASY",
-        "gene_strategies": [
-            GeneStrategyFactory.get_strategy(GeneStrategyEnum.REWARD_EASY),
-        ],
-        "org_strategies": _balanced,
-        "description": "Easier features gain fitness",
-    },
-    {
-        "label": "VALUATION_BLEND (p=0.3)",
-        "gene_strategies": [
-            GeneStrategyFactory.get_strategy(
-                GeneStrategyEnum.VALUATION_BLEND, preference=0.3
-            ),
-        ],
-        "org_strategies": _balanced,
-        "description": "Leans toward rewarding easy features",
-    },
-    {
-        "label": "SELL + BUY (CalSim Difficulty1)",
-        "gene_strategies": [],
         "org_strategies": [
-            OrgStrategyFactory.get_strategy(OrgStrategyEnum.SELL),
-            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY),
+            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_HARD),
         ],
-        "description": "Full CalSim market recalibration: sell drains common genes, "
-        "buy redistributes capital from high-performers to genes they lack",
+        "description": "Sell drains rare genes; buy redistributes capital to easy genes the organism failed",
+    },
+    {
+        "label": "SELL_UNIFORM + BUY_UNIFORM",
+        "gene_strategies": [
+            GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_UNIFORM),
+        ],
+        "org_strategies": [
+            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_UNIFORM),
+        ],
+        "description": "Sell drains all genes uniformly; buy redistributes capital to hard genes the organism failed",
+    },
+    {
+        "label": "SELL_EASY + BUY_EASY",
+        "gene_strategies": [
+            GeneStrategyFactory.get_strategy(GeneStrategyEnum.SELL_EASY),
+        ],
+        "org_strategies": [
+            OrgStrategyFactory.get_strategy(OrgStrategyEnum.BUY_EASY),
+        ],
+        "description": "Sell drains easy genes (inverse of SELL_HARD); buy redistributes capital mirroring BUY_HARD",
     },
 ]
 
 # ---------------------------------------------------------------------------
-# Fit all three and collect results
+# Fit all runs and collect results
 # ---------------------------------------------------------------------------
 print("Model Setup and Fitting")
 
@@ -176,6 +162,7 @@ for model, run in zip(models, runs):
         .replace(")", "")
         .replace("=", "")
         .replace(".", "")
+        .replace("+", "plus")
     )
     plotter.plot(
         plot_type=PlotType.GENE_FITNESS_HISTORY,

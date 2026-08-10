@@ -6,7 +6,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 class SellUniformGeneStrategy(GeneStrategy):
     """
-    Gene strategy implementing the CalSim Difficulty2 sell signal.
+    Trading sell signal applied uniformly to all genes.
 
     All genes lose value at the same rate regardless of difficulty — organisms
     "sell" their solved genes uniformly.
@@ -20,8 +20,7 @@ class SellUniformGeneStrategy(GeneStrategy):
     Summed over all organisms this equals ``-mean_j``, a uniform sell loss
     independent of gene difficulty.
 
-    Pair with `BuyUniformOrgStrategy` to reproduce a full CalSim Difficulty2
-    ("inclusive") recalibration round.
+    Pair with `BuyUniformOrgStrategy` for the full uniform trading round.
     """
 
     def __init__(self, **kwargs):
@@ -37,7 +36,7 @@ class SellUniformGeneStrategy(GeneStrategy):
         j = ctx.gene_id
         mean_j = X[:, j].mean()
         excl_j = 1.0 - mean_j
-        # CalSim D2: vdeltaSell=0 when excl=0 (all solved) or excl=1 (none solved)
+        # Skip genes with trivial exclusiveness: all-solved (excl≈0) or none-solved (excl≈1)
         if excl_j < 1e-6 or excl_j > 1.0 - 1e-6:
             return 0.0
         return float(-(1.0 / N) * X[ctx.org_id, j])

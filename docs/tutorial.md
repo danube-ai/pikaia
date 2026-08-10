@@ -150,7 +150,7 @@ The plot shows how each gene's fitness evolves. A steep early trajectory means t
 
 ## What's next
 
-- **Compare strategies** — try `GeneStrategyEnum.REWARD_HARD` to favour criteria that are rare across candidates, or `GeneStrategyEnum.REWARD_EASY` for the opposite. See `examples/example6.py`.
+- **Compare strategies** — try `GeneStrategyEnum.SELL_HARD` to favour criteria that are rare across candidates, or `GeneStrategyEnum.SELL_EASY` for the opposite. See `examples/example6.py`.
 - **Speed up large datasets** — pass `use_d_matrix=True` to `PikaiaModel` for a 30–80× speedup. See [overview](overview.md#d-matrix-accelerated-mode).
 - **Mix multiple strategies** — pass a list to `gene_strategies` and use `MixStrategyEnum.SELF_CONSISTENT` to let the model self-select weights.
 - **Explore more examples** — the `examples/` directory contains scripts for real-world movie ranking, self-consistency, and a full strategy comparison grid.

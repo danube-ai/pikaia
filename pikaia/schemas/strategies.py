@@ -17,24 +17,24 @@ class GeneStrategyEnum(str, Enum):
     """Gene acts altruistically toward others."""
 
     SELL_HARD = "SELL_HARD"
-    """CalSim Difficulty1 ("fair") sell signal.
+    """Trading sell signal weighted by gene difficulty.
 
     Hard genes (low mean expression) lose more value per unit of performance.
     Pair with ``OrgStrategyEnum.BUY_HARD``.
     """
 
     SELL_UNIFORM = "SELL_UNIFORM"
-    """CalSim Difficulty2 ("inclusive") sell signal.
+    """Trading sell signal applied uniformly to all genes.
 
     All genes lose value at the same rate, independent of difficulty.
     Pair with ``OrgStrategyEnum.BUY_UNIFORM``.
     """
 
     SELL_EASY = "SELL_EASY"
-    """CalSim Inverse sell signal.
+    """Trading sell signal weighted by gene ease — the inverse of ``SELL_HARD``.
 
-    Easy genes (high mean expression) lose more value — the mirror of
-    ``SELL_HARD``.  Pair with ``OrgStrategyEnum.BUY_EASY``.
+    Easy genes (high mean expression) lose more value.
+    Pair with ``OrgStrategyEnum.BUY_EASY``.
     """
 
     ENTROPY_MAX = "ENTROPY_MAX"
@@ -86,23 +86,23 @@ class OrgStrategyEnum(str, Enum):
     """Organism acts selfishly, promoting its own gene expression."""
 
     BUY_HARD = "BUY_HARD"
-    """CalSim Difficulty1 ("fair") buy-phase signal.
+    """Trading buy-phase paired with ``SELL_HARD``.
 
     Redistributes hard-gene sell capital to easy genes the organism failed.
     Pair with ``GeneStrategyEnum.SELL_HARD``.
     """
 
     BUY_UNIFORM = "BUY_UNIFORM"
-    """CalSim Difficulty2 ("inclusive") buy-phase signal.
+    """Trading buy-phase paired with ``SELL_UNIFORM``.
 
     Redistributes uniform sell capital to hard genes the organism failed.
     Pair with ``GeneStrategyEnum.SELL_UNIFORM``.
     """
 
     BUY_EASY = "BUY_EASY"
-    """CalSim Inverse buy-phase signal.
+    """Trading buy-phase paired with ``SELL_EASY`` — mirror of ``BUY_HARD``.
 
-    Mirror of ``BUY_HARD`` — redistributes with inverted sign.
+    Redistributes capital with inverted sign relative to ``BUY_HARD``.
     Pair with ``GeneStrategyEnum.SELL_EASY``.
     """
 

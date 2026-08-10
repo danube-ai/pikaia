@@ -47,9 +47,10 @@ Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j*
 | `ALTRUISTIC` | Gene donates fitness to dissimilar genes |
 | `SELFISH` | Gene takes fitness from similar genes |
 | `KIN_ALTRUISTIC` | Altruistic within a similarity neighbourhood |
-| `REWARD_HARD` | Rewards genes that are rarely expressed (high exclusiveness) |
-| `REWARD_EASY` | Rewards genes that are commonly expressed (low exclusiveness) |
-| `VALUATION_BLEND` | Interpolates between REWARD_HARD and REWARD_EASY via a `preference` parameter |
+| `SELL_HARD` | Drains value from rare genes (high exclusiveness); pair with `BUY_HARD` for full trading behaviour |
+| `SELL_UNIFORM` | Drains value uniformly regardless of gene difficulty; pair with `BUY_UNIFORM` for full trading behaviour |
+| `SELL_EASY` | Drains value from common genes — inverse of `SELL_HARD`; pair with `BUY_EASY` for full trading behaviour |
+| `VARIANCE` | Rewards genes with high cross-organism dispersion |
 | `ENTROPY_MAX` | Rewards genes with high entropy; supports supervised mode |
 | `ORTHOGONALITY` | Rewards genes that are uncorrelated with each other; supports supervised mode |
 | `PARTIAL_CORR` | Rewards genes with low partial correlation to others; supports supervised mode |
@@ -66,8 +67,9 @@ Called once per organism *i*. Returns an array of shape (M,) — the delta for e
 | `ALTRUISTIC` | Redistributes fitness toward dissimilar organisms |
 | `SELFISH` | Takes fitness from similar organisms |
 | `KIN_SELFISH` | Selfish within a similarity neighbourhood |
-| `SELL` | Drains value from genes proportional to their difficulty odds; pair with `BUY` |
-| `BUY` | Redistributes sell capital from high-performing organisms to genes they lack; pair with `SELL` |
+| `BUY_HARD` | Redistributes capital to easy genes the organism failed; pair with `SELL_HARD` |
+| `BUY_UNIFORM` | Redistributes capital to hard genes the organism failed; pair with `SELL_UNIFORM` |
+| `BUY_EASY` | Inverse redistribution — mirror of `BUY_HARD`; pair with `SELL_EASY` |
 | `NONE` | No contribution |
 
 ### Supervised mode
