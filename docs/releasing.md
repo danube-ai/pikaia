@@ -78,14 +78,19 @@ The tag push starts the **Publish** workflow. The production `pypi` environment 
 
 Approve it, and the workflow:
 
-- publishes `0.3.0` to production PyPI, and
-- deploys the versioned docs (`mike deploy 0.3.0 latest`) and sets `latest` as the default.
+- publishes `0.3.0` to production PyPI,
+- deploys the versioned docs (`mike deploy 0.3.0 latest`) and sets `latest` as the default, and
+- **creates the GitHub Release automatically** — a `Create GitHub Release` job reads the matching `## [0.3.0]` section from `CHANGELOG.md` and publishes it as the release notes for the `v0.3.0` tag.
+
+> **Do not create the GitHub Release by hand.** Pushing the tag is the single trigger; the release is generated from the changelog so every release is consistent. If a release object already exists for the tag (e.g. someone created it in the UI), the job **reconciles** its notes from the changelog rather than failing — but the tag push, not the UI, is the canonical way to cut a release.
 
 ### 5. Verify production
 
 ```bash
 pip install pikaia==0.3.0
 ```
+
+Confirm the [GitHub Releases page](https://github.com/danube-ai/pikaia/releases) shows `v0.3.0` with the changelog notes.
 
 ---
 
@@ -102,7 +107,10 @@ pip install pikaia==0.3.0
 | Action | Trigger | Target | Gate |
 |---|---|---|---|
 | Merge PR to `main` | push to `main` | TestPyPI + `dev` docs | CI (tests) |
-| Push `v*` tag | tag push | PyPI + versioned docs | Manual approval on `pypi` environment |
+| Push `v*` tag | tag push | PyPI + versioned docs + GitHub Release | Manual approval on `pypi` environment |
+
+The GitHub Release is created automatically from the `CHANGELOG.md` section once the
+PyPI publish succeeds — there is no manual "draft a release" step.
 
 ---
 

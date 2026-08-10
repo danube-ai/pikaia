@@ -219,6 +219,10 @@ __marimo__/
 .data/
 **/.artefacts/
 
+# example output and built docs
+artefacts/
+site/
+
 # macOS
 .DS_Store
 **/.DS_Store

@@ -130,3 +130,48 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
           verbose: true
           print-hash: true
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish-pypi
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    # Needs write access to create/update the GitHub Release (the top-level
+    # permissions block is read-only).
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # Print the body of the "## [version] - date" section, stopping at the
+          # next "## [" heading. Trim leading/trailing blank lines.
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { flag=1; next }
+            /^## \[/ && flag { flag=0 }
+            flag { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' | tac | sed -e '/./,$!d' | tac > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Release $GITHUB_REF_NAME. See CHANGELOG.md for details." > release_notes.md
+          fi
+          echo "----- release notes -----"
+          cat release_notes.md
+
+      - name: Create or update the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Idempotent: reconcile notes whether the release was auto-created here
+          # or pre-created manually via the GitHub UI.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file release_notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file release_notes.md \
+              --verify-tag
+          fi
