@@ -1,6 +1,5 @@
 import numpy as np
 
-from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -48,39 +47,17 @@ class BuyEasyOrgStrategy(OrgStrategy):
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
         X = ctx.population.matrix
         N, M = X.shape
+        gamma = ctx.gene_fitness
         mean_all = X.mean(axis=0)
         excl = 1.0 - mean_all
         sell_signal = excl / (1.0 - excl + 1e-8)
 
-        # Negative capital — Inverse sell earns the opposite sign
-        max_capital = -(X * sell_signal[np.newaxis, :]).sum(axis=1) / N
+        # Negative capital — Inverse sell earns the opposite sign.
+        max_capital = -(X * (sell_signal * gamma)[np.newaxis, :]).sum(axis=1) / N
         excl_norm2 = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
 
         i = ctx.org_id
         if excl_norm2[i] < 1e-10:
             return np.zeros(M)
-        return (1.0 - X[i, :]) * max_capital[i] / excl_norm2[i] * mean_all
-
-    def kernel(
-        self,
-        population: PikaiaPopulation,
-        gene_similarity: np.ndarray,
-        org_similarity: np.ndarray,
-        initial_org_fitness_range: float,
-        y: np.ndarray | None = None,
-    ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Linear d-vector: negation of BuyHard's d-vector."""
-        X = population.matrix
-        N = population.N
-        mean_all = X.mean(axis=0)
-        excl = 1.0 - mean_all
-        sell_signal = excl / (1.0 - excl + 1e-8)
-
-        max_capital = -(X * sell_signal[np.newaxis, :]).sum(axis=1) / N
-        excl_norm2 = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
-
-        safe_norm = np.where(excl_norm2 < 1e-10, 1.0, excl_norm2)
-        weights = np.where(excl_norm2 < 1e-10, 0.0, max_capital / safe_norm)
-
-        d = mean_all * ((1.0 - X) * weights[:, np.newaxis]).sum(axis=0)
-        return None, d
+        buy_abs = (1.0 - X[i, :]) * max_capital[i] / excl_norm2[i] * mean_all
+        return buy_abs / (gamma + 1e-10)

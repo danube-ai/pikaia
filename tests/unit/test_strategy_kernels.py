@@ -26,9 +26,6 @@ from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
 from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
 from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
-from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
-from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
-from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
@@ -310,6 +307,8 @@ class TestSellEasyGeneStrategyKernel:
         gs, os_, R = _make_sims(pop)
         _, d_hard = SellHardGeneStrategy().kernel(pop, gs, os_, R)
         _, d_easy = SellEasyGeneStrategy().kernel(pop, gs, os_, R)
+        assert d_hard is not None
+        assert d_easy is not None
         np.testing.assert_allclose(d_easy, -d_hard, atol=1e-12)
 
     def test_d_formula(self, result):
@@ -318,116 +317,6 @@ class TestSellEasyGeneStrategyKernel:
         excl = 1.0 - mean_all
         expected = mean_all * excl / (1.0 - excl + 1e-8)
         np.testing.assert_allclose(d, expected, atol=1e-12)
-
-
-# ---------------------------------------------------------------------------
-# BuyHard / BuyUniform / BuyEasy kernels
-# ---------------------------------------------------------------------------
-
-
-class TestBuyHardOrgStrategyKernel:
-    @pytest.fixture
-    def result(self):
-        pop = _make_pop(20, 8, 4)
-        gs, os_, R = _make_sims(pop)
-        return pop, BuyHardOrgStrategy().kernel(pop, gs, os_, R)
-
-    def test_returns_none_d(self, result):
-        _, (D, d) = result
-        assert D is None
-        assert d is not None
-
-    def test_d_shape(self, result):
-        pop, (_, d) = result
-        assert d.shape == (pop.M,)
-
-    def test_d_non_negative(self, result):
-        _, (_, d) = result
-        assert np.all(d >= -1e-12)
-
-    def test_d_finite(self, result):
-        _, (_, d) = result
-        assert np.all(np.isfinite(d))
-
-    def test_d_formula(self, result):
-        pop, (_, d) = result
-        X = pop.matrix
-        N = pop.N
-        mean_all = X.mean(axis=0)
-        excl = 1.0 - mean_all
-        sell_signal = excl / (1.0 - excl + 1e-8)
-        C = (X * sell_signal[np.newaxis, :]).sum(axis=1) / N
-        Z = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
-        safe_Z = np.where(Z < 1e-10, 1.0, Z)
-        w = np.where(Z < 1e-10, 0.0, C / safe_Z)
-        expected = mean_all * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
-        np.testing.assert_allclose(d, expected, atol=1e-12)
-
-
-class TestBuyUniformOrgStrategyKernel:
-    @pytest.fixture
-    def result(self):
-        pop = _make_pop(21, 8, 4)
-        gs, os_, R = _make_sims(pop)
-        return pop, BuyUniformOrgStrategy().kernel(pop, gs, os_, R)
-
-    def test_returns_none_d(self, result):
-        _, (D, d) = result
-        assert D is None
-        assert d is not None
-
-    def test_d_shape(self, result):
-        pop, (_, d) = result
-        assert d.shape == (pop.M,)
-
-    def test_d_non_negative(self, result):
-        _, (_, d) = result
-        assert np.all(d >= -1e-12)
-
-    def test_d_finite(self, result):
-        _, (_, d) = result
-        assert np.all(np.isfinite(d))
-
-    def test_d_formula(self, result):
-        pop, (_, d) = result
-        X = pop.matrix
-        N = pop.N
-        mean_all = X.mean(axis=0)
-        excl = 1.0 - mean_all
-        C = X.sum(axis=1) / N
-        Z = ((1.0 - X) * excl[np.newaxis, :]).sum(axis=1)
-        safe_Z = np.where(Z < 1e-10, 1.0, Z)
-        w = np.where(Z < 1e-10, 0.0, C / safe_Z)
-        expected = excl * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
-        np.testing.assert_allclose(d, expected, atol=1e-12)
-
-
-class TestBuyEasyOrgStrategyKernel:
-    @pytest.fixture
-    def result(self):
-        pop = _make_pop(22, 8, 4)
-        gs, os_, R = _make_sims(pop)
-        return pop, BuyEasyOrgStrategy().kernel(pop, gs, os_, R)
-
-    def test_returns_none_d(self, result):
-        _, (D, d) = result
-        assert D is None
-        assert d is not None
-
-    def test_d_shape(self, result):
-        pop, (_, d) = result
-        assert d.shape == (pop.M,)
-
-    def test_d_finite(self, result):
-        _, (_, d) = result
-        assert np.all(np.isfinite(d))
-
-    def test_d_negates_buy_hard(self):
-        pop = _make_pop(22, 8, 4)
-        gs, os_, R = _make_sims(pop)
-        _, d_hard = BuyHardOrgStrategy().kernel(pop, gs, os_, R)
-        _, d_easy = BuyEasyOrgStrategy().kernel(pop, gs, os_, R)
-        np.testing.assert_allclose(d_easy, -d_hard, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
@@ -609,9 +498,6 @@ ALL_STRATEGIES = [
     AltruisticOrgStrategy(),
     SelfishOrgStrategy(),
     KinSelfishOrgStrategy(),
-    BuyHardOrgStrategy(),
-    BuyUniformOrgStrategy(),
-    BuyEasyOrgStrategy(),
     NoneOrgStrategy(),
 ]
 

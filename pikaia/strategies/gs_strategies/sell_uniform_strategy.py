@@ -32,8 +32,15 @@ class SellUniformGeneStrategy(GeneStrategy):
         return "SellUniform"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        N = ctx.population.N
-        return float(-(1.0 / N) * ctx.population[ctx.org_id, ctx.gene_id])
+        X = ctx.population.matrix
+        N = X.shape[0]
+        j = ctx.gene_id
+        mean_j = X[:, j].mean()
+        excl_j = 1.0 - mean_j
+        # CalSim D2: vdeltaSell=0 when excl=0 (all solved) or excl=1 (none solved)
+        if excl_j < 1e-6 or excl_j > 1.0 - 1e-6:
+            return 0.0
+        return float(-(1.0 / N) * X[ctx.org_id, j])
 
     def kernel(
         self,
@@ -43,6 +50,9 @@ class SellUniformGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Linear d-vector: ``d[j] = -mean_j``."""
-        d = -population.matrix.mean(axis=0)
+        """Linear d-vector: ``d[j] = -mean_j`` for non-trivial genes only."""
+        mean = population.matrix.mean(axis=0)
+        excl = 1.0 - mean
+        mask = (excl > 1e-6) & (excl < 1.0 - 1e-6)
+        d = -mean * mask.astype(float)
         return None, d

@@ -119,7 +119,10 @@ def test_sell_hard_delta_matches_calsim_difficulty1():
 def test_buy_hard_delta_matches_calsim_difficulty1():
     # BUY_HARD: C_i = sum_k x_ik * sell_signal_k / N
     # Z_i = sum_k (1-x_ik) * mean_k
-    # d[j] = mean_j * sum_i (1-x_ij) * C_i / Z_i
+    # __call__ returns proportional delta = buy_abs / gamma_j
+    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+    from pikaia.strategies.base_strategies import StrategyContext
+
     X = PERF
     mean_all = X.mean(axis=0)
     excl = 1.0 - mean_all
@@ -131,9 +134,24 @@ def test_buy_hard_delta_matches_calsim_difficulty1():
     expected = mean_all * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
 
     pop = PikaiaPopulation(PERF)
-    _, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    np.testing.assert_allclose(d, expected, atol=1e-10)
+    gamma = np.ones(M) / M
+    strat = BuyHardOrgStrategy()
+    call_sum = np.zeros(M)
+    for i in range(N):
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(N) / N,
+            gene_fitness=gamma,
+            org_similarity=np.eye(N),
+            gene_similarity=np.eye(M),
+            initial_org_fitness_range=1.0,
+            org_id=i,
+        )
+        call_sum += strat(ctx)
+    # At uniform gamma = 1/M: max_capital is scaled by 1/M (from gamma),
+    # and the 1/gamma_j factor in the return cancels it.
+    # So __call__ sum at uniform gamma equals the original kernel d-vector.
+    np.testing.assert_allclose(call_sum, expected, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
@@ -151,23 +169,17 @@ def test_one_iteration_exact_match_difficulty1():
 
 
 # ---------------------------------------------------------------------------
-# One-iteration convergence: Difficulty2 (SellUniform+BuyUniform)
-# Exact calsim match is not guaranteed due to different capital normalisation;
-# test that the model runs, produces valid output, and hard gene (gene 1, excl=2/3)
-# gains value relative to gene 0 (excl=0, all solved).
+# One-iteration exact match: Difficulty2 (SellUniform+BuyUniform)
 # ---------------------------------------------------------------------------
 
 
-def test_one_iteration_difficulty2_hard_gene_gains():
+def test_one_iteration_exact_match_difficulty2():
+    calsim_values = _calsim_one_iter("Difficulty2", START_VALUES)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
     pikaia_gf = _pikaia_one_iter(SellUniformGeneStrategy(), BuyUniformOrgStrategy())
-    assert pikaia_gf.shape == (M,)
-    assert np.all(np.isfinite(pikaia_gf))
-    assert np.isclose(pikaia_gf.sum(), 1.0, atol=1e-10)
-    # Gene 1 (hard: only org 1 solved it) should gain relative to gene 0 (all solved)
-    # BuyUniform redistributes capital weighted by excl_j, so hard genes get more buy
-    assert pikaia_gf[1] > pikaia_gf[2], (
-        "Hard gene 1 should rank above gene 2 after BuyUniform"
-    )
+
+    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
 
 
 # ---------------------------------------------------------------------------
@@ -176,10 +188,12 @@ def test_one_iteration_difficulty2_hard_gene_gains():
 
 
 def test_sell_uniform_delta_matches_calsim_difficulty2():
-    # Difficulty2: vdeltaSell_j = startValue / N (uniform, independent of difficulty)
-    # pikaia SELL_UNIFORM d[j] = -mean_j
+    # CalSim D2: vdeltaSell_j = startValue/N if excl ∉ {0,1} else 0
+    # pikaia SELL_UNIFORM d[j] = -mean_j for 0 < excl_j < 1, else 0
     mean_j = PERF.mean(axis=0)
-    expected_d = -mean_j
+    excl_j = 1.0 - mean_j
+    mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
+    expected_d = -mean_j * mask.astype(float)
 
     pop = PikaiaPopulation(PERF)
     _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
@@ -188,22 +202,39 @@ def test_sell_uniform_delta_matches_calsim_difficulty2():
 
 
 def test_buy_uniform_delta_matches_calsim_difficulty2():
-    # BUY_UNIFORM: C_i = sum_k x_ik / N
+    # BUY_UNIFORM: C_i = sum_{k: 0<excl_k<1} x_ik * gamma_k / N
     # Z_i = sum_k (1-x_ik) * excl_k
-    # d[j] = excl_j * sum_i (1-x_ij) * C_i / Z_i
+    # __call__ returns proportional delta = buy_abs / gamma_j
+    # At uniform gamma = 1/M: sum_i __call__ = M * kernel_d
+    from pikaia.strategies.base_strategies import StrategyContext
+
     X = PERF
     mean_all = X.mean(axis=0)
     excl = 1.0 - mean_all
-    C = X.sum(axis=1) / N
+    sell_mask = ((excl > 1e-6) & (excl < 1.0 - 1e-6)).astype(float)
+    gamma = np.ones(M) / M
+    C = (X * (sell_mask * gamma)[np.newaxis, :]).sum(axis=1) / N
     Z = ((1.0 - X) * excl[np.newaxis, :]).sum(axis=1)
     safe_Z = np.where(Z < 1e-10, 1.0, Z)
     w = np.where(Z < 1e-10, 0.0, C / safe_Z)
     expected = excl * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
 
     pop = PikaiaPopulation(PERF)
-    _, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    np.testing.assert_allclose(d, expected, atol=1e-10)
+    strat = BuyUniformOrgStrategy()
+    call_sum = np.zeros(M)
+    for i in range(N):
+        ctx = StrategyContext(
+            population=pop,
+            org_fitness=np.ones(N) / N,
+            gene_fitness=gamma,
+            org_similarity=np.eye(N),
+            gene_similarity=np.eye(M),
+            initial_org_fitness_range=1.0,
+            org_id=i,
+        )
+        call_sum += strat(ctx)
+    # At uniform gamma = 1/M: sum of proportional deltas × gamma = buy_abs summed.
+    np.testing.assert_allclose(call_sum * gamma, expected, atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
@@ -229,3 +260,42 @@ def test_many_iterations_sell_hard_buy_hard_valid():
     assert np.isclose(gf.sum(), 1.0, atol=1e-10)
     # Gene 3 (solved by org 0 and 2, while org 1 has hard gene 1) should rank above gene 2
     assert gf[3] > gf[2]
+
+
+# ---------------------------------------------------------------------------
+# Multi-iteration convergence: pikaia matches calsim at k > 1
+# This verifies the proportional delta fix (buy_abs / gamma) correctly
+# reproduces CalSim's additive dynamics under replicator normalisation.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
+def test_multi_iter_convergence_difficulty1(k):
+    """Pikaia SellHard+BuyHard matches CalSim Difficulty1 at many iterations."""
+    calsim_values = _calsim_k_iters("Difficulty1", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_k_iters(SellHardGeneStrategy, BuyHardOrgStrategy, k)
+
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        atol=1e-5,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+    )
+
+
+@pytest.mark.parametrize("k", [5, 10, 20, 50, 100])
+def test_multi_iter_convergence_difficulty2(k):
+    """Pikaia SellUniform+BuyUniform matches CalSim Difficulty2 at many iterations."""
+    calsim_values = _calsim_k_iters("Difficulty2", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_k_iters(SellUniformGeneStrategy, BuyUniformOrgStrategy, k)
+
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        atol=1e-5,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+    )

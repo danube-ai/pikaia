@@ -145,13 +145,11 @@ class TestBuyHardStructure:
         assert result.shape == (M,)
         assert np.all(np.isfinite(result))
 
-    def test_kernel_returns_none_d(self):
+    def test_kernel_fallback_base_class(self):
         pop = _pop()
         D, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert D is None
-        assert d is not None
-        assert d.shape == (M,)
-        assert np.all(np.isfinite(d))
+        assert d is None
 
 
 class TestBuyUniformStructure:
@@ -164,13 +162,11 @@ class TestBuyUniformStructure:
         assert result.shape == (M,)
         assert np.all(np.isfinite(result))
 
-    def test_kernel_returns_none_d(self):
+    def test_kernel_fallback_base_class(self):
         pop = _pop()
         D, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert D is None
-        assert d is not None
-        assert d.shape == (M,)
-        assert np.all(np.isfinite(d))
+        assert d is None
 
 
 class TestBuyEasyStructure:
@@ -183,13 +179,11 @@ class TestBuyEasyStructure:
         assert result.shape == (M,)
         assert np.all(np.isfinite(result))
 
-    def test_kernel_returns_none_d(self):
+    def test_kernel_fallback_base_class(self):
         pop = _pop()
         D, d = BuyEasyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
         assert D is None
-        assert d is not None
-        assert d.shape == (M,)
-        assert np.all(np.isfinite(d))
+        assert d is None
 
 
 # ---------------------------------------------------------------------------
@@ -281,39 +275,6 @@ def test_sell_easy_kernel_matches_call_sum():
     np.testing.assert_allclose(d, call_sum, atol=1e-10)
 
 
-def test_buy_hard_kernel_matches_call_sum():
-    pop = _pop()
-    s = BuyHardOrgStrategy()
-    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    call_sum = np.zeros(M)
-    for i in range(N):
-        call_sum += s(_make_ctx(pop, i))
-    np.testing.assert_allclose(d, call_sum, atol=1e-10)
-
-
-def test_buy_uniform_kernel_matches_call_sum():
-    pop = _pop()
-    s = BuyUniformOrgStrategy()
-    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    call_sum = np.zeros(M)
-    for i in range(N):
-        call_sum += s(_make_ctx(pop, i))
-    np.testing.assert_allclose(d, call_sum, atol=1e-10)
-
-
-def test_buy_easy_kernel_matches_call_sum():
-    pop = _pop()
-    s = BuyEasyOrgStrategy()
-    _, d = s.kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    call_sum = np.zeros(M)
-    for i in range(N):
-        call_sum += s(_make_ctx(pop, i))
-    np.testing.assert_allclose(d, call_sum, atol=1e-10)
-
-
 # ---------------------------------------------------------------------------
 # 4. Formula correctness
 # ---------------------------------------------------------------------------
@@ -332,7 +293,10 @@ def test_sell_hard_kernel_formula():
 def test_sell_uniform_kernel_formula():
     pop = _pop()
     mean_j = PERF.mean(axis=0)
-    expected = -mean_j
+    excl_j = 1.0 - mean_j
+    # CalSim D2: sell=0 for trivially-solved (excl=0) or trivially-failed (excl=1) genes
+    mask = (excl_j > 1e-6) & (excl_j < 1.0 - 1e-6)
+    expected = -mean_j * mask.astype(float)
     _, d = SellUniformGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
     assert d is not None
     np.testing.assert_allclose(d, expected, atol=1e-10)
@@ -348,82 +312,31 @@ def test_sell_easy_kernel_formula():
     np.testing.assert_allclose(d, expected, atol=1e-10)
 
 
-def test_buy_hard_kernel_formula():
-    # d[j] = mean_j * sum_i[(1-x_ij)*C_i/Z_i]
-    # C_i = (1/N) * sum_k x_ik * excl_k/(1-excl_k)
-    # Z_i = sum_k (1-x_ik) * mean_k
-    X = PERF
-    mean_all = X.mean(axis=0)
-    excl = 1.0 - mean_all
-    sell_signal = excl / (1.0 - excl + 1e-8)
-    C = (X * sell_signal[np.newaxis, :]).sum(axis=1) / N
-    Z = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
-    safe_Z = np.where(Z < 1e-10, 1.0, Z)
-    w = np.where(Z < 1e-10, 0.0, C / safe_Z)
-    expected = mean_all * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
-
+def test_buy_hard_no_d_matrix_kernel():
+    # Buy strategies cannot be expressed in D-matrix form (capital depends on gamma).
+    # kernel() falls back to base class returning (None, None).
     pop = _pop()
-    _, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    np.testing.assert_allclose(d, expected, atol=1e-10)
+    D, d = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
 
 
-def test_buy_uniform_kernel_formula():
-    # d[j] = excl_j * sum_i[(1-x_ij)*C_i/Z_i]
-    # C_i = (1/N) * sum_k x_ik
-    # Z_i = sum_k (1-x_ik) * excl_k
-    X = PERF
-    mean_all = X.mean(axis=0)
-    excl = 1.0 - mean_all
-    C = X.sum(axis=1) / N
-    Z = ((1.0 - X) * excl[np.newaxis, :]).sum(axis=1)
-    safe_Z = np.where(Z < 1e-10, 1.0, Z)
-    w = np.where(Z < 1e-10, 0.0, C / safe_Z)
-    expected = excl * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
-
+def test_buy_uniform_no_d_matrix_kernel():
     pop = _pop()
-    _, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    assert d is not None
-    np.testing.assert_allclose(d, expected, atol=1e-10)
+    D, d = BuyUniformOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
 
 
-def test_buy_easy_kernel_formula():
-    # BUY_EASY = -BUY_HARD kernel
+def test_buy_easy_no_d_matrix_kernel():
     pop = _pop()
-    _, d_hard = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    _, d_easy = BuyEasyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    np.testing.assert_allclose(d_easy, -d_hard, atol=1e-10)
+    D, d = BuyEasyOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert D is None
+    assert d is None
 
 
 # ---------------------------------------------------------------------------
-# 5. Pair balance: SELL_HARD + BUY_HARD net delta
-# ---------------------------------------------------------------------------
-
-
-def test_sell_hard_buy_hard_net_delta():
-    # Verify the combined net delta using the known formulas for the canonical dataset
-    X = PERF
-    mean_all = X.mean(axis=0)
-    excl = 1.0 - mean_all
-    sell_signal = excl / (1.0 - excl + 1e-8)
-
-    sell_d = -mean_all * sell_signal
-
-    C = (X * sell_signal[np.newaxis, :]).sum(axis=1) / N
-    Z = ((1.0 - X) * mean_all[np.newaxis, :]).sum(axis=1)
-    safe_Z = np.where(Z < 1e-10, 1.0, Z)
-    w = np.where(Z < 1e-10, 0.0, C / safe_Z)
-    buy_d = mean_all * ((1.0 - X) * w[:, np.newaxis]).sum(axis=0)
-
-    pop = _pop()
-    _, d_sell = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    _, d_buy = BuyHardOrgStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
-    np.testing.assert_allclose(d_sell, sell_d, atol=1e-10)
-    np.testing.assert_allclose(d_buy, buy_d, atol=1e-10)
-
-
-# ---------------------------------------------------------------------------
-# 6. SELL_EASY = -SELL_HARD
+# 5. SELL_EASY = -SELL_HARD
 # ---------------------------------------------------------------------------
 
 
@@ -431,6 +344,8 @@ def test_sell_easy_negates_sell_hard_kernel():
     pop = _pop()
     _, d_hard = SellHardGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
     _, d_easy = SellEasyGeneStrategy().kernel(pop, np.eye(M), np.eye(N), 1.0)
+    assert d_hard is not None
+    assert d_easy is not None
     np.testing.assert_allclose(d_easy, -d_hard, atol=1e-10)
 
 
