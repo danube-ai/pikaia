@@ -33,11 +33,16 @@ git tag v0.3.0  ──push──▶  PyPI + versioned docs   (manual approval ga
 
 ### 1. Bump the version
 
-Open a PR that bumps `project.version` in `pyproject.toml` and run `uv lock` so the lockfile stays in sync (CI enforces `uv lock --locked`).
+Open a PR that:
+
+1. Bumps `project.version` in `pyproject.toml`.
+2. Runs `uv lock` so the lockfile stays in sync (CI enforces `uv lock --locked`).
+3. Adds a `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md` summarising what changed, and appends a comparison link at the bottom (e.g. `[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z`).
 
 ```bash
 git checkout -b release/0.3.0
 # edit pyproject.toml: version = "0.3.0"
+# edit CHANGELOG.md: add [0.3.0] section and comparison link
 uv lock
 git commit -am "chore: bump version to 0.3.0"
 ```
