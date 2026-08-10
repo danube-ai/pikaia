@@ -5,6 +5,41 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-08-10
+
+### Fixed
+
+- **CalSim strategy multi-iteration accuracy.** All three strategy pairs now
+  reproduce CalSim output exactly across many iterations, not just the first:
+  - **BuyHard / BuyUniform / BuyEasy** now return a *proportional* delta
+    (`buy_abs / γ_j`) instead of an absolute one.  Without this, the
+    multiplicative replicator diverges from CalSim's additive dynamics after a
+    single iteration, collapsing genes to extrema by k ≈ 10.
+  - **SellUniform** now applies CalSim Difficulty2's condition: sell signal is 0
+    for genes where `excl_j ≈ 0` (all organisms solved it) or `excl_j ≈ 1`
+    (none solved it), matching `vdeltaSell = 0` in CalSim's `calculateDelta`.
+  - **BuyUniform** capital now excludes genes with trivial exclusiveness (same
+    mask as SellUniform), so per-organism capital ratios match CalSim exactly.
+
+### Added
+
+- **100-iteration CalSim convergence tests** for all three strategy pairs:
+  - `SellHard + BuyHard` (Difficulty1): exact match at k = 1 … 100 (atol 1e-5).
+  - `SellUniform + BuyUniform` (Difficulty2): exact match at k = 1 … 100
+    (atol 1e-5).
+  - `SellEasy + BuyEasy` (Inverse): exact match at k = 1 … 10 (rtol 1e-4);
+    capped at k = 10 because CalSim Inverse is inherently divergent (values grow
+    exponentially, CalSim itself crashes at ~k = 26).
+
+## [0.3.1] - 2026-08-07
+
+### Added
+
+- **`VarianceGeneStrategy`** (`VARIANCE`) — rewards genes with high
+  cross-organism dispersion (variance of expression across the population).
+  Registered in `GeneStrategyEnum` and `GeneStrategyFactory`; unit tests and
+  `kernel()` included.
+
 ## [0.3.0] - 2026-08-04
 
 ### Changed
@@ -215,6 +250,8 @@ Maintenance release.
 
 Initial public release.
 
+[0.3.2]: https://github.com/danube-ai/pikaia/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/danube-ai/pikaia/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/danube-ai/pikaia/compare/v0.2.10...v0.3.0
 [0.2.10]: https://github.com/danube-ai/pikaia/compare/v0.2.6...v0.2.10
 [0.2.6]: https://github.com/danube-ai/pikaia/compare/v0.2.4...v0.2.6
