@@ -16,10 +16,12 @@ except ImportError:
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models import PikaiaModel
+from pikaia.strategies.gs_strategies.sell_easy_strategy import SellEasyGeneStrategy
 from pikaia.strategies.gs_strategies.sell_hard_strategy import SellHardGeneStrategy
 from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
     SellUniformGeneStrategy,
 )
+from pikaia.strategies.os_strategies.buy_easy_strategy import BuyEasyOrgStrategy
 from pikaia.strategies.os_strategies.buy_hard_strategy import BuyHardOrgStrategy
 from pikaia.strategies.os_strategies.buy_uniform_strategy import BuyUniformOrgStrategy
 
@@ -297,5 +299,46 @@ def test_multi_iter_convergence_difficulty2(k):
         pikaia_gf,
         calsim_normalized,
         atol=1e-5,
+        err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
+    )
+
+
+# ---------------------------------------------------------------------------
+# One-iteration exact match: Inverse (SellEasy+BuyEasy)
+# ---------------------------------------------------------------------------
+
+
+def test_one_iteration_exact_match_inverse():
+    calsim_values = _calsim_one_iter("Inverse", START_VALUES)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_one_iter(SellEasyGeneStrategy(), BuyEasyOrgStrategy())
+
+    np.testing.assert_allclose(pikaia_gf, calsim_normalized, atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Multi-iteration convergence: Inverse (SellEasy+BuyEasy)
+#
+# CalSim "Inverse" is inherently divergent — easy genes grow without bound,
+# hard genes go negative, and CalSim itself crashes at ~k=26 (ZeroDivisionError
+# in its own special-case handler).  Both pikaia and CalSim show the same
+# exponential growth, so absolute tolerance is meaningless at large k.
+# We use rtol and cap at k=10 (well before CalSim becomes unstable).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("k", [1, 5, 10])
+def test_multi_iter_convergence_inverse(k):
+    """Pikaia SellEasy+BuyEasy matches CalSim Inverse up to k=10 (rtol=1e-4)."""
+    calsim_values = _calsim_k_iters("Inverse", k)
+    calsim_normalized = calsim_values / calsim_values.sum()
+
+    pikaia_gf = _pikaia_k_iters(SellEasyGeneStrategy, BuyEasyOrgStrategy, k)
+
+    np.testing.assert_allclose(
+        pikaia_gf,
+        calsim_normalized,
+        rtol=1e-4,
         err_msg=f"Mismatch at k={k}: pikaia={pikaia_gf}, calsim={calsim_normalized}",
     )
