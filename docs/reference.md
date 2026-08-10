@@ -52,9 +52,11 @@
 
 ::: pikaia.strategies.gs_strategies.dominant_strategy.DominantGeneStrategy
 
-::: pikaia.strategies.gs_strategies.reward_hard_strategy.RewardHardGeneStrategy
+::: pikaia.strategies.gs_strategies.sell_hard_strategy.SellHardGeneStrategy
 
-::: pikaia.strategies.gs_strategies.reward_easy_strategy.RewardEasyGeneStrategy
+::: pikaia.strategies.gs_strategies.sell_uniform_strategy.SellUniformGeneStrategy
+
+::: pikaia.strategies.gs_strategies.sell_easy_strategy.SellEasyGeneStrategy
 
 ::: pikaia.strategies.gs_strategies.altruistic_strategy.AltruisticGeneStrategy
 
@@ -62,7 +64,7 @@
 
 ::: pikaia.strategies.gs_strategies.kin_altruistic_strategy.KinAltruisticGeneStrategy
 
-::: pikaia.strategies.gs_strategies.valuation_blend_strategy.ValuationBlendGeneStrategy
+::: pikaia.strategies.gs_strategies.variance_strategy.VarianceGeneStrategy
 
 ::: pikaia.strategies.gs_strategies.entropy_max_strategy.EntropyMaxGeneStrategy
 
@@ -82,9 +84,11 @@
 
 ::: pikaia.strategies.os_strategies.kin_selfish_strategy.KinSelfishOrgStrategy
 
-::: pikaia.strategies.os_strategies.sell_strategy.SellOrgStrategy
+::: pikaia.strategies.os_strategies.buy_hard_strategy.BuyHardOrgStrategy
 
-::: pikaia.strategies.os_strategies.buy_strategy.BuyOrgStrategy
+::: pikaia.strategies.os_strategies.buy_uniform_strategy.BuyUniformOrgStrategy
+
+::: pikaia.strategies.os_strategies.buy_easy_strategy.BuyEasyOrgStrategy
 
 ### Mix Strategies
 
