@@ -66,6 +66,13 @@ class PikaiaModel(GeneticModel):
         """
         import time
 
+        if self._initial_org_fitness_range == 0:
+            logger.info(
+                "Skipping fit: organism fitness range is 0. "
+                "Returning uniform scores unchanged."
+            )
+            return
+
         start_time = time.perf_counter()
         if self._use_d_matrix:
             if self._max_iter is None:

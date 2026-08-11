@@ -193,12 +193,14 @@ class TestGeneticModelComputeSimilarity:
         with pytest.raises(ValueError, match="All gene items are identical"):
             PikaiaModel(population=pop)
 
-    def test_identical_org_rows_range_zero_raises(self):
-        """Identical org rows give org_fitness_range == 0, raises before similarity."""
+    def test_identical_org_rows_range_zero_warns(self, caplog):
+        """Identical org rows give org_fitness_range == 0: emits warning, then raises on identical items."""
         identical_matrix = np.ones((3, 4)) * 0.5
         pop = PikaiaPopulation(identical_matrix)
-        with pytest.raises(ValueError, match="All organism fitness values are 0"):
-            PikaiaModel(population=pop)
+        with caplog.at_level(logging.WARNING):
+            with pytest.raises(ValueError, match="All .* items are identical"):
+                PikaiaModel(population=pop)
+        assert "equal initial fitness" in caplog.text
 
 
 class TestGeneticModelInitBranches:
@@ -259,8 +261,10 @@ class TestGeneticModelInitBranches:
             )
         assert "initial_gene_fitness will likely have little effect" in caplog.text
 
-    def test_all_zero_org_fitness_raises(self):
-        """A population matrix that yields all-zero org fitness raises ValueError."""
+    def test_all_zero_org_fitness_warns(self, caplog):
+        """An all-zero matrix emits the range=0 warning, then raises on identical items."""
         zero_pop = PikaiaPopulation(np.zeros((3, 4)))
-        with pytest.raises(ValueError, match="All organism fitness values are 0"):
-            PikaiaModel(population=zero_pop)
+        with caplog.at_level(logging.WARNING):
+            with pytest.raises(ValueError, match="All .* items are identical"):
+                PikaiaModel(population=zero_pop)
+        assert "equal initial fitness" in caplog.text

@@ -156,7 +156,12 @@ class GeneticModel(ABC):
             self._initial_org_fitness
         )
         if self._initial_org_fitness_range == 0:
-            raise ValueError("All organism fitness values are 0.")
+            logger.warning(
+                "All organisms have equal initial fitness (range = 0). "
+                "The data has balanced inverse-symmetric features that cancel out "
+                "under uniform gene weighting — no organism can be distinguished. "
+                "Scores will be returned as uniform (no ranking is possible)."
+            )
 
         # Similarity matrices
         self._gene_similarity = self._compute_similarity(mode="gene")
