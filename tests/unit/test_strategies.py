@@ -21,6 +21,10 @@ from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
 )
 from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
+from pikaia.strategies.mix_strategies.amplitude import (
+    normalize_delta_amplitudes,
+    normalize_kernel_amplitude,
+)
 from pikaia.strategies.mix_strategies.self_consistent_strategy import (
     SelfConsistentMixStrategy,
 )
@@ -603,6 +607,71 @@ class TestSelfishGeneStrategy:
         ctx = _make_gene_context(n_genes=1)
         result = SelfishGeneStrategy()(ctx)
         assert result == 0.0
+
+
+class TestAmplitudeNormalization:
+    """Tests for mix-time amplitude normalisation helpers and opt-in flag."""
+
+    def test_normalize_delta_unit_rms_active_strategies(self):
+        loud = np.ones((4, 3)) * 10.0
+        quiet = np.ones((4, 3)) * 0.1
+        delta = np.stack([loud, quiet], axis=-1)
+        out = normalize_delta_amplitudes(delta)
+        for k in range(2):
+            rms = np.sqrt(np.mean(out[:, :, k] ** 2))
+            assert abs(rms - 1.0) < 1e-9
+
+    def test_normalize_delta_leaves_near_zero_unchanged(self):
+        active = np.ones((2, 2))
+        zero = np.zeros((2, 2))
+        delta = np.stack([active, zero], axis=-1)
+        out = normalize_delta_amplitudes(delta)
+        assert np.allclose(out[:, :, 1], 0.0)
+        assert abs(np.sqrt(np.mean(out[:, :, 0] ** 2)) - 1.0) < 1e-9
+
+    def test_normalize_kernel_frobenius(self):
+        D = np.array([[3.0, 0.0], [0.0, 4.0]])  # ||D||_F = 5
+        d = np.array([3.0, 4.0])  # ||d||_2 = 5
+        D_n, d_n = normalize_kernel_amplitude(D, d)
+        assert D_n is not None and d_n is not None
+        assert abs(np.linalg.norm(D_n, "fro") - 1.0) < 1e-9
+        assert abs(np.linalg.norm(d_n) - 1.0) < 1e-9
+
+    def test_fixed_default_preserves_amplitude_bias(self):
+        loud = np.ones((3, 2)) * 10.0
+        quiet = np.ones((3, 2)) * 0.1
+        delta = np.stack([loud, quiet], axis=-1)
+        mixed, _ = FixedMixStrategy()(delta, np.array([0.5, 0.5]))
+        # Without normalisation, loud dominates: ~5.05 everywhere
+        assert np.allclose(mixed, 5.05)
+
+    def test_fixed_normalize_amplitudes_equalizes(self):
+        loud = np.ones((3, 2)) * 10.0
+        quiet = np.ones((3, 2)) * 0.1
+        delta = np.stack([loud, quiet], axis=-1)
+        mixed, _ = FixedMixStrategy(normalize_amplitudes=True)(
+            delta, np.array([0.5, 0.5])
+        )
+        # Both slabs become ones → mix is ones
+        assert np.allclose(mixed, 1.0)
+
+    def test_self_consistent_normalize_flag(self):
+        loud = np.ones((3, 2)) * 10.0
+        quiet = np.ones((3, 2)) * 0.1
+        delta = np.stack([loud, quiet], axis=-1)
+        mixed, updated = SelfConsistentMixStrategy(normalize_amplitudes=True)(
+            delta, np.array([0.5, 0.5])
+        )
+        assert mixed.shape == (3, 2)
+        assert abs(updated.sum() - 1.0) < 1e-9
+        # After RMS-norm both strategies have equal mean |Δ|, so SC keeps 0.5/0.5
+        assert np.allclose(updated, [0.5, 0.5])
+
+    def test_factory_forwards_normalize_flag(self):
+        s = MixStrategyFactory.get_strategy(
+            MixStrategyEnum.FIXED, normalize_amplitudes=True
+        )
+        assert s.options.get("normalize_amplitudes") is True
 
 
 class TestSelfConsistentMixStrategy:
