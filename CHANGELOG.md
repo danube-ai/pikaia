@@ -5,6 +5,18 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Amplitude-normalised mixing** (`normalize_amplitudes=True` on
+  `FixedMixStrategy` / `SelfConsistentMixStrategy`). When enabled, each
+  strategy's delta slab is RMS-normalised (iterative path) or each
+  `(D, d)` kernel is Frobenius/L2-normalised (D-matrix path) before mix
+  coefficients are applied, so α reflects relative contribution rather than
+  raw kernel scale. Default remains `False` for backward compatibility.
+  Helpers: `normalize_delta_amplitudes`, `normalize_kernel_amplitude`.
+
 ## [0.3.3] - 2026-08-11
 
 ### Fixed

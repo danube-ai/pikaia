@@ -89,6 +89,16 @@ When multiple gene or organism strategies are active, a mixing strategy determin
 | `FIXED` | Fixed equal weights across strategies |
 | `SELF_CONSISTENT` | Weights adapt each iteration based on strategy performance |
 
+Pass `normalize_amplitudes=True` to either mix strategy to RMS-normalise each strategy's delta (or Frobenius-normalise each D-matrix kernel) **before** applying mix coefficients. This makes α an honest contribution weight when strategies have very different intrinsic scales (e.g. `BALANCED` vs `SELFISH`):
+
+```python
+mix = MixStrategyFactory.get_strategy(
+    MixStrategyEnum.FIXED, normalize_amplitudes=True
+)
+```
+
+Default is `False` (legacy amplitude-biased mixing).
+
 ---
 
 ## D-matrix accelerated mode
