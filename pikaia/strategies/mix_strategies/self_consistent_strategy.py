@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from pikaia.strategies.base_strategies import MixStrategy
+from pikaia.strategies.mix_strategies.amplitude import normalize_delta_amplitudes
 
 
 class SelfConsistentMixStrategy(MixStrategy):
@@ -12,6 +13,12 @@ class SelfConsistentMixStrategy(MixStrategy):
     This strategy computes a weighted sum of the input delta tensor using the
     current mixing coefficients, then updates the coefficients in a
     self-consistent manner based on the mean absolute value of the mixed deltas.
+
+    Keyword Args:
+        normalize_amplitudes (bool): If ``True``, RMS-normalise each strategy's
+            delta slab before mixing and before the coefficient update, so
+            adaptation is not dominated by intrinsically louder kernels.
+            Defaults to ``False``.
 
     Example:
         strategy = SelfConsistentMixStrategy()
@@ -56,6 +63,9 @@ class SelfConsistentMixStrategy(MixStrategy):
             absolute value of the mixed deltas, scaled by the number of columns in
             the delta array.
         """
+        if self.options.get("normalize_amplitudes", False):
+            delta = normalize_delta_amplitudes(delta)
+
         # Compute per-strategy mean magnitude BEFORE mixing so that strategies with
         # larger deltas genuinely grow their coefficients relative to others.
         # Averaging over both the organism axis (0) and gene axis (1) gives a

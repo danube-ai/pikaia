@@ -320,7 +320,15 @@ class GeneticModel(ABC):
 
         The per-strategy lists have length
         ``len(gene_strategies) + len(org_strategies)`` with gene entries first.
+
+        When a mix strategy has ``normalize_amplitudes=True``, each contributing
+        kernel is Frobenius/L2-normalised before weighting so mix coefficients
+        are amplitude-honest (matching the iterative mix path).
         """
+        from pikaia.strategies.mix_strategies.amplitude import (
+            normalize_kernel_amplitude,
+        )
+
         M = self._population.M
         D_total = np.zeros((M, M))
         d_total = np.zeros(M)
@@ -330,11 +338,23 @@ class GeneticModel(ABC):
         D_per: list[np.ndarray | None] = []
         d_per: list[np.ndarray | None] = []
 
+        K_g = len(self._gene_strategies)
+        norm_gene = bool(
+            getattr(self._gene_mix_strategy, "options", {}).get(
+                "normalize_amplitudes", False
+            )
+        )
+        norm_org = bool(
+            getattr(self._org_mix_strategy, "options", {}).get(
+                "normalize_amplitudes", False
+            )
+        )
+
         all_pairs = list(
             zip(self._gene_strategies, self._initial_gene_mixing_coeffs)
         ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
 
-        for strat, coeff in all_pairs:
+        for idx, (strat, coeff) in enumerate(all_pairs):
             D_s, d_s = strat.kernel(
                 self._population,
                 self._gene_similarity,
@@ -342,6 +362,8 @@ class GeneticModel(ABC):
                 self._initial_org_fitness_range,
                 self._y,
             )
+            if (norm_gene if idx < K_g else norm_org):
+                D_s, d_s = normalize_kernel_amplitude(D_s, d_s)
             D_per.append(D_s)
             d_per.append(d_s)
             if D_s is not None:
