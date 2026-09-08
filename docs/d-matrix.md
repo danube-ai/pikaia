@@ -243,7 +243,7 @@ For each `ORIGINAL` row, the named gene strategy is paired with `NoneOrgStrategy
 
 ### 1.7.2. Results
 
-| Formulation | Strategy assessed | Partner in comparison | 1 iteration | 50 iterations | 100 iterations | D-matrix vs. iterative-path assessment |
+| Formulation | Strategy | Partner | Max. absolute difference (1 iter.) | Max. absolute difference (50 iter.) | Max. absolute difference (100 iter.) | Result and timing (100 iter.) |
 |---|---|---|---:|---:|---:|---|
 | ORIGINAL | Dominant gene | None organism | 0 | 1.11e-16 | 6.51e-18 | Matches. 2.33 ms iterative vs 0.69 ms D matrix; D matrix was 3.4 times faster. |
 | ORIGINAL | Selfish gene | None organism | 0 | 5.55e-17 | 2.78e-17 | Matches. 8.32 ms iterative vs 0.67 ms D matrix; D matrix was 12.5 times faster. |
