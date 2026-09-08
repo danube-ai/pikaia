@@ -189,10 +189,9 @@ strategy of each type with a fixed coefficient of one.
 | Altruistic gene, $D^G$ | The sum of $\delta^G_{ij}$ over all organisms $i$. | Gene component of Alt-Sel. |
 | Selfish organism, $D^O$ | The sum of $\delta^O_{ij}$ over all organisms $i$. | Organism component of Alt-Sel. |
 
-This distinction explains why the end-to-end comparison below has one Alt-Sel
-row rather than two isolated strategy rows. The row tests a public model
-configuration accepted by `PikaiaModel`, while the equations above establish
-what each strategy contributes to that configuration.
+This distinction also determines how to read the end-to-end comparison below.
+The table has one row per strategy, while the partner column identifies the
+complete public model configuration accepted by `PikaiaModel`.
 
 ## 1.6. Compatibility comparison
 
@@ -208,27 +207,29 @@ The acceptance criterion is `rtol=1e-12` and `atol=1e-12`. A displayed zero mean
 
 For each `ORIGINAL` row, the named gene strategy is paired with
 `NoneOrgStrategy`. That no-op partner contributes zero, so the comparison
-isolates the named strategy. The `MATH_PAPER` row names both strategies because
-the supported public configuration is the complete Alt-Sel pair. It does not
-mean the two matrix components are algebraically inseparable; it means isolated
-math-paper D-matrix models are intentionally outside the package's compatibility
-contract.
+isolates the named strategy. The two `MATH_PAPER` rows refer to the same Alt-Sel
+run: one row assesses its altruistic-gene component and the other its
+selfish-organism component. Their numerical results are therefore intentionally
+identical. This does not mean the matrix components are algebraically
+inseparable; isolated math-paper D-matrix models are simply outside the
+package's public compatibility contract.
 
 ### 1.6.2. Results
 
-| Formulation | D-matrix configuration compared | 1 iteration | 50 iterations | 100 iterations | D-matrix vs. iterative-path assessment |
-|---|---|---:|---:|---:|---|
-| ORIGINAL | Dominant gene | 0 | 1.11e-16 | 6.51e-18 | Matches iterative path. |
-| ORIGINAL | Selfish gene | 0 | 5.55e-17 | 2.78e-17 | Matches iterative path. |
-| ORIGINAL | Kin-altruistic gene, default full neighbourhood | 0 | 1.11e-16 | 5.55e-17 | Matches iterative path. |
-| ORIGINAL | Altruistic gene | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Sell hard gene | 1.39e-17 | 2.84e-16 | 5.72e-17 | Matches iterative path. |
-| ORIGINAL | Sell uniform gene | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Sell easy gene | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Variance gene | 0 | 3.33e-16 | 6.94e-17 | Matches iterative path. |
-| MATH_PAPER | Altruistic gene + Selfish organism, unit fixed coefficients | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches iterative path. |
+| Formulation | Strategy assessed | Partner in comparison | 1 iteration | 50 iterations | 100 iterations | D-matrix vs. iterative-path assessment |
+|---|---|---|---:|---:|---:|---|
+| ORIGINAL | Dominant gene | None organism | 0 | 1.11e-16 | 6.51e-18 | Matches iterative path. |
+| ORIGINAL | Selfish gene | None organism | 0 | 5.55e-17 | 2.78e-17 | Matches iterative path. |
+| ORIGINAL | Kin-altruistic gene, default full neighbourhood | None organism | 0 | 1.11e-16 | 5.55e-17 | Matches iterative path. |
+| ORIGINAL | Altruistic gene | None organism | 0 | 0 | 0 | Matches iterative path. |
+| ORIGINAL | Sell hard gene | None organism | 1.39e-17 | 2.84e-16 | 5.72e-17 | Matches iterative path. |
+| ORIGINAL | Sell uniform gene | None organism | 0 | 0 | 0 | Matches iterative path. |
+| ORIGINAL | Sell easy gene | None organism | 0 | 0 | 0 | Matches iterative path. |
+| ORIGINAL | Variance gene | None organism | 0 | 3.33e-16 | 6.94e-17 | Matches iterative path. |
+| MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches iterative path as part of Alt-Sel. |
+| MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches iterative path as part of Alt-Sel. |
 
-The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper row uses a five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and historical similarity scaling. The original kernels also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Their largest observed discrepancy is $3.4\times10^{-16}$.
+The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The two math-paper rows report the same five-organism, three-gene Alt-Sel run with initial $\gamma=(0.4,0.35,0.25)$ and historical similarity scaling. The original kernels also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Their largest observed discrepancy is $3.4\times10^{-16}$.
 
 The assertions are implemented in `tests/unit/test_d_matrix_equivalence.py` and `tests/unit/test_math_paper_formulation.py`.
 
