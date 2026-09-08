@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import StrategyNormalizations
 
 
 @dataclass(slots=True)
@@ -31,6 +32,8 @@ class StrategyContext:
     gene_id: Optional[int] = None
     #: Optional target variable for supervised strategies.
     y: Optional[np.ndarray] = None
+    #: Immutable population-derived values needed by some formulations.
+    normalizations: StrategyNormalizations | None = None
 
 
 class GeneStrategy(ABC):
@@ -97,6 +100,16 @@ class GeneStrategy(ABC):
         """
         return None, None
 
+    @property
+    def requires_normalizations(self) -> bool:
+        """Whether this strategy's kernel accepts population normalizations."""
+        return False
+
+    @property
+    def requires_iterative_path(self) -> bool:
+        """Whether this strategy cannot participate in a D-matrix run."""
+        return False
+
 
 class OrgStrategy(ABC):
     """
@@ -157,6 +170,16 @@ class OrgStrategy(ABC):
         that support the fast D-matrix path override this method.
         """
         return None, None
+
+    @property
+    def requires_normalizations(self) -> bool:
+        """Whether this strategy's kernel accepts population normalizations."""
+        return False
+
+    @property
+    def requires_iterative_path(self) -> bool:
+        """Whether this strategy cannot participate in a D-matrix run."""
+        return False
 
 
 class MixStrategy(ABC):

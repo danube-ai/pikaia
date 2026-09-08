@@ -1,6 +1,9 @@
+from typing import Any
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import StrategyFormulation, StrategyFormulationConfig
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -14,7 +17,11 @@ class DominantGeneStrategy(GeneStrategy):
     This implementation follows the logic from the original `alg.py`.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        **kwargs: Any,
+    ):
         """Initialise the Dominant gene strategy.
 
         Args:
@@ -22,6 +29,9 @@ class DominantGeneStrategy(GeneStrategy):
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
+        self.formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
 
     @property
     def name(self) -> str:
@@ -41,6 +51,13 @@ class DominantGeneStrategy(GeneStrategy):
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
         """
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            return float(
+                (1 / ctx.population.N)
+                * ctx.gene_fitness[ctx.gene_id]
+                * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            )
+
         return float(
             # constant factor and normalization by population size
             (4 / ctx.population.N)
@@ -68,8 +85,22 @@ class DominantGeneStrategy(GeneStrategy):
             y: Unused.
 
         Returns:
-            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
-            with ``D[j, j] = 4 * (x_bar_j - 0.5)``.
+            For ``ORIGINAL``, ``(D, None)`` where ``D`` is diagonal with
+            ``D[j, j] = 4 * (x_bar_j - 0.5)``.  ``MATH_PAPER`` returns
+            ``(None, None)`` because its linear-in-fitness formula cannot be
+            represented by the static D-matrix contract.
         """
-        D = np.diag(4.0 * (population.matrix.mean(axis=0) - 0.5))
+        mean_centered_expression = population.matrix.mean(axis=0) - 0.5
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            # The revised delta is linear in gamma.  The D-matrix engine only
+            # supports population-static d vectors and bilinear D matrices, so
+            # this formulation intentionally uses the iterative path.
+            return None, None
+
+        D = np.diag(4.0 * mean_centered_expression)
         return D, None
+
+    @property
+    def requires_iterative_path(self) -> bool:
+        """The math-paper formulation cannot be represented by static kernels."""
+        return self.formulation is StrategyFormulation.MATH_PAPER

@@ -1,6 +1,13 @@
+from typing import Any
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import (
+    StrategyFormulation,
+    StrategyFormulationConfig,
+    StrategyNormalizations,
+)
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -16,7 +23,11 @@ class AltruisticGeneStrategy(GeneStrategy):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        **kwargs: Any,
+    ):
         """Initialise the Altruistic gene strategy.
 
         Args:
@@ -24,6 +35,9 @@ class AltruisticGeneStrategy(GeneStrategy):
                 stored in ``self.options``.
         """
         super().__init__(**kwargs)
+        self.formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
 
     @property
     def name(self) -> str:
@@ -49,6 +63,25 @@ class AltruisticGeneStrategy(GeneStrategy):
         # Vectorized computation for all genes except self
         # 16 / N * similarity * fitness_self * (pop_self - 0.5) * fitness_others *
         # (pop_others - pop_self)
+        interaction = (
+            ctx.gene_similarity[ctx.gene_id, indices]
+            * ctx.gene_fitness[ctx.gene_id]
+            * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            * ctx.gene_fitness[indices]
+            * (
+                ctx.population[ctx.org_id, indices]
+                - ctx.population[ctx.org_id, ctx.gene_id]
+            )
+        )
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if ctx.normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            return float(
+                np.sum(interaction)
+                / ctx.population.N
+                / ctx.normalizations.require_gene_mean_pairwise_difference()
+            )
+
         return float(
             np.sum(
                 # constant factor and normalization by population size
@@ -79,6 +112,7 @@ class AltruisticGeneStrategy(GeneStrategy):
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
+        normalizations: StrategyNormalizations | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Full ``(M, M)`` D matrix encoding cross-gene altruistic interactions.
 
@@ -91,9 +125,9 @@ class AltruisticGeneStrategy(GeneStrategy):
 
         Returns:
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
-            ``D[j, k] = (16/M) * gene_similarity[j, k]``
-            ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
-            and the diagonal set to zero.
+            the formulation-specific scaling applied to
+            ``gene_similarity[j, k] * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``.
+            The diagonal is set to zero.
         """
         X = population.matrix  # (N, M)
         M = population.M
@@ -101,6 +135,19 @@ class AltruisticGeneStrategy(GeneStrategy):
         # X_diff[i, j, k] = X[i,k] - X[i,j]
         X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
         kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
-        D = (16.0 / M) * gene_similarity * kernel
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            D = (
+                gene_similarity
+                * kernel
+                / normalizations.require_gene_mean_pairwise_difference()
+            )
+        else:
+            D = (16.0 / M) * gene_similarity * kernel
         np.fill_diagonal(D, 0.0)
         return D, None
+
+    @property
+    def requires_normalizations(self) -> bool:
+        return True

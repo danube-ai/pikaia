@@ -153,15 +153,18 @@ class TestEntropyMaxGeneStrategy:
         strat = EntropyMaxGeneStrategy()
         strat._get_scores(X_BASE, None)
         assert strat._mode == "unsupervised"
-        first_scores = strat._info_scores.copy()  # type: ignore[union-attr]
+        assert strat._info_scores is not None
+        first_scores = strat._info_scores.copy()
         strat._get_scores(X_BASE, Y_BASE)
         assert strat._mode == "supervised"
+        assert strat._info_scores is not None
         assert not np.allclose(strat._info_scores, first_scores)  # recomputed with MI
 
     def test_precomputed_not_overwritten_on_mode_switch(self):
         precomputed = np.array([0.8, 0.4, 0.6, 0.2])
         strat = EntropyMaxGeneStrategy(precomputed_info=precomputed)
         strat._get_scores(X_BASE, Y_BASE)  # switching "mode" — should NOT recompute
+        assert strat._info_scores is not None
         assert np.allclose(strat._info_scores, precomputed)
 
     def test_factory_round_trip(self):
@@ -333,6 +336,7 @@ class TestPartialCorrGeneStrategy:
         precomputed = np.array([0.9, 0.1, 0.5, 0.3])
         strat = PartialCorrGeneStrategy(precomputed_pc=precomputed)
         strat._get_scores(X_BASE, Y_BASE)  # switching "mode" — should NOT recompute
+        assert strat._partial_corrs is not None
         assert np.allclose(strat._partial_corrs, precomputed)
 
     def test_factory_round_trip(self):

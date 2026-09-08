@@ -1,5 +1,7 @@
 """Strategy factories and execution context for pikaia."""
 
+from pikaia.schemas.strategies import StrategyFormulation
+
 from .base_strategies import StrategyContext
 from .strategy_factories import (
     GeneStrategyFactory,
@@ -12,4 +14,5 @@ __all__ = [
     "OrgStrategyFactory",
     "MixStrategyFactory",
     "StrategyContext",
+    "StrategyFormulation",
 ]

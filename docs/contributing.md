@@ -230,12 +230,12 @@ When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and th
 For your strategy to support this path:
 
 1. Override `kernel()` to return `(D, d)` where at least one is not `None`.
-2. The update applied is `γ_new = γ * (1 + D @ γ + d)`, then re-normalised.
-3. `D` captures gene–gene interactions (bilinear in **γ**); `d` captures fixed linear offsets.
+2. The update applied is `γ_new = γ * (1 + d + γ * (D @ γ))`, then re-normalised.
+3. `D` captures deltas of the form `γ_j * sum_k D_jk * γ_k`; `d` captures fixed delta offsets.
 4. If your delta does not depend on **γ** at all, return `D=None` and a precomputed `d`.
 5. If your delta scales with `γ_j`, express it as `D[j,j]` on the diagonal.
 
-**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `D @ γ + d` for a few random **γ** vectors. See `tests/unit/test_strategy_kernels.py` for examples of this pattern.
+**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `d + γ * (D @ γ)` for a few random **γ** vectors. See the [D-matrix formulation](d-matrix.md) for the derivation procedure and `tests/unit/test_strategy_kernels.py` for examples.
 
 ---
 

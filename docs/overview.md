@@ -96,7 +96,7 @@ When multiple gene or organism strategies are active, a mixing strategy determin
 For compatible strategy combinations, pikaia precomputes a compact kernel `(D, d)` once before the iteration loop and then runs cheap `O(M²)` updates:
 
 ```
-γ_new = γ * (1 + D @ γ + d)
+γ_new = γ * (1 + d + γ * (D @ γ))
 ```
 
 instead of the full `O(N·M²)` per-organism loop. This is typically **30–80× faster** for large populations.
@@ -118,7 +118,9 @@ Most built-in strategies support the D-matrix path — each implements `kernel()
 - **`NONE` strategies** return `(None, None)`; a combination of only `NONE` strategies has no kernel at all.
 - **The trading buy strategies** (`BUY_HARD`, `BUY_UNIFORM`, `BUY_EASY`) do **not** support the D-matrix path. Their per-organism delta (`buy_abs / γ_j`) depends on the current gene fitness **γ** in a way that cannot be captured by a static `(D, d)` kernel, so they only run correctly under the standard iterative loop. If you enable `use_d_matrix=True` with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.
 
-Custom strategies must implement `kernel()` to participate; see the [Contributor Guide](contributing.md).
+Custom strategies must implement `kernel()` to participate. See the
+[D-matrix formulation](d-matrix.md) for the exact contract, derivations, and
+compatibility limits, or the [Contributor Guide](contributing.md).
 
 ---
 

@@ -41,6 +41,7 @@ print("=== Example 7: Gene Fitness Bootstrap Stability ===\n")
 # Data
 # ---------------------------------------------------------------------------
 data = load_wine()
+assert not isinstance(data, tuple)
 X_raw, y = data.data, data.target
 feature_names = data.feature_names
 

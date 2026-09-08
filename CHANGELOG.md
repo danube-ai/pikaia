@@ -5,6 +5,28 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-08
+
+### Added
+
+- **Math-paper strategy formulations.** `DominantGeneStrategy`,
+  `AltruisticGeneStrategy`, and `SelfishOrgStrategy` now accept the validated
+  `StrategyFormulation` enum. `ORIGINAL` remains the default; `MATH_PAPER`
+  enables the revised equations and population-derived normalizations from the
+  mathematical paper.
+- **D-matrix formulation reference.** Added a dedicated documentation page
+  deriving the D-matrix contract from the iterative equations and recording
+  exact, approximate, iterative-only, and unsupported strategy mappings.
+- **Math-paper equivalence tests.** Added iterative versus D-matrix regression
+  coverage for multiple non-uniform initial gene-fitness vectors.
+
+### Changed
+
+- **D-matrix documentation and safeguards.** Corrected the documented fast
+  update equation, clarified reduced-dynamics organism kernels, and make
+  `MATH_PAPER` dominant fail fast when `use_d_matrix=True` is selected because
+  its linear-in-fitness formulation has no static D-matrix representation.
+
 ## [0.3.3] - 2026-08-11
 
 ### Fixed
@@ -263,6 +285,7 @@ Maintenance release.
 
 Initial public release.
 
+[0.4.0]: https://github.com/danube-ai/pikaia/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/danube-ai/pikaia/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/danube-ai/pikaia/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/danube-ai/pikaia/compare/v0.3.0...v0.3.1

@@ -6,12 +6,22 @@ import numpy as np
 
 from pikaia.config.logger import logger
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import StrategyNormalizations
 from pikaia.strategies.base_strategies import (
     GeneStrategy,
     MixStrategy,
     OrgStrategy,
 )
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
+
+
+def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
+    """Return the mean absolute difference over distinct value pairs."""
+    values = np.asarray(values, dtype=float)
+    if values.size < 2:
+        return None
+    differences = np.abs(values[:, np.newaxis] - values[np.newaxis, :])
+    return float(differences[np.triu_indices(values.size, k=1)].mean())
 
 
 class GeneticModel(ABC):
@@ -162,6 +172,17 @@ class GeneticModel(ABC):
                 "under uniform gene weighting — no organism can be distinguished. "
                 "Scores will be returned as uniform (no ranking is possible)."
             )
+
+        # These fixed-population values are only used by MATH_PAPER strategies.
+        # Pydantic validates that any calculated values are finite and non-negative.
+        self._strategy_normalizations = StrategyNormalizations(
+            gene_mean_pairwise_difference=_mean_pairwise_absolute_difference(
+                self._population.matrix.mean(axis=0)
+            ),
+            harmonic_fitness_mean_pairwise_difference=(
+                _mean_pairwise_absolute_difference(self._population.matrix.mean(axis=1))
+            ),
+        )
 
         # Similarity matrices
         self._gene_similarity = self._compute_similarity(mode="gene")
@@ -335,12 +356,23 @@ class GeneticModel(ABC):
         ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
 
         for strat, coeff in all_pairs:
+            if strat.requires_iterative_path:
+                raise ValueError(
+                    f"{type(strat).__name__} in its selected formulation does "
+                    "not support use_d_matrix=True. Use use_d_matrix=False."
+                )
+            kernel_kwargs = (
+                {"normalizations": self._strategy_normalizations}
+                if strat.requires_normalizations
+                else {}
+            )
             D_s, d_s = strat.kernel(
                 self._population,
                 self._gene_similarity,
                 self._org_similarity,
                 self._initial_org_fitness_range,
                 self._y,
+                **kernel_kwargs,
             )
             D_per.append(D_s)
             d_per.append(d_s)

@@ -28,6 +28,12 @@
 
 ::: pikaia.schemas.strategies.MixStrategyEnum
 
+::: pikaia.schemas.strategies.StrategyFormulation
+
+::: pikaia.schemas.strategies.StrategyFormulationConfig
+
+::: pikaia.schemas.strategies.StrategyNormalizations
+
 ## Strategies
 
 ### Base Classes

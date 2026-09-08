@@ -1,6 +1,13 @@
+from typing import Any
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import (
+    StrategyFormulation,
+    StrategyFormulationConfig,
+    StrategyNormalizations,
+)
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -16,7 +23,11 @@ class SelfishOrgStrategy(OrgStrategy):
     This implementation follows the logic from the original `alg.py`.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        **kwargs: Any,
+    ):
         """Initialise the Selfish organism strategy.
 
         Keyword Args:
@@ -27,6 +38,9 @@ class SelfishOrgStrategy(OrgStrategy):
                 and stored in ``self.options``.
         """
         super().__init__(**kwargs)
+        self.formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
 
     @property
     def name(self) -> str:
@@ -55,11 +69,20 @@ class SelfishOrgStrategy(OrgStrategy):
         if len(relatives) == 0 or ctx.org_fitness[ctx.org_id] == 0:
             return np.zeros(ctx.population.M)
 
-        # Compute gene-specific term: (gene_contribution / org_fitness - 1/M)
+        # Compute gene-specific term for the selected formulation.
         gene_contribution = ctx.population[ctx.org_id, :] * ctx.gene_fitness
-        gene_term = (gene_contribution / ctx.org_fitness[ctx.org_id]) - (
-            1 / ctx.population.M
-        )
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if ctx.normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            gene_term = gene_contribution
+            normalization = (
+                ctx.normalizations.require_harmonic_fitness_mean_pairwise_difference()
+            )
+        else:
+            gene_term = (gene_contribution / ctx.org_fitness[ctx.org_id]) - (
+                1 / ctx.population.M
+            )
+            normalization = ctx.initial_org_fitness_range
 
         # Compute relative weights: similarity * fitness difference
         org_similarity = ctx.org_similarity[ctx.org_id, relatives]
@@ -76,8 +99,8 @@ class SelfishOrgStrategy(OrgStrategy):
             (-2 / ctx.population.N)
             # normalization by kin range
             * (1 / kin_range)
-            # scale by initial range
-            * (summed_delta_o / ctx.initial_org_fitness_range)
+            # scale by the formulation-specific population range
+            * (summed_delta_o / normalization)
         )
 
         return delta_o
@@ -89,6 +112,7 @@ class SelfishOrgStrategy(OrgStrategy):
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
+        normalizations: StrategyNormalizations | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Full ``(M, M)`` D matrix for kin-selfish org interactions.
 
@@ -106,23 +130,35 @@ class SelfishOrgStrategy(OrgStrategy):
         """
         X = population.matrix  # (N, M)
         N = population.N
-        R = initial_org_fitness_range
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            R = normalizations.require_harmonic_fitness_mean_pairwise_difference()
+        else:
+            R = initial_org_fitness_range
         kin_range = self.options.get("kin_range", N)
 
         D_acc = np.zeros((population.M, population.M))
         n_contributing = 0
         for i in range(N):
             sorted_idx = np.argsort(-org_similarity[i, :])
-            relatives_i = sorted_idx[sorted_idx != i][:kin_range]
+            if self.formulation is StrategyFormulation.MATH_PAPER:
+                selected_relatives = sorted_idx[:kin_range]
+                relatives_i = selected_relatives[selected_relatives != i]
+                denominator = kin_range
+            else:
+                relatives_i = sorted_idx[sorted_idx != i][:kin_range]
+                denominator = len(relatives_i)
             if len(relatives_i) == 0:
                 continue
-            n_rel = len(relatives_i)
             s_il = org_similarity[i, relatives_i]  # (n_rel,)
             # x_diff_lk[l, k] = X[i, k] - X[relatives_i[l], k]
             x_diff = X[i, np.newaxis, :] - X[relatives_i, :]  # (n_rel, M)
             # sum_l s_il * (x_ik - x_lk): (M,)
             sum_l = s_il @ x_diff
-            D_acc += np.outer(X[i, :], sum_l) / n_rel
+            # The historical formulation includes self in the kin-range
+            # denominator even though self does not contribute to the sum.
+            D_acc += np.outer(X[i, :], sum_l) / denominator
             n_contributing += 1
 
         if n_contributing == 0:
@@ -130,3 +166,7 @@ class SelfishOrgStrategy(OrgStrategy):
 
         D = D_acc / N * (-2.0 / R)
         return D, None
+
+    @property
+    def requires_normalizations(self) -> bool:
+        return True
