@@ -1233,9 +1233,40 @@ complete public model configuration accepted by <code>PikaiaModel</code>.</p>
 <ol>
 <li>The iterative model uses <code>use_d_matrix=False</code> and evaluates the direct strategy equations.</li>
 <li>The reduced model uses <code>use_d_matrix=True</code> and evaluates the precomputed <span class="arithmatex">\(D\)</span> matrix and <span class="arithmatex">\(d\)</span> vector.</li>
-<li>After exactly 1, 50, or 100 iterations, the comparison records the largest absolute difference between corresponding final gene-fitness entries: <span class="arithmatex">\(\max_j|\gamma^{\mathrm{iterative}}_j-\gamma^{\mathrm{D}}_j|\)</span>.</li>
+<li>After exactly 1, 50, or 100 iterations, the comparison records the largest absolute differences between corresponding entries in both final fitness outputs.</li>
 </ol>
-<p>The acceptance criterion is <code>rtol=1e-12</code> and <code>atol=1e-12</code>. A displayed zero means the two floating-point vectors were bitwise equal on that fixture; a small value such as <code>1.11e-16</code> is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.</p>
+<p>For gene fitness, the reported difference at iteration <span class="arithmatex">\(t\)</span> is:</p>
+<div class="arithmatex">\[
+E_{\gamma}(t)
+=
+\max_j
+\left|
+\gamma^{\mathrm{iterative}}_j(t)
+-
+\gamma^{\mathrm{D}}_j(t)
+\right|.
+\]</div>
+<p>Here, <span class="arithmatex">\(\gamma^{\mathrm{iterative}}_j(t)\)</span> and <span class="arithmatex">\(\gamma^{\mathrm{D}}_j(t)\)</span> are the fitness values of gene <span class="arithmatex">\(j\)</span> after iteration <span class="arithmatex">\(t\)</span> in the iterative and D-matrix models, respectively. The maximum runs over every gene <span class="arithmatex">\(j\)</span>.</p>
+<p>For organism fitness, the reported difference is:</p>
+<div class="arithmatex">\[
+E_o(t)
+=
+\max_i
+\left|
+o^{\mathrm{iterative}}_i(t)
+-
+o^{\mathrm{D}}_i(t)
+\right|.
+\]</div>
+<p>Here, <span class="arithmatex">\(o^{\mathrm{iterative}}_i(t)\)</span> and <span class="arithmatex">\(o^{\mathrm{D}}_i(t)\)</span> are the fitness values of organism <span class="arithmatex">\(i\)</span> after iteration <span class="arithmatex">\(t\)</span>. The maximum runs over every organism <span class="arithmatex">\(i\)</span>.</p>
+<p>Organism fitness is derived from gene fitness in both execution paths using the same population matrix:</p>
+<div class="arithmatex">\[
+o_i(t)
+=
+\sum_j X_{ij}\gamma_j(t).
+\]</div>
+<p>Consequently, equal gene-fitness vectors imply equal organism-fitness vectors for the same <span class="arithmatex">\(X\)</span>. The tests still compare organism fitness explicitly. This protects the public output against implementation errors such as storing the wrong iteration or using inconsistent state even though there is no separate organism-fitness evolution equation.</p>
+<p>Each table cell is written as <span class="arithmatex">\(E_{\gamma}(t) / E_o(t)\)</span>, or gene difference followed by organism difference. The acceptance criterion for both outputs is <code>rtol=1e-12</code> and <code>atol=1e-12</code>. A displayed zero means the corresponding floating-point vectors were bitwise equal on that fixture; a small value such as <code>1.11e-16</code> is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.</p>
 <p>For each <code>ORIGINAL</code> row, the named gene strategy is paired with <code>NoneOrgStrategy</code>. That no-op partner contributes zero, so the comparison isolates the named strategy. The math-paper dominant row uses the same arrangement. The other two <code>MATH_PAPER</code> rows refer to the same Alt-Sel run: one row assesses its altruistic-gene component and the other its selfish-organism component. Their numerical results are therefore intentionally identical. This does not mean the matrix components are algebraically inseparable; their isolated D-matrix models are outside the package's public compatibility contract.</p>
 <h3 id="172-iterative-vs-d-matrix-path-differences">1.7.2. Iterative vs. D-matrix path differences<a class="headerlink" href="#172-iterative-vs-d-matrix-path-differences" title="Permanent link">&para;</a></h3>
 <table>
@@ -1244,9 +1275,9 @@ complete public model configuration accepted by <code>PikaiaModel</code>.</p>
 <th>Formulation</th>
 <th>Strategy</th>
 <th>Partner</th>
-<th style="text-align: right;">Max. absolute difference (1 iter.)</th>
-<th style="text-align: right;">Max. absolute difference (50 iter.)</th>
-<th style="text-align: right;">Max. absolute difference (100 iter.)</th>
+<th style="text-align: right;">1 iter. (G/O)</th>
+<th style="text-align: right;">50 iter. (G/O)</th>
+<th style="text-align: right;">100 iter. (G/O)</th>
 <th>Result and timing (100 iter.)</th>
 </tr>
 </thead>
@@ -1255,104 +1286,104 @@ complete public model configuration accepted by <code>PikaiaModel</code>.</p>
 <td>ORIGINAL</td>
 <td>Dominant gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1.11e-16</td>
-<td style="text-align: right;">6.51e-18</td>
-<td>Matches. 2.33 ms iterative vs 0.69 ms D matrix; D matrix was 3.4 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">1.11e-16 / 1.11e-16</td>
+<td style="text-align: right;">6.51e-18 / 0</td>
+<td>Matches. 3.16 ms iterative vs 1.11 ms D matrix; D matrix was 2.9 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Selfish gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">5.55e-17</td>
-<td style="text-align: right;">2.78e-17</td>
-<td>Matches. 8.32 ms iterative vs 0.67 ms D matrix; D matrix was 12.5 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">2.78e-17 / 0</td>
+<td>Matches. 11.36 ms iterative vs 1.10 ms D matrix; D matrix was 10.3 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Kin-altruistic gene, default full neighbourhood</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1.11e-16</td>
-<td style="text-align: right;">5.55e-17</td>
-<td>Matches. 9.41 ms iterative vs 0.69 ms D matrix; D matrix was 13.6 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">1.11e-16 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td>Matches. 12.77 ms iterative vs 1.12 ms D matrix; D matrix was 11.4 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Altruistic gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td>Matches. 11.65 ms iterative vs 0.68 ms D matrix; D matrix was 17.1 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 15.66 ms iterative vs 1.10 ms D matrix; D matrix was 14.2 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Sell hard gene</td>
 <td>None organism</td>
-<td style="text-align: right;">1.39e-17</td>
-<td style="text-align: right;">2.84e-16</td>
-<td style="text-align: right;">5.72e-17</td>
-<td>Matches. 4.04 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster.</td>
+<td style="text-align: right;">1.39e-17 / 0</td>
+<td style="text-align: right;">2.84e-16 / 2.22e-16</td>
+<td style="text-align: right;">5.72e-17 / 5.55e-17</td>
+<td>Matches. 5.23 ms iterative vs 1.29 ms D matrix; D matrix was 4.0 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Sell uniform gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td>Matches. 3.90 ms iterative vs 0.61 ms D matrix; D matrix was 6.4 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 5.16 ms iterative vs 1.03 ms D matrix; D matrix was 5.0 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Sell easy gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td>Matches. 4.02 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 5.29 ms iterative vs 1.04 ms D matrix; D matrix was 5.1 times faster.</td>
 </tr>
 <tr>
 <td>ORIGINAL</td>
 <td>Variance gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">3.33e-16</td>
-<td style="text-align: right;">6.94e-17</td>
-<td>Matches. 8.58 ms iterative vs 0.72 ms D matrix; D matrix was 12.0 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">3.33e-16 / 2.22e-16</td>
+<td style="text-align: right;">6.94e-17 / 1.11e-16</td>
+<td>Matches. 11.50 ms iterative vs 1.21 ms D matrix; D matrix was 9.5 times faster.</td>
 </tr>
 <tr>
 <td>MATH_PAPER</td>
 <td>Dominant gene</td>
 <td>None organism</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">2.22e-16</td>
-<td style="text-align: right;">5.20e-18</td>
-<td>Matches. 2.59 ms iterative vs 0.69 ms D matrix; D matrix was 3.8 times faster.</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">2.22e-16 / 1.11e-16</td>
+<td style="text-align: right;">5.20e-18 / 0</td>
+<td>Matches. 3.53 ms iterative vs 1.14 ms D matrix; D matrix was 3.1 times faster.</td>
 </tr>
 <tr>
 <td>MATH_PAPER</td>
 <td>Altruistic gene</td>
 <td>Selfish organism, unit fixed coefficient</td>
-<td style="text-align: right;">5.55e-17</td>
-<td style="text-align: right;">5.55e-17</td>
-<td style="text-align: right;">1.11e-16</td>
-<td>Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster.</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 0</td>
+<td style="text-align: right;">1.11e-16 / 2.22e-16</td>
+<td>Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster.</td>
 </tr>
 <tr>
 <td>MATH_PAPER</td>
 <td>Selfish organism</td>
 <td>Altruistic gene, unit fixed coefficient</td>
-<td style="text-align: right;">5.55e-17</td>
-<td style="text-align: right;">5.55e-17</td>
-<td style="text-align: right;">1.11e-16</td>
-<td>Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster.</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 0</td>
+<td style="text-align: right;">1.11e-16 / 2.22e-16</td>
+<td>Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster.</td>
 </tr>
 </tbody>
 </table>
-<p>The original rows use a fixed four-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.6,0.3,0.1)\)</span>. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.4,0.35,0.25)\)</span> and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than <span class="arithmatex">\(N\)</span>. All comparisons satisfy the same <code>rtol=1e-12</code>, <code>atol=1e-12</code> criterion; the original kernels' largest observed discrepancy is <span class="arithmatex">\(3.4\times10^{-16}\)</span>.</p>
+<p>The original rows use a fixed four-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.6,0.3,0.1)\)</span>. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.4,0.35,0.25)\)</span> and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than <span class="arithmatex">\(N\)</span>. The automated tests compare every gene- and organism-fitness history entry from the initial state through the requested final iteration. All comparisons satisfy the same <code>rtol=1e-12</code>, <code>atol=1e-12</code> criterion.</p>
 <p>The assertions are implemented in <code>tests/unit/test_d_matrix_equivalence.py</code> and <code>tests/unit/test_math_paper_formulation.py</code>.</p>
 <h3 id="173-historical-iterative-implementation-cross-check">1.7.3. Historical iterative implementation cross-check<a class="headerlink" href="#173-historical-iterative-implementation-cross-check" title="Permanent link">&para;</a></h3>
 <p>The math-paper iterative path was also compared numerically with the actual <code>pikaia-gitlab-old/public/src/pikaia/alg.py</code> implementation rather than only with equations transcribed into tests. Three deterministic populations of shapes <span class="arithmatex">\(5\times3\)</span>, <span class="arithmatex">\(7\times4\)</span>, and <span class="arithmatex">\(9\times5\)</span> were checked at 1, 50, and 100 iterations. Dominant gene was paired with a no-op organism strategy; Alt-Sel was checked with <span class="arithmatex">\(K=1\)</span>, <span class="arithmatex">\(K=2\)</span>, <span class="arithmatex">\(K=N\)</span>, and <span class="arithmatex">\(K&gt;N\)</span>.</p>
