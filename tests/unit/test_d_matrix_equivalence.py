@@ -79,6 +79,39 @@ def _fit(
     return model
 
 
+def _assert_fitness_histories_match(
+    iterative: PikaiaModel,
+    d_matrix: PikaiaModel,
+    max_iter: int,
+) -> None:
+    """Assert that both public fitness histories agree through ``max_iter``.
+
+    Organism fitness is deterministically derived from gene fitness as
+    ``population.matrix @ gene_fitness``. Comparing it explicitly nevertheless
+    protects the public output contract from storage, indexing, or execution-path
+    regressions.
+
+    Args:
+        iterative: Model fitted through direct strategy evaluation.
+        d_matrix: Model fitted through the reduced D-matrix path.
+        max_iter: Final iteration included in the comparison.
+
+    """
+    history_slice = slice(0, max_iter + 1)
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[history_slice],
+        d_matrix.gene_fitness_history[history_slice],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(
+        iterative.organism_fitness_history[history_slice],
+        d_matrix.organism_fitness_history[history_slice],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
 EXACT_GENE_STRATEGIES: list[tuple[str, Callable[[], GeneStrategy]]] = [
     ("dominant", DominantGeneStrategy),
     ("selfish", SelfishGeneStrategy),
@@ -123,12 +156,7 @@ def test_exact_original_gene_kernels_match_iterative_path(
         [strategy_factory()], [NoneOrgStrategy()], use_d_matrix=True, max_iter=max_iter
     )
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 @pytest.mark.parametrize("seed", [101, 102, 103])
@@ -161,12 +189,7 @@ def test_exact_original_gene_kernels_match_across_populations(
     iterative.fit()
     d_matrix.fit()
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 UNSUPPORTED_GENE_STRATEGIES: list[tuple[str, Callable[[], GeneStrategy]]] = [
@@ -328,12 +351,7 @@ def test_fixed_mixture_of_exact_kernels_matches_iterative_path(max_iter: int) ->
     iterative.fit()
     d_matrix.fit()
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 @pytest.mark.parametrize("max_iter", [1, 50, 100])
@@ -351,10 +369,5 @@ def test_d_matrix_preserves_zero_gene_fitness(max_iter: int) -> None:
     iterative.fit()
     d_matrix.fit()
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
     assert d_matrix.gene_fitness_history[max_iter, 2] == 0.0

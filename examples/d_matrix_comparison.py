@@ -13,8 +13,8 @@ strategy. This example runs only configurations accepted by ``PikaiaModel``:
 
 For each configuration, independently constructed iterative and D-matrix models
 start from the same population and gene-fitness vector. The script reports the
-largest absolute difference after 1, 50, and 100 iterations and the runtime of
-both 100-iteration runs.
+largest absolute gene- and organism-fitness differences after 1, 50, and 100
+iterations and the runtime of both 100-iteration runs.
 """
 
 import logging
@@ -62,6 +62,23 @@ class DMatrixConfiguration:
     gene_strategy_factory: Callable[[], GeneStrategy]
     org_strategy_factory: Callable[[], OrgStrategy]
     initial_gene_fitness: tuple[float, ...]
+
+
+@dataclass(frozen=True)
+class FitResult:
+    """Store both final public fitness outputs and the fit duration."""
+
+    gene_fitness: np.ndarray
+    organism_fitness: np.ndarray
+    elapsed_seconds: float
+
+
+@dataclass(frozen=True)
+class PathDifference:
+    """Store maximum absolute output differences for one iteration count."""
+
+    gene_fitness: float
+    organism_fitness: float
 
 
 def original_population() -> PikaiaPopulation:
@@ -139,8 +156,18 @@ def fit_configuration(
     *,
     use_d_matrix: bool,
     iterations: int,
-) -> tuple[np.ndarray, float]:
-    """Fit one model and return its final gene fitness and elapsed seconds."""
+) -> FitResult:
+    """Fit one model and return both final fitness outputs and elapsed time.
+
+    Args:
+        configuration: Supported strategy and formulation configuration to fit.
+        use_d_matrix: Whether to use reduced D-matrix execution.
+        iterations: Exact number of evolutionary updates to execute.
+
+    Returns:
+        Final gene fitness, final organism fitness, and elapsed fit time.
+
+    """
     model = PikaiaModel(
         population=configuration.population_factory(),
         gene_strategies=[configuration.gene_strategy_factory()],
@@ -153,40 +180,79 @@ def fit_configuration(
     started = perf_counter()
     model.fit()
     elapsed = perf_counter() - started
-    return model.gene_fitness_history[iterations], elapsed
+    return FitResult(
+        gene_fitness=model.gene_fitness_history[iterations],
+        organism_fitness=model.organism_fitness_history[iterations],
+        elapsed_seconds=elapsed,
+    )
 
 
 def compare_configuration(
     configuration: DMatrixConfiguration,
-) -> tuple[list[float], float, float]:
-    """Return path errors and median 100-step runtimes.
+) -> tuple[list[PathDifference], float, float]:
+    """Return both output errors and median 100-step runtimes.
 
-    Correctness is checked independently at 1, 50, and 100 iterations. Runtime
-    values are medians over ``TIMING_REPEATS`` complete 100-iteration fits to
-    reduce one-off scheduling noise.
+    Correctness is checked independently for final gene and organism fitness at
+    1, 50, and 100 iterations. Runtime values are medians over
+    ``TIMING_REPEATS`` complete 100-iteration fits to reduce one-off scheduling
+    noise.
+
+    Args:
+        configuration: Supported configuration to compare between execution paths.
+
+    Returns:
+        Per-iteration output differences followed by iterative and D-matrix
+        median runtimes in seconds.
+
     """
-    differences: list[float] = []
+    differences: list[PathDifference] = []
 
     for iterations in (1, 50, 100):
-        iterative, _ = fit_configuration(
+        iterative = fit_configuration(
             configuration,
             use_d_matrix=False,
             iterations=iterations,
         )
-        reduced, _ = fit_configuration(
+        reduced = fit_configuration(
             configuration,
             use_d_matrix=True,
             iterations=iterations,
         )
-        np.testing.assert_allclose(iterative, reduced, rtol=1e-12, atol=1e-12)
-        differences.append(float(np.max(np.abs(iterative - reduced))))
+        np.testing.assert_allclose(
+            iterative.gene_fitness,
+            reduced.gene_fitness,
+            rtol=1e-12,
+            atol=1e-12,
+        )
+        np.testing.assert_allclose(
+            iterative.organism_fitness,
+            reduced.organism_fitness,
+            rtol=1e-12,
+            atol=1e-12,
+        )
+        differences.append(
+            PathDifference(
+                gene_fitness=float(
+                    np.max(np.abs(iterative.gene_fitness - reduced.gene_fitness))
+                ),
+                organism_fitness=float(
+                    np.max(
+                        np.abs(iterative.organism_fitness - reduced.organism_fitness)
+                    )
+                ),
+            )
+        )
 
     iterative_runtimes = [
-        fit_configuration(configuration, use_d_matrix=False, iterations=100)[1]
+        fit_configuration(
+            configuration, use_d_matrix=False, iterations=100
+        ).elapsed_seconds
         for _ in range(TIMING_REPEATS)
     ]
     d_matrix_runtimes = [
-        fit_configuration(configuration, use_d_matrix=True, iterations=100)[1]
+        fit_configuration(
+            configuration, use_d_matrix=True, iterations=100
+        ).elapsed_seconds
         for _ in range(TIMING_REPEATS)
     ]
 
@@ -197,7 +263,8 @@ def main() -> None:
     """Run and print the supported-configuration comparison."""
     heading = (
         f"{'Formulation':<12} {'Configuration':<48} "
-        f"{'1 iter':>10} {'50 iter':>10} {'100 iter':>10} "
+        f"{'G1':>10} {'O1':>10} {'G50':>10} {'O50':>10} "
+        f"{'G100':>10} {'O100':>10} "
         f"{'iter ms':>10} {'D ms':>10}"
     )
     print(heading)
@@ -210,14 +277,18 @@ def main() -> None:
         print(
             f"{configuration.formulation.value:<12} "
             f"{configuration.name:<48} "
-            f"{differences[0]:>10.2e} "
-            f"{differences[1]:>10.2e} "
-            f"{differences[2]:>10.2e} "
+            f"{differences[0].gene_fitness:>10.2e} "
+            f"{differences[0].organism_fitness:>10.2e} "
+            f"{differences[1].gene_fitness:>10.2e} "
+            f"{differences[1].organism_fitness:>10.2e} "
+            f"{differences[2].gene_fitness:>10.2e} "
+            f"{differences[2].organism_fitness:>10.2e} "
             f"{iterative_runtime * 1000:>10.3f} "
             f"{d_matrix_runtime * 1000:>10.3f}"
         )
 
-    print("\nAll differences satisfy rtol=1e-12 and atol=1e-12.")
+    print("\nG = gene fitness; O = organism fitness; suffix = iteration count.")
+    print("All differences satisfy rtol=1e-12 and atol=1e-12.")
     print(f"Runtimes are medians of {TIMING_REPEATS} complete 100-iteration fits.")
 
 
