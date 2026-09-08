@@ -37,12 +37,12 @@ Open a PR that:
 
 1. Bumps `project.version` in `pyproject.toml`.
 2. Runs `uv lock` so the lockfile stays in sync (CI enforces `uv lock --locked`).
-3. Adds a `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md` summarising what changed, and appends a comparison link at the bottom (e.g. `[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z`).
+3. Adds the next numbered `## N. [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md` summarising what changed, and appends a comparison link at the bottom (e.g. `[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z`).
 
 ```bash
 git checkout -b release/0.3.0
 # edit pyproject.toml: version = "0.3.0"
-# edit CHANGELOG.md: add [0.3.0] section and comparison link
+# edit CHANGELOG.md: add the numbered [0.3.0] section and comparison link
 uv lock
 git commit -am "chore: bump version to 0.3.0"
 ```

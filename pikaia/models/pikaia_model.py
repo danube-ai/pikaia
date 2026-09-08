@@ -12,9 +12,6 @@ from pikaia.strategies.base_strategies import (
     OrgStrategy,
     StrategyContext,
 )
-from pikaia.strategies.mix_strategies.self_consistent_strategy import (
-    SelfConsistentMixStrategy,
-)
 
 
 class PikaiaModel(GeneticModel):
@@ -51,11 +48,8 @@ class PikaiaModel(GeneticModel):
         self._use_d_matrix = use_d_matrix
 
         # D-matrix state — populated by _compute_d_matrix() inside fit().
-        # Initialized as empty lists so type-checkers accept slicing.
         self._D_matrix: np.ndarray | None = None
         self._d_vector: np.ndarray | None = None
-        self._D_per_strategy: list = []
-        self._d_per_strategy: list = []
 
     def fit(self) -> None:
         """Fit the genetic model by running the simulation.
@@ -247,8 +241,8 @@ class PikaiaModel(GeneticModel):
             "org_fitness": current_org_fitness,
             "gene_fitness": current_gene_fitness,
             "initial_org_fitness_range": self._initial_org_fitness_range,
-            "org_similarity": self._org_similarity,
-            "gene_similarity": self._gene_similarity,
+            "org_similarity": self._active_org_similarity,
+            "gene_similarity": self._active_gene_similarity,
             "normalizations": self._strategy_normalizations,
             "y": self._y,
         }
@@ -333,30 +327,19 @@ class PikaiaModel(GeneticModel):
     # D-matrix fast paths
     # ------------------------------------------------------------------
 
-    def _run_d_matrix_iterations(
-        self, *, epsilon_override: float | None = None
-    ) -> None:
+    def _run_d_matrix_iterations(self) -> None:
         """Run the D-matrix fast iteration loop.
 
         Uses the precomputed ``self._D_matrix`` (bilinear term) and
-        ``self._d_vector`` (linear term from balanced org) to execute each
+        ``self._d_vector`` (population-static linear term) to execute each
         step in ``O(M²)`` instead of ``O(N·M²)``.
-
-        Args:
-            epsilon_override: If provided, overrides ``self._epsilon`` as the
-                convergence threshold.  Used internally by
-                ``_run_d_matrix_fix_point()`` to apply a tight tolerance.
 
         """
         import time
 
         D = self._D_matrix  # (M, M) or None
         d = self._d_vector  # (M,)  or None
-        epsilon = epsilon_override if epsilon_override is not None else self._epsilon
-
-        is_sc_gene = isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
-        is_sc_org = isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
-        K_g = len(self._gene_strategies)
+        epsilon = self._epsilon
 
         gene_mix_coeffs = np.array(self._initial_gene_mixing_coeffs)
         org_mix_coeffs = np.array(self._initial_org_mixing_coeffs)
@@ -371,13 +354,7 @@ class PikaiaModel(GeneticModel):
             logger.debug(f"D-matrix iteration {i}...")
             gamma = self._gene_fitness_hist[i - 1, :]
 
-            # When SelfConsistentMixStrategy is active, the mixing coefficients
-            # evolve and D_total must be recomputed each step.
-            if is_sc_gene or is_sc_org:
-                all_coeffs = np.concatenate([gene_mix_coeffs, org_mix_coeffs])
-                D_active, d_active = self._recompute_combined_d(all_coeffs)
-            else:
-                D_active, d_active = D, d
+            D_active, d_active = D, d
 
             # Fast replicator step
             bilinear = gamma * (D_active @ gamma) if D_active is not None else 0.0
@@ -387,29 +364,16 @@ class PikaiaModel(GeneticModel):
 
             if np.any(gamma_new <= 0):
                 raise ValueError(
-                    f"D-matrix step produced non-positive gene fitness at iteration "
-                    f"{i}. Population structure may be incompatible with the "
-                    "D-matrix path. Check for gene columns with mean expression > 0.5 "
-                    "when using BalancedOrgStrategy."
+                    "D-matrix step produced non-positive gene fitness at iteration "
+                    f"{i}. The selected population, strategies, coefficients, or "
+                    "initial fitness values are outside the stable numerical range "
+                    "of the reduced update. Use the iterative path or revise the "
+                    "configuration."
                 )
             gamma_new /= gamma_new.sum()
 
             self._gene_fitness_hist[i, :] = gamma_new
             self._org_fitness_hist[i, :] = self._population.matrix @ gamma_new
-
-            # Update mixing coefficients for SelfConsistent
-            if is_sc_gene:
-                D_gene = self._D_per_strategy[:K_g]
-                d_gene = self._d_per_strategy[:K_g]
-                gene_mix_coeffs = SelfConsistentMixStrategy.update_coeffs_d_matrix(
-                    D_gene, d_gene, gamma_new, gene_mix_coeffs
-                )
-            if is_sc_org:
-                D_org = self._D_per_strategy[K_g:]
-                d_org = self._d_per_strategy[K_g:]
-                org_mix_coeffs = SelfConsistentMixStrategy.update_coeffs_d_matrix(
-                    D_org, d_org, gamma_new, org_mix_coeffs
-                )
 
             self._gene_mixing_coeffs_hist[i, :] = gene_mix_coeffs
             self._org_mixing_coeffs_hist[i, :] = org_mix_coeffs
@@ -434,39 +398,6 @@ class PikaiaModel(GeneticModel):
                 f"D-matrix completed {self._max_iter} iterations without ESE. "
                 f"Total: {total_elapsed:.4f}s."
             )
-
-    def _recompute_combined_d(
-        self, all_coeffs: np.ndarray
-    ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Recompute the combined D matrix and d-vector from current mixing coefficients.
-
-        Used only by ``_run_d_matrix_iterations()`` when ``SelfConsistentMixStrategy``
-        is active (coefficients evolve each step).
-
-        Args:
-            all_coeffs: Combined mixing coefficients for gene strategies followed by
-                org strategies, shape ``(K_g + K_o,)``.
-
-        Returns:
-            ``(D_total, d_total)`` with current coefficients applied.
-
-        """
-        M = self._population.M
-        D_total = np.zeros((M, M))
-        d_total = np.zeros(M)
-        has_D = False
-        has_d = False
-        for idx, (D_s, d_s) in enumerate(
-            zip(self._D_per_strategy, self._d_per_strategy)
-        ):
-            c = all_coeffs[idx]
-            if D_s is not None:
-                D_total += c * D_s
-                has_D = True
-            if d_s is not None:
-                d_total += c * d_s
-                has_d = True
-        return (D_total if has_D else None), (d_total if has_d else None)
 
     def predict(self, population: PikaiaPopulation) -> np.ndarray:
         """Predicts the organism fitness for a new population using the fitted model.

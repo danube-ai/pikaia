@@ -96,10 +96,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Full ``(M, M)`` D matrix with kin-weighted similarity.
-
-        Respects the ``kin_range`` option: per gene *j*, only the top
-        ``kin_range`` most similar genes *k* contribute (self excluded).
+        """Return the D matrix for the verified full-gene neighbourhood.
 
         Args:
             population: Population providing the ``(N, M)`` data matrix.
@@ -109,15 +106,19 @@ class KinAltruisticGeneStrategy(GeneStrategy):
             y: Unused.
 
         Returns:
-            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            For the default neighbourhood, returns ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
             ``D[j, k] = (16/M) * (0.5 - gene_sim_masked[j, k])``
             ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
-            and the diagonal set to zero.
+            and the diagonal set to zero. An explicit ``kin_range`` returns
+            ``(None, None)`` because it has no verified D-matrix implementation.
 
         """
+        if "kin_range" in self.options:
+            return None, None
+
         X = population.matrix  # (N, M)
         M = population.M
-        kin_range = self.options.get("kin_range", M)
+        kin_range = M
 
         # Build masked similarity: only top kin_range similar genes per row
         gene_sim_masked = np.zeros_like(gene_similarity)
@@ -133,3 +134,14 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         D = (16.0 / M) * (0.5 - gene_sim_masked) * inner
         np.fill_diagonal(D, 0.0)
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Support only the verified default full-gene neighbourhood.
+
+        The D kernel was verified only for the default full-gene
+        neighbourhood. An explicit ``kin_range`` therefore uses the
+        iterative formulation conservatively, including when it happens to
+        equal the current number of genes.
+        """
+        return "kin_range" not in self.options

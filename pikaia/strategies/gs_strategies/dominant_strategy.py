@@ -101,6 +101,6 @@ class DominantGeneStrategy(GeneStrategy):
         return D, None
 
     @property
-    def requires_iterative_path(self) -> bool:
-        """The math-paper formulation cannot be represented by static kernels."""
-        return self.formulation is StrategyFormulation.MATH_PAPER
+    def supports_d_matrix(self) -> bool:
+        """Support D-matrix execution only for the original quadratic equation."""
+        return self.formulation is StrategyFormulation.ORIGINAL

@@ -14,6 +14,7 @@ Each test class covers:
 """
 
 import numpy as np
+import pytest
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models import PikaiaModel
@@ -32,6 +33,25 @@ from pikaia.strategies.gs_strategies.partial_corr_strategy import (
 from pikaia.strategies.gs_strategies.redundancy_penalty_strategy import (
     RedundancyPenaltyGeneStrategy,
 )
+
+
+@pytest.mark.parametrize(
+    ("encoder", "expected"),
+    [
+        (EntropyMaxGeneStrategy._encode_target, np.array([1, 0, 1])),
+        (OrthoGeneStrategy._encode_target, np.array([1.0, -1.0, 1.0])),
+        (PartialCorrGeneStrategy._encode_target, np.array([1.0, -1.0, 1.0])),
+        (
+            RedundancyPenaltyGeneStrategy._encode_target,
+            np.array([1.0, -1.0, 1.0]),
+        ),
+    ],
+)
+def test_research_strategies_encode_non_numeric_targets(encoder, expected):
+    """String target labels are deterministically encoded before scoring."""
+    encoded = encoder(np.array(["beta", "alpha", "beta"]))
+    np.testing.assert_array_equal(encoded, expected)
+
 
 # ---------------------------------------------------------------------------
 # Shared fixtures and helpers
@@ -123,22 +143,6 @@ class TestEntropyMaxGeneStrategy:
         assert isinstance(result, float)
         assert np.isfinite(result)
 
-    def test_kernel_shape(self):
-        strat = EntropyMaxGeneStrategy()
-        pop = _make_pop()
-        D, d = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0, y=Y_BASE)
-        assert D is not None
-        assert D.shape == (pop.M, pop.M)
-        assert d is None
-
-    def test_kernel_is_diagonal(self):
-        strat = EntropyMaxGeneStrategy()
-        pop = _make_pop()
-        D, _ = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0, y=Y_BASE)
-        assert D is not None
-        off_diag = D - np.diag(np.diag(D))
-        assert np.allclose(off_diag, 0.0)
-
     def test_info_scores_in_range(self):
         scores = EntropyMaxGeneStrategy.compute_info_scores(X_BASE, Y_BASE)
         assert scores.shape == (X_BASE.shape[1],)
@@ -223,22 +227,6 @@ class TestOrthoGeneStrategy:
         assert strat._orthogonality is not None
         assert strat._orthogonality.shape == (X_BASE.shape[1],)
 
-    def test_kernel_shape(self):
-        strat = OrthoGeneStrategy()
-        pop = _make_pop()
-        D, d = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0)
-        assert D is not None
-        assert D.shape == (pop.M, pop.M)
-        assert d is None
-
-    def test_kernel_is_diagonal(self):
-        strat = OrthoGeneStrategy()
-        pop = _make_pop()
-        D, _ = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0)
-        assert D is not None
-        off_diag = D - np.diag(np.diag(D))
-        assert np.allclose(off_diag, 0.0)
-
     def test_uncorrelated_features_score_higher(self):
         """A feature independent of all others should score higher than a duplicate."""
         n = 20
@@ -306,22 +294,6 @@ class TestPartialCorrGeneStrategy:
         ctx_g1.gene_fitness = np.ones(X_BASE.shape[1]) / X_BASE.shape[1]
         s1 = PartialCorrGeneStrategy(precomputed_pc=precomputed)(ctx_g1)
         assert s0 > s1  # higher partial corr → higher delta
-
-    def test_kernel_shape(self):
-        strat = PartialCorrGeneStrategy()
-        pop = _make_pop()
-        D, d = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0, y=Y_BASE)
-        assert D is not None
-        assert D.shape == (pop.M, pop.M)
-        assert d is None
-
-    def test_kernel_is_diagonal(self):
-        strat = PartialCorrGeneStrategy()
-        pop = _make_pop()
-        D, _ = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0, y=Y_BASE)
-        assert D is not None
-        off_diag = D - np.diag(np.diag(D))
-        assert np.allclose(off_diag, 0.0)
 
     def test_mode_switch_recomputes(self):
         strat = PartialCorrGeneStrategy()
@@ -409,22 +381,6 @@ class TestRedundancyPenaltyGeneStrategy:
         assert strat._mode == "unsupervised"
         strat._get_scores(X_BASE, Y_BASE)
         assert strat._mode == "supervised"
-
-    def test_kernel_shape(self):
-        strat = RedundancyPenaltyGeneStrategy()
-        pop = _make_pop()
-        D, d = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0)
-        assert D is not None
-        assert D.shape == (pop.M, pop.M)
-        assert d is None
-
-    def test_kernel_is_diagonal(self):
-        strat = RedundancyPenaltyGeneStrategy()
-        pop = _make_pop()
-        D, _ = strat.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0)
-        assert D is not None
-        off_diag = D - np.diag(np.diag(D))
-        assert np.allclose(off_diag, 0.0)
 
     def test_high_redundancy_gives_negative_delta(self):
         """Highly redundant features should receive a negative delta."""

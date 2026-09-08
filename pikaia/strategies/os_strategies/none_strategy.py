@@ -43,3 +43,8 @@ class NoneOrgStrategy(OrgStrategy):
 
         """
         return np.zeros(ctx.population.M)
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Allow D-matrix runs because this no-op contributes exact zero."""
+        return True

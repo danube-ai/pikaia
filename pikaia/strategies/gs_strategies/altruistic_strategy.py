@@ -157,3 +157,8 @@ class AltruisticGeneStrategy(GeneStrategy):
         model before strategy evaluation.
         """
         return True
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that both supported formulations have an exact D kernel."""
+        return True

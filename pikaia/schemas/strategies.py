@@ -20,6 +20,18 @@ class StrategyFormulationConfig(BaseModel):
     formulation: StrategyFormulation = StrategyFormulation.ORIGINAL
 
 
+class KinRangeConfig(BaseModel):
+    """Validate an optional positive kin-range request.
+
+    The model applies the population-dependent upper bound separately because
+    the number of organisms is unavailable while a strategy is constructed.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    kin_range: int | None = Field(default=None, ge=1)
+
+
 class StrategyNormalizations(BaseModel):
     """Population-derived normalization values for math-paper strategies."""
 

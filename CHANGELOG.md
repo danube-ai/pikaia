@@ -10,12 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 1.1. Added
 
 - **Math-paper strategy formulations.** `DominantGeneStrategy`, `AltruisticGeneStrategy`, and `SelfishOrgStrategy` now accept the validated `StrategyFormulation` enum. `ORIGINAL` remains the default; `MATH_PAPER` enables the revised equations and population-derived normalizations from the mathematical paper.
-- **D-matrix formulation reference.** Added a dedicated documentation page deriving the D-matrix contract from the iterative equations and recording exact, approximate, iterative-only, and unsupported strategy mappings.
-- **Math-paper equivalence tests.** Added iterative versus D-matrix regression coverage for multiple non-uniform initial gene-fitness vectors.
+- **D-matrix formulation reference.** Added a dedicated documentation page deriving the exact D-matrix contract from the iterative equations, explaining the corrected Alt-Sel reduction, and recording every supported configuration.
+- **D-matrix equivalence tests.** Added iterative-versus-reduced regression coverage at 1, 50, and 100 iterations over fixed and deterministic random populations.
 
 ### 1.2. Changed
 
-- **D-matrix documentation and safeguards.** Corrected the documented fast update equation, clarified reduced-dynamics organism kernels, and make `MATH_PAPER` dominant fail fast when `use_d_matrix=True` is selected because its linear-in-fitness formulation has no static D-matrix representation.
+- **D-matrix safeguards.** Removed kernels that diverged from their iterative equations, restricted acceleration to exact fixed-mix kernels, and made unsupported or self-consistent configurations fail fast instead of silently dropping strategy contributions. `MATH_PAPER` acceleration is restricted to the historical altruistic-gene plus selfish-organism (Alt-Sel) configuration.
+- **D-matrix comparison example.** Replaced the obsolete all-combinations benchmark with direct iterative-versus-reduced checks for every supported configuration at 1, 50, and 100 iterations.
 
 ## 2. [0.3.3] - 2026-08-11
 

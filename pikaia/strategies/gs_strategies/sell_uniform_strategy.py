@@ -72,3 +72,8 @@ class SellUniformGeneStrategy(GeneStrategy):
         mask = (excl > 1e-6) & (excl < 1.0 - 1e-6)
         d = -mean * mask.astype(float)
         return None, d
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the population-static linear kernel is exact."""
+        return True

@@ -146,11 +146,12 @@ jobs:
       - name: Extract release notes from CHANGELOG
         run: |
           version="${GITHUB_REF_NAME#v}"
-          # Print the body of the "## [version] - date" section, stopping at the
-          # next "## [" heading. Trim leading/trailing blank lines.
+          # Print the body of the numbered "## N. [version] - date" section,
+          # stopping at the next numbered level-two heading. Trim surrounding
+          # blank lines.
           awk -v ver="$version" '
-            $0 ~ "^## \\[" ver "\\]" { flag=1; next }
-            /^## \[/ && flag { flag=0 }
+            $0 ~ "^## [0-9]+\\. \\[" ver "\\]" { flag=1; next }
+            /^## [0-9]+\. / && flag { flag=0 }
             flag { print }
           ' CHANGELOG.md | sed -e '/./,$!d' | tac | sed -e '/./,$!d' | tac > release_notes.md
           if [ ! -s release_notes.md ]; then

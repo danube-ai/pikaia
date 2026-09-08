@@ -42,3 +42,8 @@ class NoneGeneStrategy(GeneStrategy):
 
         """
         return 0.0
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Allow D-matrix runs because this no-op contributes exact zero."""
+        return True

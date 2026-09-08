@@ -81,6 +81,27 @@ class GeneStrategy(ABC):
             )
         self.options = kwargs
 
+    def set_formulation(self, formulation: StrategyFormulation | str) -> None:
+        """Apply a model-owned formulation after validating strategy support.
+
+        Args:
+            formulation: Formulation selected for the complete simulation.
+
+        Raises:
+            ValueError: If this strategy does not implement the formulation.
+
+        """
+        selected = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if selected not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {selected.value}; "
+                f"supported formulations: {supported}."
+            )
+        self.formulation = selected
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -128,8 +149,13 @@ class GeneStrategy(ABC):
         return False
 
     @property
-    def requires_iterative_path(self) -> bool:
-        """Whether this strategy cannot participate in a D-matrix run."""
+    def supports_d_matrix(self) -> bool:
+        """Whether this strategy implements an exact D-matrix contribution.
+
+        A strategy that returns ``False`` may still be used by the ordinary
+        iterative solver. The model rejects it when ``use_d_matrix=True`` so
+        an unsupported contribution is never silently omitted.
+        """
         return False
 
 
@@ -171,6 +197,27 @@ class OrgStrategy(ABC):
                 f"supported formulations: {supported}."
             )
         self.options = kwargs
+
+    def set_formulation(self, formulation: StrategyFormulation | str) -> None:
+        """Apply a model-owned formulation after validating strategy support.
+
+        Args:
+            formulation: Formulation selected for the complete simulation.
+
+        Raises:
+            ValueError: If this strategy does not implement the formulation.
+
+        """
+        selected = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if selected not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {selected.value}; "
+                f"supported formulations: {supported}."
+            )
+        self.formulation = selected
 
     @property
     @abstractmethod
@@ -215,8 +262,13 @@ class OrgStrategy(ABC):
         return False
 
     @property
-    def requires_iterative_path(self) -> bool:
-        """Whether this strategy cannot participate in a D-matrix run."""
+    def supports_d_matrix(self) -> bool:
+        """Whether this strategy implements an exact D-matrix contribution.
+
+        A strategy that returns ``False`` may still be used by the ordinary
+        iterative solver. The model rejects it when ``use_d_matrix=True`` so
+        an unsupported contribution is never silently omitted.
+        """
         return False
 
 

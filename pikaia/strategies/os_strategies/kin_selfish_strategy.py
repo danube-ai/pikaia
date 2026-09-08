@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import (
     OrgStrategy,
     StrategyContext,
@@ -90,54 +89,3 @@ class KinSelfishOrgStrategy(OrgStrategy):
         )
 
         return delta_o
-
-    def kernel(
-        self,
-        population: PikaiaPopulation,
-        gene_similarity: np.ndarray,
-        org_similarity: np.ndarray,
-        initial_org_fitness_range: float,
-        y: np.ndarray | None = None,
-    ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Full ``(M, M)`` D matrix with kin-inverted similarity weights.
-
-        Like `SelfishOrgStrategy`'s kernel but uses ``(0.5 - s^o_il)``
-        as the similarity weight, flipping the sign for close kin.
-
-        Args:
-            population: Population providing the ``(N, M)`` data matrix.
-            gene_similarity: Unused.
-            org_similarity: Organism similarity matrix of shape ``(N, N)``.
-            initial_org_fitness_range: Used to normalise the D matrix.
-            y: Unused.
-
-        Returns:
-            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
-            ``D[j, k] = (+2 / (N * R)) * sum_i[x_ij * sum_l((0.5 - s^o_il) * (x_ik - x_lk))]``,
-            summed over kin neighbours of each organism.
-
-        """
-        X = population.matrix  # (N, M)
-        N = population.N
-        R = initial_org_fitness_range
-        kin_range = self.options.get("kin_range", N)
-
-        D_acc = np.zeros((population.M, population.M))
-        n_contributing = 0
-        for i in range(N):
-            sorted_idx = np.argsort(-org_similarity[i, :])
-            relatives_i = sorted_idx[sorted_idx != i][:kin_range]
-            if len(relatives_i) == 0:
-                continue
-            n_rel = len(relatives_i)
-            s_il = org_similarity[i, relatives_i]
-            x_diff = X[i, np.newaxis, :] - X[relatives_i, :]  # (n_rel, M)
-            sum_l = (0.5 - s_il) @ x_diff  # (M,)
-            D_acc += np.outer(X[i, :], sum_l) / n_rel
-            n_contributing += 1
-
-        if n_contributing == 0:
-            return np.zeros((population.M, population.M)), None
-
-        D = D_acc / N * (2.0 / R)
-        return D, None

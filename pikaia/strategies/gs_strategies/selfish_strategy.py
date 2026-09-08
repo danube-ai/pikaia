@@ -108,3 +108,8 @@ class SelfishGeneStrategy(GeneStrategy):
         D = -(16.0 / M) * gene_similarity * kernel
         np.fill_diagonal(D, 0.0)
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the original selfish-gene kernel is exact."""
+        return True

@@ -71,3 +71,8 @@ class SellEasyGeneStrategy(GeneStrategy):
         sell_signal = excl / (1.0 - excl + 1e-8)
         d = mean_all * sell_signal
         return None, d
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the population-static linear kernel is exact."""
+        return True

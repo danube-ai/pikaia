@@ -99,7 +99,7 @@ For compatible strategy combinations, pikaia precomputes a compact kernel `(D, d
 γ_new = γ * (1 + d + γ * (D @ γ))
 ```
 
-instead of the full `O(N·M²)` per-organism loop. This is typically **30–80× faster** for large populations.
+instead of the full `O(N·M²)` per-organism loop. The practical speed-up depends on population size, gene count, and the selected strategies.
 
 Enable it with:
 
@@ -113,12 +113,9 @@ model = PikaiaModel(
 )
 ```
 
-Most built-in strategies support the D-matrix path — each implements `kernel()` returning at least one non-`None` term. Two categories are exceptions:
+In `ORIGINAL`, D-matrix execution is limited to fixed mixtures of strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. The strict `MATH_PAPER` compatibility guarantee is available only for the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Any unsupported request raises `ValueError` instead of silently omitting a strategy or using an approximation.
 
-- **`NONE` strategies** return `(None, None)`; a combination of only `NONE` strategies has no kernel at all.
-- **The trading buy strategies** (`BUY_HARD`, `BUY_UNIFORM`, `BUY_EASY`) do **not** support the D-matrix path. Their per-organism delta (`buy_abs / γ_j`) depends on the current gene fitness **γ** in a way that cannot be captured by a static `(D, d)` kernel, so they only run correctly under the standard iterative loop. If you enable `use_d_matrix=True` with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.
-
-Custom strategies must implement `kernel()` to participate. See the [D-matrix formulation](d-matrix.md) for the exact contract, derivations, and compatibility limits, or the [Contributor Guide](contributing.md).
+See the [D-matrix formulation](d-matrix.md) for the exact equations, historical similarity scaling, compatibility table, and limits.
 
 ---
 

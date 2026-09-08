@@ -3,6 +3,7 @@
 from .preprocessing import FeatureType
 from .strategies import (
     GeneStrategyEnum,
+    KinRangeConfig,
     MixStrategyEnum,
     OrgStrategyEnum,
     StrategyFormulation,
@@ -15,6 +16,7 @@ __all__ = [
     "StrategyFormulationConfig",
     "StrategyNormalizations",
     "GeneStrategyEnum",
+    "KinRangeConfig",
     "OrgStrategyEnum",
     "MixStrategyEnum",
     "FeatureType",

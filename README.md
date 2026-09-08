@@ -18,7 +18,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
 - 🧩 Modular, extensible strategy system — 12 gene strategies and 7 organism strategies; supervised and unsupervised modes supported
-- ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
+- ⚡ D-matrix accelerated iteration mode for rigorously verified strategy configurations
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
 - ✅ 99% test coverage across the `pikaia` package
@@ -161,16 +161,18 @@ model.fit()
 print("Gene fitness history:", model.gene_fitness_history)
 ```
 
-For a significant speed-up on large populations, enable the **D-matrix accelerated** mode:
+For a significant speed-up on large populations, enable the **D-matrix accelerated** mode with a [verified compatible configuration](https://danube-ai.github.io/pikaia/d-matrix/):
 
 ```python
 model = PikaiaModel(
     population=population,
-    gene_strategies=gene_strategies,
-    org_strategies=org_strategies,
-    gene_mix_strategy=gene_mix_strategy,
-    org_mix_strategy=org_mix_strategy,
-    use_d_matrix=True,  # 30–80× faster for compatible strategy combinations
+    gene_strategies=[
+        GeneStrategyFactory.get_strategy(GeneStrategyEnum.DOMINANT)
+    ],
+    org_strategies=[
+        OrgStrategyFactory.get_strategy(OrgStrategyEnum.NONE)
+    ],
+    use_d_matrix=True,
     max_iter=500,
 )
 model.fit()
@@ -180,7 +182,7 @@ model.fit()
 - See [`examples/README.md`](examples/README.md) for a full index of all examples.
 - See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
 - See `examples/paper_example.py` for the paper example script.
-- See `examples/d_matrix_comparison.py` to benchmark all 40 strategy combinations with D-matrix acceleration.
+- See `examples/d_matrix_comparison.py` to compare every supported D-matrix configuration with its iterative equivalent.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

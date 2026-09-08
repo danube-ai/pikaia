@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -136,28 +135,3 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
             * ctx.gene_fitness[ctx.gene_id]
             * (0.5 - scores[ctx.gene_id])
         )
-
-    def kernel(
-        self,
-        population: PikaiaPopulation,
-        gene_similarity: np.ndarray,
-        org_similarity: np.ndarray,
-        initial_org_fitness_range: float,
-        y: np.ndarray | None = None,
-    ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: ``D[j,j] = 4 * (0.5 - redundancy[j])``.
-
-        Args:
-            population: Current population.
-            gene_similarity: Gene-similarity matrix (unused).
-            org_similarity: Organism-similarity matrix (unused).
-            initial_org_fitness_range: Initial fitness range (unused).
-            y: Optional target labels for supervised mode.
-
-        Returns:
-            ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix.
-
-        """
-        scores = self._get_scores(population.matrix, y)
-        D = np.diag(4.0 * (0.5 - scores))
-        return D, None

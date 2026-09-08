@@ -6,18 +6,8 @@ from pikaia.models.pikaia_model import PikaiaModel
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
-from pikaia.strategies.gs_strategies.kin_altruistic_strategy import (
-    KinAltruisticGeneStrategy,
-)
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
-from pikaia.strategies.mix_strategies.self_consistent_strategy import (
-    SelfConsistentMixStrategy,
-)
-from pikaia.strategies.os_strategies.altruistic_strategy import AltruisticOrgStrategy
-from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
-from pikaia.strategies.os_strategies.kin_selfish_strategy import KinSelfishOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
-from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 
 # ---------------------------------------------------------------------------
 # Minimal strategy subclass that returns a d-vector (no D matrix)
@@ -44,6 +34,11 @@ class _LinearGeneStrategy(GeneStrategy):
     ):
         d = population.matrix.mean(axis=0)
         return None, d
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Mark the test-only population-static linear kernel as exact."""
+        return True
 
 
 class TestPikaiaModel:
@@ -350,24 +345,6 @@ class TestV1IterativeEquivalence:
         )
         np.testing.assert_allclose(g_std, g_dm, atol=1e-4)
 
-    def test_dominant_selfish_org(self, seed):
-        """Dominant gene + Selfish org."""
-        g_std, g_dm = self._run_both(
-            seed,
-            [DominantGeneStrategy()],
-            [SelfishOrgStrategy()],
-        )
-        np.testing.assert_allclose(g_std, g_dm, atol=1e-4)
-
-    def test_dominant_balanced_org(self, seed):
-        """Dominant gene + Balanced org (d-vector path)."""
-        g_std, g_dm = self._run_both(
-            seed,
-            [DominantGeneStrategy()],
-            [BalancedOrgStrategy()],
-        )
-        np.testing.assert_allclose(g_std, g_dm, atol=1e-4)
-
 
 # ---------------------------------------------------------------------------
 # D-matrix error paths
@@ -407,30 +384,6 @@ class TestDMatrixErrorPaths:
         with pytest.raises(ValueError, match="None of the selected strategies"):
             model.fit()
 
-    def test_iterations_raises_on_non_positive_gamma(self):
-        """_run_d_matrix_iterations raises ValueError when gamma goes non-positive.
-
-        With gamma_0 concentrated on gene 0 (≈0.98) and x_bar[0]≈0.7,
-        the bilinear step is:
-          step_0 = 0.98 * (D_bal @ gamma)_0 = 0.98 * (-2*0.7*1) ≈ -1.37
-        so  gamma_new_0 = 0.98 * (1 - 1.37) < 0  → ValueError.
-        """
-        X = np.full((4, 3), 0.9)
-        X[0, 0] = 0.1  # slight variation so fitness range > 0
-        X[1, 1] = 0.1
-        pop = PikaiaPopulation(X)
-        # x_bar ≈ [0.7, 0.7, 0.9]; concentrate gamma on gene 0
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[NoneGeneStrategy()],
-            org_strategies=[BalancedOrgStrategy()],
-            use_d_matrix=True,
-            max_iter=1,
-            initial_gene_fitness=[0.98, 0.01, 0.01],
-        )
-        with pytest.raises(ValueError, match="non-positive gene fitness"):
-            model.fit()
-
     def test_error_message_lists_strategy_class_names(self):
         """ValueError message must name the offending strategy classes."""
         pop = PikaiaPopulation(np.random.default_rng(33).random((4, 3)))
@@ -443,28 +396,6 @@ class TestDMatrixErrorPaths:
         )
         with pytest.raises(ValueError, match="NoneGeneStrategy"):
             model.fit()
-
-    def test_org_only_d_kernel_is_valid(self):
-        """NoneGeneStrategy (no kernel) + BalancedOrgStrategy (D kernel) → valid.
-
-        When only the org strategy contributes a kernel, _compute_d_matrix
-        must NOT raise — it only raises when ALL strategies return (None, None).
-        With uniform initial gamma and x_bar in [0, 0.45], the balanced D step
-        keeps gamma positive every iteration.
-        """
-        # x_bar well below 0.5 so balanced step gamma*(1 - 2*x_bar*gamma) stays > 0
-        X = np.random.default_rng(34).random((8, 4)) * 0.45
-        pop = PikaiaPopulation(X)
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[NoneGeneStrategy()],
-            org_strategies=[BalancedOrgStrategy()],
-            use_d_matrix=True,
-            max_iter=10,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        assert np.isclose(model.gene_fitness_history[last, :].sum(), 1.0, atol=1e-9)
 
     def test_d_vector_only_kernel_is_valid(self):
         """A strategy returning (None, d) — no D matrix — is a valid kernel.
@@ -524,94 +455,6 @@ class TestDMatrixErrorPaths:
         assert model.ESE_iter < 500
 
 
-class TestSelfConsistentDMatrix:
-    """SelfConsistentMixStrategy evolves mixing coefficients inside D-matrix loop."""
-
-    def _pop(self, seed=40, N=8, M=4):
-        return PikaiaPopulation(np.random.default_rng(seed).random((N, M)))
-
-    def test_gene_sc_dmatrix_runs(self):
-        """SelfConsistentMixStrategy as gene mix strategy runs D-matrix iterations."""
-        pop = self._pop()
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[DominantGeneStrategy(), AltruisticGeneStrategy()],
-            org_strategies=[NoneOrgStrategy()],
-            gene_mix_strategy=SelfConsistentMixStrategy(),
-            max_iter=20,
-            use_d_matrix=True,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        gamma = model.gene_fitness_history[last, :]
-        assert np.isclose(gamma.sum(), 1.0, atol=1e-9)
-        assert np.all(gamma >= 0)
-
-    def test_org_sc_dmatrix_runs(self):
-        """SelfConsistentMixStrategy as org mix strategy runs D-matrix iterations."""
-        pop = self._pop(seed=41)
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[DominantGeneStrategy()],
-            org_strategies=[SelfishOrgStrategy(), NoneOrgStrategy()],
-            org_mix_strategy=SelfConsistentMixStrategy(),
-            max_iter=20,
-            use_d_matrix=True,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        assert np.isclose(model.gene_fitness_history[last, :].sum(), 1.0, atol=1e-9)
-
-    def test_gene_mixing_coeffs_change_over_time(self):
-        """Mixing coefficients should evolve when using SelfConsistentMixStrategy."""
-        pop = self._pop(seed=42)
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[DominantGeneStrategy(), AltruisticGeneStrategy()],
-            org_strategies=[NoneOrgStrategy()],
-            gene_mix_strategy=SelfConsistentMixStrategy(),
-            max_iter=30,
-            use_d_matrix=True,
-        )
-        model.fit()
-        initial_coeffs = model.gene_mixing_history[0, :]
-        last_idx = np.flatnonzero(model.gene_mixing_history.sum(axis=1)).max()
-        final_coeffs = model.gene_mixing_history[last_idx, :]
-        # Coefficients must stay normalised
-        assert np.isclose(final_coeffs.sum(), 1.0, atol=1e-9)
-        # And they should have changed from uniform [0.5, 0.5]
-        assert not np.allclose(initial_coeffs, final_coeffs, atol=1e-6)
-
-    def test_update_coeffs_d_matrix_static(self):
-        """update_coeffs_d_matrix returns normalised coefficients."""
-        rng = np.random.default_rng(43)
-        M = 4
-        D1 = rng.random((M, M))
-        D2 = rng.random((M, M))
-        gamma = rng.random(M)
-        gamma /= gamma.sum()
-        coeffs = np.array([0.5, 0.5])
-        updated = SelfConsistentMixStrategy.update_coeffs_d_matrix(
-            [D1, D2], [None, None], gamma, coeffs
-        )
-        assert np.isclose(updated.sum(), 1.0, atol=1e-12)
-        assert np.all(updated >= 0)
-
-    def test_update_coeffs_d_matrix_d_none_path(self):
-        """update_coeffs_d_matrix handles (None, d) pairs."""
-        rng = np.random.default_rng(44)
-        M = 4
-        d1 = rng.random(M)
-        d2 = rng.random(M)
-        gamma = rng.random(M)
-        gamma /= gamma.sum()
-        coeffs = np.array([0.5, 0.5])
-        updated = SelfConsistentMixStrategy.update_coeffs_d_matrix(
-            [None, None], [d1, d2], gamma, coeffs
-        )
-        assert np.isclose(updated.sum(), 1.0, atol=1e-12)
-
-
 # ---------------------------------------------------------------------------
 # D-matrix with complex strategy combinations
 # ---------------------------------------------------------------------------
@@ -627,48 +470,6 @@ class TestDMatrixComplexStrategies:
             population=pop,
             gene_strategies=[AltruisticGeneStrategy()],
             org_strategies=[NoneOrgStrategy()],
-            max_iter=20,
-            use_d_matrix=True,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        assert np.isclose(model.gene_fitness_history[last, :].sum(), 1.0, atol=1e-9)
-
-    @pytest.mark.parametrize("seed", [52, 53])
-    def test_kin_altruistic_gene_dmatrix(self, seed):
-        pop = PikaiaPopulation(np.random.default_rng(seed).random((8, 5)))
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[KinAltruisticGeneStrategy(kin_range=3)],
-            org_strategies=[NoneOrgStrategy()],
-            max_iter=20,
-            use_d_matrix=True,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        assert np.isclose(model.gene_fitness_history[last, :].sum(), 1.0, atol=1e-9)
-
-    @pytest.mark.parametrize("seed", [54, 55])
-    def test_dominant_altruistic_org_dmatrix(self, seed):
-        pop = PikaiaPopulation(np.random.default_rng(seed).random((8, 4)))
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[DominantGeneStrategy()],
-            org_strategies=[AltruisticOrgStrategy()],
-            max_iter=20,
-            use_d_matrix=True,
-        )
-        model.fit()
-        last = np.flatnonzero(model.gene_fitness_history.sum(axis=1)).max()
-        assert np.isclose(model.gene_fitness_history[last, :].sum(), 1.0, atol=1e-9)
-
-    @pytest.mark.parametrize("seed", [56, 57])
-    def test_dominant_kin_selfish_org_dmatrix(self, seed):
-        pop = PikaiaPopulation(np.random.default_rng(seed).random((8, 4)))
-        model = PikaiaModel(
-            population=pop,
-            gene_strategies=[DominantGeneStrategy()],
-            org_strategies=[KinSelfishOrgStrategy(kin_range=3)],
             max_iter=20,
             use_d_matrix=True,
         )
@@ -801,7 +602,7 @@ class TestAdaptiveSupervision:
         model = PikaiaModel(
             population=pop,
             gene_strategies=[DominantGeneStrategy()],
-            org_strategies=[BalancedOrgStrategy()],
+            org_strategies=[NoneOrgStrategy()],
             use_d_matrix=True,
             max_iter=3,
             y=y,

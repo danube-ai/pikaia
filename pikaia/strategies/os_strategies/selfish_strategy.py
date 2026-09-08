@@ -5,10 +5,7 @@ from typing import ClassVar
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
-from pikaia.schemas.strategies import (
-    StrategyFormulation,
-    StrategyNormalizations,
-)
+from pikaia.schemas.strategies import StrategyFormulation, StrategyNormalizations
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -57,6 +54,8 @@ class SelfishOrgStrategy(OrgStrategy):
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            kin_range = min(kin_range or ctx.population.N, ctx.population.N)
 
         # Get indices of most similar relatives, excluding self
         relatives = np.argsort(-ctx.org_similarity[ctx.org_id, :])
@@ -112,44 +111,41 @@ class SelfishOrgStrategy(OrgStrategy):
         y: np.ndarray | None = None,
         normalizations: StrategyNormalizations | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Full ``(M, M)`` D matrix for kin-selfish org interactions.
+        """Return the historical ``MATH_PAPER`` D matrix for selfish organisms.
 
         Args:
             population: Population providing the ``(N, M)`` data matrix.
             gene_similarity: Unused.
             org_similarity: Organism similarity matrix of shape ``(N, N)``.
-            initial_org_fitness_range: Used to normalise the D matrix.
+            initial_org_fitness_range: Unused by ``MATH_PAPER``.
             y: Unused.
             normalizations: Population-derived normalisation values required by
                 the ``MATH_PAPER`` formulation; ignored by ``ORIGINAL``.
 
         Returns:
-            Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            For ``MATH_PAPER``, returns ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
             ``D[j, k] = (-2 / (N * R)) * sum_i[x_ij * sum_l(s^o_il * (x_ik - x_lk))]``,
-            summed over kin neighbours of each organism.
+            summed over kin neighbours of each organism. ``ORIGINAL`` returns
+            ``(None, None)`` because it has no D-matrix implementation.
 
         """
-        X = population.matrix  # (N, M)
+        if self.formulation is not StrategyFormulation.MATH_PAPER:
+            return None, None
+        if normalizations is None:
+            raise ValueError("MATH_PAPER requires population normalizations.")
+
+        X = population.matrix
         N = population.N
-        if self.formulation is StrategyFormulation.MATH_PAPER:
-            if normalizations is None:
-                raise ValueError("MATH_PAPER requires population normalizations.")
-            R = normalizations.require_harmonic_fitness_mean_pairwise_difference()
-        else:
-            R = initial_org_fitness_range
-        kin_range = self.options.get("kin_range", N)
+        R = normalizations.require_harmonic_fitness_mean_pairwise_difference()
+        kin_range = min(self.options.get("kin_range") or N, N)
 
         D_acc = np.zeros((population.M, population.M))
         n_contributing = 0
         for i in range(N):
             sorted_idx = np.argsort(-org_similarity[i, :])
-            if self.formulation is StrategyFormulation.MATH_PAPER:
-                selected_relatives = sorted_idx[:kin_range]
-                relatives_i = selected_relatives[selected_relatives != i]
-                denominator = kin_range
-            else:
-                relatives_i = sorted_idx[sorted_idx != i][:kin_range]
-                denominator = len(relatives_i)
+            selected_relatives = sorted_idx[:kin_range]
+            relatives_i = selected_relatives[selected_relatives != i]
+            denominator = kin_range
             if len(relatives_i) == 0:
                 continue
             s_il = org_similarity[i, relatives_i]  # (n_rel,)
@@ -176,3 +172,8 @@ class SelfishOrgStrategy(OrgStrategy):
         model before strategy evaluation.
         """
         return True
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Support the exact historical kernel only for ``MATH_PAPER``."""
+        return self.formulation is StrategyFormulation.MATH_PAPER

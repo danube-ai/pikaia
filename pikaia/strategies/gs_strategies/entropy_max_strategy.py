@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from pikaia.data.population import PikaiaPopulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -165,28 +164,3 @@ class EntropyMaxGeneStrategy(GeneStrategy):
             * ctx.gene_fitness[ctx.gene_id]
             * (scores[ctx.gene_id] - 0.5)
         )
-
-    def kernel(
-        self,
-        population: PikaiaPopulation,
-        gene_similarity: np.ndarray,
-        org_similarity: np.ndarray,
-        initial_org_fitness_range: float,
-        y: np.ndarray | None = None,
-    ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D: ``D[j,j] = 4 * (info_score[j] - 0.5)``.
-
-        Args:
-            population: Current population.
-            gene_similarity: Gene-similarity matrix (unused).
-            org_similarity: Organism-similarity matrix (unused).
-            initial_org_fitness_range: Initial fitness range (unused).
-            y: Target labels.  Pass these to enable MI computation.
-
-        Returns:
-            ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix.
-
-        """
-        scores = self._get_scores(population.matrix, y)
-        D = np.diag(4.0 * (scores - 0.5))
-        return D, None

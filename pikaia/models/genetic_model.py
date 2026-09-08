@@ -8,13 +8,21 @@ import numpy as np
 
 from pikaia.config.logger import logger
 from pikaia.data.population import PikaiaPopulation
-from pikaia.schemas.strategies import StrategyNormalizations
+from pikaia.schemas.strategies import (
+    KinRangeConfig,
+    StrategyFormulation,
+    StrategyFormulationConfig,
+    StrategyNormalizations,
+)
 from pikaia.strategies.base_strategies import (
     GeneStrategy,
     MixStrategy,
     OrgStrategy,
 )
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
+from pikaia.strategies.mix_strategies.self_consistent_strategy import (
+    SelfConsistentMixStrategy,
+)
 
 
 def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
@@ -24,6 +32,23 @@ def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
         return None
     differences = np.abs(values[:, np.newaxis] - values[np.newaxis, :])
     return float(differences[np.triu_indices(values.size, k=1)].mean())
+
+
+def _compute_legacy_similarity(matrix: np.ndarray, divisor: int) -> np.ndarray:
+    """Return the similarity scaling used by the old Pikaia implementation.
+
+    Args:
+        matrix: Rows representing the items whose pairwise similarity is needed.
+        divisor: Historical normalisation divisor: ``N`` for genes or ``M`` for
+            organisms.
+
+    Returns:
+        Square similarity matrix defined as one minus Euclidean distance divided
+        by the historical divisor.
+
+    """
+    differences = matrix[:, np.newaxis, :] - matrix[np.newaxis, :, :]
+    return 1.0 - np.linalg.norm(differences, axis=2) / divisor
 
 
 class GeneticModel(ABC):
@@ -47,6 +72,7 @@ class GeneticModel(ABC):
         epsilon: float | None = None,
         n_jobs: int = 1,
         y: np.ndarray | None = None,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
     ):
         """Initialise the GeneticModel.
 
@@ -87,11 +113,16 @@ class GeneticModel(ABC):
                 Defaults to 1. If -1, all available CPUs are used.
             y (np.ndarray | None, optional):
                 Optional target values for supervised strategies.
+            formulation (StrategyFormulation | str): Mathematical formulation
+                selected for the complete simulation. Defaults to ``ORIGINAL``.
 
         """
         # Population and strategies
         self._population = population
         self._y = y
+        self._formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
 
         if gene_strategies is None:
             self._gene_strategies = []
@@ -114,6 +145,8 @@ class GeneticModel(ABC):
                     "org_strategies is ignored when max_iter is None (default)"
                 )
             self._org_strategies = list(org_strategies)
+
+        self._apply_model_formulation()
 
         if gene_mix_strategy is not None and max_iter is None:
             logger.warning(
@@ -190,6 +223,12 @@ class GeneticModel(ABC):
         # Similarity matrices
         self._gene_similarity = self._compute_similarity(mode="gene")
         self._org_similarity = self._compute_similarity(mode="org")
+        self._legacy_gene_similarity = _compute_legacy_similarity(
+            self._population.matrix.T, self._population.N
+        )
+        self._legacy_org_similarity = _compute_legacy_similarity(
+            self._population.matrix, self._population.M
+        )
 
         # History containers
         self._gene_fitness_hist = np.zeros(
@@ -278,6 +317,42 @@ class GeneticModel(ABC):
 
         return normalized.tolist()
 
+    def _apply_model_formulation(self) -> None:
+        """Validate and apply the formulation selected for this simulation.
+
+        A formulation is model-owned because it defines shared quantities such
+        as the similarity matrices and pairwise-difference normalisations. The
+        method validates every strategy before mutating any instance, so a
+        failed model construction cannot leave a partially reconfigured list.
+
+        Raises:
+            ValueError: If one or more selected strategies do not support the
+                model's formulation.
+
+        """
+        strategies = [*self._gene_strategies, *self._org_strategies]
+        incompatible = [
+            type(strategy).__name__
+            for strategy in strategies
+            if self._formulation not in strategy.supported_formulations
+        ]
+        if incompatible:
+            names = ", ".join(incompatible)
+            raise ValueError(
+                f"formulation {self._formulation.value} is not supported by "
+                f"the selected strategies: {names}. "
+                "Use ORIGINAL or choose only strategies that implement the "
+                "requested formulation."
+            )
+        if self._formulation is StrategyFormulation.MATH_PAPER:
+            for strategy in strategies:
+                if "kin_range" in strategy.options:
+                    KinRangeConfig.model_validate(
+                        {"kin_range": strategy.options["kin_range"]}
+                    )
+        for strategy in strategies:
+            strategy.set_formulation(self._formulation)
+
     def _compute_similarity(self, mode: str = "org") -> np.ndarray:
         """Compute the similarity/kinship matrix for organisms or genes.
 
@@ -315,6 +390,25 @@ class GeneticModel(ABC):
         return 1 - distances / max_dist
 
     @property
+    def _active_gene_similarity(self) -> np.ndarray:
+        """Return the similarity matrix selected by the model formulation."""
+        if self._formulation is StrategyFormulation.MATH_PAPER:
+            return self._legacy_gene_similarity
+        return self._gene_similarity
+
+    @property
+    def _active_org_similarity(self) -> np.ndarray:
+        """Return the similarity matrix selected by the model formulation."""
+        if self._formulation is StrategyFormulation.MATH_PAPER:
+            return self._legacy_org_similarity
+        return self._org_similarity
+
+    @property
+    def formulation(self) -> StrategyFormulation:
+        """Return the formulation selected for the complete simulation."""
+        return self._formulation
+
+    @property
     def population(self) -> PikaiaPopulation:
         """The population used in the model."""
         return self._population
@@ -339,27 +433,20 @@ class GeneticModel(ABC):
 
         - ``self._D_matrix``: combined ``(M, M)`` bilinear matrix, or ``None``.
         - ``self._d_vector``: combined ``(M,)`` linear vector, or ``None``.
-        - ``self._D_per_strategy``: per-strategy D matrices (unweighted).
-        - ``self._d_per_strategy``: per-strategy d-vectors (unweighted).
-
-        The per-strategy lists have length
-        ``len(gene_strategies) + len(org_strategies)`` with gene entries first.
         """
+        self._validate_d_matrix_configuration()
         M = self._population.M
         D_total = np.zeros((M, M))
         d_total = np.zeros(M)
         has_D = False
         has_d = False
 
-        D_per: list[np.ndarray | None] = []
-        d_per: list[np.ndarray | None] = []
-
         all_pairs = list(
             zip(self._gene_strategies, self._initial_gene_mixing_coeffs)
         ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
 
         for strat, coeff in all_pairs:
-            if strat.requires_iterative_path:
+            if not strat.supports_d_matrix:
                 raise ValueError(
                     f"{type(strat).__name__} in its selected formulation does "
                     "not support use_d_matrix=True. Use use_d_matrix=False."
@@ -371,14 +458,12 @@ class GeneticModel(ABC):
             )
             D_s, d_s = strat.kernel(
                 self._population,
-                self._gene_similarity,
-                self._org_similarity,
+                self._active_gene_similarity,
+                self._active_org_similarity,
                 self._initial_org_fitness_range,
                 self._y,
                 **kernel_kwargs,
             )
-            D_per.append(D_s)
-            d_per.append(d_s)
             if D_s is not None:
                 D_total += coeff * D_s
                 has_D = True
@@ -397,8 +482,56 @@ class GeneticModel(ABC):
 
         self._D_matrix = D_total if has_D else None
         self._d_vector = d_total if has_d else None
-        self._D_per_strategy = D_per
-        self._d_per_strategy = d_per
+
+    def _validate_d_matrix_configuration(self) -> None:
+        """Reject math-paper D-matrix combinations outside historical Alt-Sel.
+
+        The historical reduced solver was derived for exactly one altruistic
+        gene strategy and one selfish organism strategy, both with fixed unit
+        coefficients. ``ORIGINAL`` accepts only fixed mixtures because its
+        D-matrix derivation does not represent the per-organism coefficient
+        update used by ``SelfConsistentMixStrategy``.
+
+        Raises:
+            ValueError: If a math-paper D-matrix request is not the exact
+                historical Alt-Sel configuration.
+
+        """
+        if self._formulation is StrategyFormulation.ORIGINAL:
+            if isinstance(
+                self._gene_mix_strategy, SelfConsistentMixStrategy
+            ) or isinstance(self._org_mix_strategy, SelfConsistentMixStrategy):
+                raise ValueError(
+                    "use_d_matrix=True requires fixed mixing coefficients for "
+                    "the ORIGINAL formulation. Use use_d_matrix=False with "
+                    "SelfConsistentMixStrategy."
+                )
+            return
+
+        from pikaia.strategies.gs_strategies.altruistic_strategy import (
+            AltruisticGeneStrategy,
+        )
+        from pikaia.strategies.os_strategies.selfish_strategy import (
+            SelfishOrgStrategy,
+        )
+
+        is_altsel = (
+            len(self._gene_strategies) == 1
+            and len(self._org_strategies) == 1
+            and isinstance(self._gene_strategies[0], AltruisticGeneStrategy)
+            and isinstance(self._org_strategies[0], SelfishOrgStrategy)
+            and self._initial_gene_mixing_coeffs == [1.0]
+            and self._initial_org_mixing_coeffs == [1.0]
+            and not isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
+            and not isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
+        )
+        if not is_altsel:
+            raise ValueError(
+                "MATH_PAPER use_d_matrix=True is available only for the "
+                "unmixed AltruisticGeneStrategy + SelfishOrgStrategy "
+                "(Alt-Sel) combination. Use use_d_matrix=False for other "
+                "MATH_PAPER strategies or formulations."
+            )
 
     @property
     def gene_mixing(self) -> Iterable[float]:

@@ -105,7 +105,11 @@ class BiasGeneStrategy(GeneStrategy):
     def __call__(self, ctx: StrategyContext) -> float:
         mean_j = ctx.population.matrix[:, ctx.gene_id].mean()
         sign = 1.0 if mean_j >= self.options["threshold"] else -1.0
-        return float((4.0 / ctx.population.N) * sign * ctx.gene_fitness[ctx.gene_id])
+        return float(
+            (4.0 / ctx.population.N)
+            * sign
+            * ctx.gene_fitness[ctx.gene_id] ** 2
+        )
 
     def kernel(
         self,
@@ -121,12 +125,18 @@ class BiasGeneStrategy(GeneStrategy):
         signs = np.where(mean_all >= threshold, 1.0, -1.0)
         D = np.diag(4.0 * signs)
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Declare the kernel exact for this strategy."""
+        return True
 ```
 
 **Key rules:**
 
 - `__call__` must return a Python `float`.
-- `kernel()` returns `(D, d)` where `D` is `(M, M)` (bilinear term) and `d` is `(M,)` (linear term). Return `None` for the term your strategy doesn't use. The default base-class implementation already returns `(None, None)`, so you can skip `kernel()` entirely if you don't need the D-matrix fast path.
+- `kernel()` returns `(D, d)` where `D` is `(M, M)` (bilinear term) and `d` is `(M,)` (linear term). Return `None` for the term your strategy does not use.
+- Override `supports_d_matrix` to return `True` only after proving that the kernel exactly matches the iterative update. The default is `False`, so strategies without an exact kernel can skip `kernel()` entirely.
 
 ### 3.2. Step 2 — Add an enum value
 
@@ -187,7 +197,7 @@ def test_kernel_diagonal_matches_call_sum():
         sum(strat(StrategyContext(..., org_id=i, gene_id=j)) for i in range(6))
         for j in range(4)
     ])
-    np.testing.assert_allclose(np.diag(D) @ gf, call_sum @ gf, atol=1e-10)
+    np.testing.assert_allclose(gf * (D @ gf), call_sum, atol=1e-10)
 ```
 
 ---
@@ -221,13 +231,17 @@ class MyOrgStrategy(OrgStrategy):
         return None, None
 ```
 
-See `BuyHardOrgStrategy` in `pikaia/strategies/os_strategies/buy_hard_strategy.py` for a real example where the kernel computes a linear `d`-vector from a cross-organism redistribution.
+Do not add a kernel merely because an organism equation can be partially
+rearranged. Its complete summed delta must satisfy the exact contract. The
+math-paper `SelfishOrgStrategy` derivation in the
+[D-matrix formulation](d-matrix.md#152-selfish-organism-contribution) is the
+current organism-level example.
 
 ---
 
 ## 5. The D-matrix fast path
 
-When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. This is typically 30–80× faster for large populations.
+When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. The practical speed-up depends on population size, gene count, and the selected strategies.
 
 For your strategy to support this path:
 
@@ -237,7 +251,7 @@ For your strategy to support this path:
 4. If your delta does not depend on **γ** at all, return `D=None` and a precomputed `d`.
 5. If your delta scales with `γ_j`, express it as `D[j,j]` on the diagonal.
 
-**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `d + γ * (D @ γ)` for a few random **γ** vectors. See the [D-matrix formulation](d-matrix.md) for the derivation procedure and `tests/unit/test_strategy_kernels.py` for examples.
+**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `d + γ * (D @ γ)` for several random $\gamma$ vectors, then comparing complete iterative and D-matrix runs at 1, 50, and 100 iterations. See the [D-matrix formulation](d-matrix.md) for the derivation procedure and `tests/unit/test_d_matrix_equivalence.py` for end-to-end examples.
 
 ---
 

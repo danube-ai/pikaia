@@ -78,3 +78,8 @@ class VarianceGeneStrategy(GeneStrategy):
         s_hat = _normalized_std(population.matrix)
         D = np.diag(4.0 * s_hat * (population.matrix.mean(axis=0) - 0.5))
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the population-static variance kernel is exact."""
+        return True
