@@ -16,7 +16,7 @@
         <link rel="prev" href="../tutorial/">
       
       
-        <link rel="next" href="../contributing/">
+        <link rel="next" href="../d-matrix/">
       
       
         
@@ -288,6 +288,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../d-matrix/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  D-matrix formulation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../contributing/" class="md-tabs__link">
         
   
@@ -507,10 +526,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-replicator-equation" class="md-nav__link">
+  <a href="#1-the-replicator-equation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The replicator equation
+        1. The replicator equation
       
     </span>
   </a>
@@ -518,10 +537,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#organisms-genes-and-the-population-matrix" class="md-nav__link">
+  <a href="#2-organisms-genes-and-the-population-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Organisms, genes, and the population matrix
+        2. Organisms, genes, and the population matrix
       
     </span>
   </a>
@@ -529,22 +548,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#strategies" class="md-nav__link">
+  <a href="#3-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strategies
+        3. Strategies
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Strategies">
+    <nav class="md-nav" aria-label="3. Strategies">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#gene-strategies-genestrategy" class="md-nav__link">
+  <a href="#31-gene-strategies-genestrategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gene strategies (GeneStrategy)
+        3.1. Gene strategies (GeneStrategy)
       
     </span>
   </a>
@@ -552,10 +571,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#organism-strategies-orgstrategy" class="md-nav__link">
+  <a href="#32-organism-strategies-orgstrategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Organism strategies (OrgStrategy)
+        3.2. Organism strategies (OrgStrategy)
       
     </span>
   </a>
@@ -563,10 +582,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#supervised-mode" class="md-nav__link">
+  <a href="#33-supervised-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supervised mode
+        3.3. Supervised mode
       
     </span>
   </a>
@@ -574,10 +593,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mixing-strategies-mixstrategy" class="md-nav__link">
+  <a href="#34-mixing-strategies-mixstrategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Mixing strategies (MixStrategy)
+        3.4. Mixing strategies (MixStrategy)
       
     </span>
   </a>
@@ -590,10 +609,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#d-matrix-accelerated-mode" class="md-nav__link">
+  <a href="#4-d-matrix-accelerated-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        D-matrix accelerated mode
+        4. D-matrix accelerated mode
       
     </span>
   </a>
@@ -601,10 +620,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-classes" class="md-nav__link">
+  <a href="#5-key-classes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key classes
+        5. Key classes
       
     </span>
   </a>
@@ -612,10 +631,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
+  <a href="#6-where-to-go-next" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where to go next
+        6. Where to go next
       
     </span>
   </a>
@@ -626,6 +645,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../d-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    D-matrix formulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -735,14 +781,14 @@
 <p><strong>pikaia</strong> is a Python library for data analysis using evolutionary simulation. It models tabular data as a population of organisms (rows) and genes (columns), then applies strategies inspired by evolutionary biology and game theory to uncover which features drive differentiation in your data.</p>
 <p>For a step-by-step first run, see the <a href="../tutorial/">Tutorial</a>. For adding new strategies, see the <a href="../contributing/">Contributor Guide</a>.</p>
 <hr />
-<h2 id="the-replicator-equation">The replicator equation<a class="headerlink" href="#the-replicator-equation" title="Permanent link">&para;</a></h2>
+<h2 id="1-the-replicator-equation">1. The replicator equation<a class="headerlink" href="#1-the-replicator-equation" title="Permanent link">&para;</a></h2>
 <p>pikaia evolves a gene-fitness vector <strong>γ</strong> (one value per feature, summing to 1) using the <strong>replicator equation</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>γ_j(t+1) = γ_j(t) · (1 + Σ_i Δ(i, j))
 </code></pre></div>
 <p>At each iteration, every organism <em>i</em> contributes a delta Δ(i, j) to gene <em>j</em>. The result is multiplied element-wise and re-normalised. Genes with consistently positive deltas grow in fitness; genes with negative deltas shrink.</p>
 <p>This differs from gradient-based optimisation: there is no loss function, no training data, and no labels. The simulation explores the population's internal structure through the strategy rules.</p>
 <hr />
-<h2 id="organisms-genes-and-the-population-matrix">Organisms, genes, and the population matrix<a class="headerlink" href="#organisms-genes-and-the-population-matrix" title="Permanent link">&para;</a></h2>
+<h2 id="2-organisms-genes-and-the-population-matrix">2. Organisms, genes, and the population matrix<a class="headerlink" href="#2-organisms-genes-and-the-population-matrix" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -776,9 +822,9 @@
 </table>
 <p>Data must be normalised to [0, 1] (higher = better) before passing to <code>PikaiaPopulation</code>. The <code>PikaiaPreprocessor</code> handles this for common cases.</p>
 <hr />
-<h2 id="strategies">Strategies<a class="headerlink" href="#strategies" title="Permanent link">&para;</a></h2>
+<h2 id="3-strategies">3. Strategies<a class="headerlink" href="#3-strategies" title="Permanent link">&para;</a></h2>
 <p>Strategies are the rules that determine how organisms and genes interact each iteration. They produce the delta values that feed the replicator equation.</p>
-<h3 id="gene-strategies-genestrategy">Gene strategies (<code>GeneStrategy</code>)<a class="headerlink" href="#gene-strategies-genestrategy" title="Permanent link">&para;</a></h3>
+<h3 id="31-gene-strategies-genestrategy">3.1. Gene strategies (<code>GeneStrategy</code>)<a class="headerlink" href="#31-gene-strategies-genestrategy" title="Permanent link">&para;</a></h3>
 <p>Called once per <em>(organism i, gene j)</em> pair. Returns a scalar delta for gene <em>j</em> based on how organism <em>i</em> expressed it.</p>
 <table>
 <thead>
@@ -842,7 +888,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="organism-strategies-orgstrategy">Organism strategies (<code>OrgStrategy</code>)<a class="headerlink" href="#organism-strategies-orgstrategy" title="Permanent link">&para;</a></h3>
+<h3 id="32-organism-strategies-orgstrategy">3.2. Organism strategies (<code>OrgStrategy</code>)<a class="headerlink" href="#32-organism-strategies-orgstrategy" title="Permanent link">&para;</a></h3>
 <p>Called once per organism <em>i</em>. Returns an array of shape (M,) — the delta for every gene in one shot. Organism strategies can express <strong>cross-gene</strong> interactions that a per-gene strategy cannot.</p>
 <table>
 <thead>
@@ -886,11 +932,11 @@
 </tr>
 </tbody>
 </table>
-<h3 id="supervised-mode">Supervised mode<a class="headerlink" href="#supervised-mode" title="Permanent link">&para;</a></h3>
+<h3 id="33-supervised-mode">3.3. Supervised mode<a class="headerlink" href="#33-supervised-mode" title="Permanent link">&para;</a></h3>
 <p>Four gene strategies (<code>ENTROPY_MAX</code>, <code>ORTHO_GENE</code>, <code>PARTIAL_CORR</code>, <code>REDUNDANCY_PENALTY</code>) can optionally incorporate a target variable. Pass <code>y</code> to <code>PikaiaModel</code> and they blend it into their signal automatically — without <code>y</code> they run fully unsupervised:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span> <span class="n">gene_strategies</span><span class="o">=</span><span class="n">gene_strategies</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="mixing-strategies-mixstrategy">Mixing strategies (<code>MixStrategy</code>)<a class="headerlink" href="#mixing-strategies-mixstrategy" title="Permanent link">&para;</a></h3>
+<h3 id="34-mixing-strategies-mixstrategy">3.4. Mixing strategies (<code>MixStrategy</code>)<a class="headerlink" href="#34-mixing-strategies-mixstrategy" title="Permanent link">&para;</a></h3>
 <p>When multiple gene or organism strategies are active, a mixing strategy determines how their deltas are combined each iteration.</p>
 <table>
 <thead>
@@ -911,11 +957,11 @@
 </tbody>
 </table>
 <hr />
-<h2 id="d-matrix-accelerated-mode">D-matrix accelerated mode<a class="headerlink" href="#d-matrix-accelerated-mode" title="Permanent link">&para;</a></h2>
+<h2 id="4-d-matrix-accelerated-mode">4. D-matrix accelerated mode<a class="headerlink" href="#4-d-matrix-accelerated-mode" title="Permanent link">&para;</a></h2>
 <p>For compatible strategy combinations, pikaia precomputes a compact kernel <code>(D, d)</code> once before the iteration loop and then runs cheap <code>O(M²)</code> updates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>γ_new = γ * (1 + D @ γ + d)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>γ_new = γ * (1 + d + γ * (D @ γ))
 </code></pre></div>
-<p>instead of the full <code>O(N·M²)</code> per-organism loop. This is typically <strong>30–80× faster</strong> for large populations.</p>
+<p>instead of the full <code>O(N·M²)</code> per-organism loop. The practical speed-up depends on population size, gene count, and the selected strategies.</p>
 <p>Enable it with:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">PikaiaModel</span><span class="p">(</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">population</span><span class="o">=</span><span class="n">population</span><span class="p">,</span>
@@ -925,14 +971,10 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </code></pre></div>
-<p>Most built-in strategies support the D-matrix path — each implements <code>kernel()</code> returning at least one non-<code>None</code> term. Two categories are exceptions:</p>
-<ul>
-<li><strong><code>NONE</code> strategies</strong> return <code>(None, None)</code>; a combination of only <code>NONE</code> strategies has no kernel at all.</li>
-<li><strong>The trading buy strategies</strong> (<code>BUY_HARD</code>, <code>BUY_UNIFORM</code>, <code>BUY_EASY</code>) do <strong>not</strong> support the D-matrix path. Their per-organism delta (<code>buy_abs / γ_j</code>) depends on the current gene fitness <strong>γ</strong> in a way that cannot be captured by a static <code>(D, d)</code> kernel, so they only run correctly under the standard iterative loop. If you enable <code>use_d_matrix=True</code> with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.</li>
-</ul>
-<p>Custom strategies must implement <code>kernel()</code> to participate; see the <a href="../contributing/">Contributor Guide</a>.</p>
+<p>In <code>ORIGINAL</code>, D-matrix execution is limited to the built-in <code>FixedMixStrategy</code> and strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. In <code>MATH_PAPER</code>, the exact public configurations are dominant gene paired with a no-op organism strategy and the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Adaptive, custom, and otherwise unsupported requests raise <code>ValueError</code> instead of silently omitting a contribution or using an approximation.</p>
+<p>See the <a href="../d-matrix/">D-matrix formulation</a> for the exact equations, historical similarity scaling, compatibility table, and limits.</p>
 <hr />
-<h2 id="key-classes">Key classes<a class="headerlink" href="#key-classes" title="Permanent link">&para;</a></h2>
+<h2 id="5-key-classes">5. Key classes<a class="headerlink" href="#5-key-classes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -972,7 +1014,7 @@
 </tbody>
 </table>
 <hr />
-<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
+<h2 id="6-where-to-go-next">6. Where to go next<a class="headerlink" href="#6-where-to-go-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../tutorial/">Tutorial</a> — run your first analysis end to end</li>
 <li><a href="../contributing/">Contributor Guide</a> — add new strategies and extend pikaia</li>
