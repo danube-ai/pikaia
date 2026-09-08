@@ -241,7 +241,7 @@ The acceptance criterion is `rtol=1e-12` and `atol=1e-12`. A displayed zero mean
 
 For each `ORIGINAL` row, the named gene strategy is paired with `NoneOrgStrategy`. That no-op partner contributes zero, so the comparison isolates the named strategy. The math-paper dominant row uses the same arrangement. The other two `MATH_PAPER` rows refer to the same Alt-Sel run: one row assesses its altruistic-gene component and the other its selfish-organism component. Their numerical results are therefore intentionally identical. This does not mean the matrix components are algebraically inseparable; their isolated D-matrix models are outside the package's public compatibility contract.
 
-### 1.7.2. Results
+### 1.7.2. Iterative vs. D-matrix path differences
 
 | Formulation | Strategy | Partner | Max. absolute difference (1 iter.) | Max. absolute difference (50 iter.) | Max. absolute difference (100 iter.) | Result and timing (100 iter.) |
 |---|---|---|---:|---:|---:|---|
