@@ -1,5 +1,8 @@
 """Implement the no-op gene strategy."""
 
+from typing import ClassVar
+
+from pikaia.schemas.strategies import StrategyFormulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
@@ -8,8 +11,14 @@ class NoneGeneStrategy(GeneStrategy):
 
     This strategy is a neutral placeholder that returns a delta value of 0,
     effectively making no change to the gene's fitness. It serves as a baseline
-    or a way to disable gene-level selection.
+    or a way to disable gene-level selection. Because zero is independent of
+    the selected equations, the strategy supports both ``ORIGINAL`` and
+    ``MATH_PAPER``.
     """
+
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+    )
 
     def __init__(self, **kwargs):
         """Initialise the None (no-op) gene strategy.

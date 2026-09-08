@@ -6,7 +6,9 @@ strategy. This example runs only configurations accepted by ``PikaiaModel``:
 
 1. Each D-capable ``ORIGINAL`` gene strategy, isolated with
    ``NoneOrgStrategy``.
-2. The ``MATH_PAPER`` altruistic-gene plus selfish-organism (Alt-Sel)
+2. The ``MATH_PAPER`` dominant-gene strategy, isolated with
+   ``NoneOrgStrategy``.
+3. The ``MATH_PAPER`` altruistic-gene plus selfish-organism (Alt-Sel)
    configuration.
 
 For each configuration, independently constructed iterative and D-matrix models
@@ -18,6 +20,7 @@ both 100-iteration runs.
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from statistics import median
 from time import perf_counter
 
 import numpy as np
@@ -45,6 +48,8 @@ from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 
 logger.setLevel(logging.WARNING)
+
+TIMING_REPEATS = 7
 
 
 @dataclass(frozen=True)
@@ -111,6 +116,14 @@ CONFIGURATIONS = tuple(
     for name, strategy_factory in ORIGINAL_STRATEGIES
 ) + (
     DMatrixConfiguration(
+        name="Dominant gene",
+        formulation=StrategyFormulation.MATH_PAPER,
+        population_factory=math_paper_population,
+        gene_strategy_factory=DominantGeneStrategy,
+        org_strategy_factory=NoneOrgStrategy,
+        initial_gene_fitness=(0.4, 0.35, 0.25),
+    ),
+    DMatrixConfiguration(
         name="Altruistic gene + Selfish organism (Alt-Sel)",
         formulation=StrategyFormulation.MATH_PAPER,
         population_factory=math_paper_population,
@@ -146,18 +159,21 @@ def fit_configuration(
 def compare_configuration(
     configuration: DMatrixConfiguration,
 ) -> tuple[list[float], float, float]:
-    """Return 1/50/100-step errors and both 100-step runtimes."""
+    """Return path errors and median 100-step runtimes.
+
+    Correctness is checked independently at 1, 50, and 100 iterations. Runtime
+    values are medians over ``TIMING_REPEATS`` complete 100-iteration fits to
+    reduce one-off scheduling noise.
+    """
     differences: list[float] = []
-    iterative_runtime = 0.0
-    d_matrix_runtime = 0.0
 
     for iterations in (1, 50, 100):
-        iterative, iterative_elapsed = fit_configuration(
+        iterative, _ = fit_configuration(
             configuration,
             use_d_matrix=False,
             iterations=iterations,
         )
-        reduced, reduced_elapsed = fit_configuration(
+        reduced, _ = fit_configuration(
             configuration,
             use_d_matrix=True,
             iterations=iterations,
@@ -165,11 +181,16 @@ def compare_configuration(
         np.testing.assert_allclose(iterative, reduced, rtol=1e-12, atol=1e-12)
         differences.append(float(np.max(np.abs(iterative - reduced))))
 
-        if iterations == 100:
-            iterative_runtime = iterative_elapsed
-            d_matrix_runtime = reduced_elapsed
+    iterative_runtimes = [
+        fit_configuration(configuration, use_d_matrix=False, iterations=100)[1]
+        for _ in range(TIMING_REPEATS)
+    ]
+    d_matrix_runtimes = [
+        fit_configuration(configuration, use_d_matrix=True, iterations=100)[1]
+        for _ in range(TIMING_REPEATS)
+    ]
 
-    return differences, iterative_runtime, d_matrix_runtime
+    return differences, median(iterative_runtimes), median(d_matrix_runtimes)
 
 
 def main() -> None:
@@ -197,6 +218,7 @@ def main() -> None:
         )
 
     print("\nAll differences satisfy rtol=1e-12 and atol=1e-12.")
+    print(f"Runtimes are medians of {TIMING_REPEATS} complete 100-iteration fits.")
 
 
 if __name__ == "__main__":

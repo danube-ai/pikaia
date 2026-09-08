@@ -34,17 +34,17 @@ def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
     return float(differences[np.triu_indices(values.size, k=1)].mean())
 
 
-def _compute_legacy_similarity(matrix: np.ndarray, divisor: int) -> np.ndarray:
-    """Return the similarity scaling used by the old Pikaia implementation.
+def _compute_math_paper_similarity(matrix: np.ndarray, divisor: int) -> np.ndarray:
+    """Return the similarity scaling selected by ``MATH_PAPER``.
 
     Args:
         matrix: Rows representing the items whose pairwise similarity is needed.
-        divisor: Historical normalisation divisor: ``N`` for genes or ``M`` for
-            organisms.
+        divisor: Math-paper normalisation divisor: ``N`` for genes or ``M``
+            for organisms, matching the historical Pikaia implementation.
 
     Returns:
         Square similarity matrix defined as one minus Euclidean distance divided
-        by the historical divisor.
+        by the formulation-specific divisor.
 
     """
     differences = matrix[:, np.newaxis, :] - matrix[np.newaxis, :, :]
@@ -220,15 +220,20 @@ class GeneticModel(ABC):
             ),
         )
 
-        # Similarity matrices
-        self._gene_similarity = self._compute_similarity(mode="gene")
-        self._org_similarity = self._compute_similarity(mode="org")
-        self._legacy_gene_similarity = _compute_legacy_similarity(
-            self._population.matrix.T, self._population.N
-        )
-        self._legacy_org_similarity = _compute_legacy_similarity(
-            self._population.matrix, self._population.M
-        )
+        # Compute only the similarities selected for this run. This preserves
+        # ORIGINAL behaviour while avoiding its max-distance preconditions in
+        # MATH_PAPER models, whose N/M-scaled similarities remain defined when
+        # all compared vectors are identical.
+        if self._formulation is StrategyFormulation.MATH_PAPER:
+            self._gene_similarity = _compute_math_paper_similarity(
+                self._population.matrix.T, self._population.N
+            )
+            self._org_similarity = _compute_math_paper_similarity(
+                self._population.matrix, self._population.M
+            )
+        else:
+            self._gene_similarity = self._compute_similarity(mode="gene")
+            self._org_similarity = self._compute_similarity(mode="org")
 
         # History containers
         self._gene_fitness_hist = np.zeros(
@@ -392,15 +397,11 @@ class GeneticModel(ABC):
     @property
     def _active_gene_similarity(self) -> np.ndarray:
         """Return the similarity matrix selected by the model formulation."""
-        if self._formulation is StrategyFormulation.MATH_PAPER:
-            return self._legacy_gene_similarity
         return self._gene_similarity
 
     @property
     def _active_org_similarity(self) -> np.ndarray:
         """Return the similarity matrix selected by the model formulation."""
-        if self._formulation is StrategyFormulation.MATH_PAPER:
-            return self._legacy_org_similarity
         return self._org_similarity
 
     @property
@@ -484,17 +485,19 @@ class GeneticModel(ABC):
         self._d_vector = d_total if has_d else None
 
     def _validate_d_matrix_configuration(self) -> None:
-        """Reject math-paper D-matrix combinations outside historical Alt-Sel.
+        """Validate formulation-specific D-matrix configuration constraints.
 
         The historical reduced solver was derived for exactly one altruistic
         gene strategy and one selfish organism strategy, both with fixed unit
-        coefficients. ``ORIGINAL`` accepts only fixed mixtures because its
-        D-matrix derivation does not represent the per-organism coefficient
-        update used by ``SelfConsistentMixStrategy``.
+        coefficients. The math-paper dominant strategy is independently exact
+        when paired with the formulation-neutral no-op organism strategy.
+        Every formulation requires fixed mixing because the reduced equation
+        does not represent the per-organism coefficient update used by
+        ``SelfConsistentMixStrategy``.
 
         Raises:
-            ValueError: If a math-paper D-matrix request is not the exact
-                historical Alt-Sel configuration.
+            ValueError: If mixing is self-consistent or a math-paper request is
+                neither historical Alt-Sel nor isolated dominant gene.
 
         """
         if self._formulation is StrategyFormulation.ORIGINAL:
@@ -511,8 +514,19 @@ class GeneticModel(ABC):
         from pikaia.strategies.gs_strategies.altruistic_strategy import (
             AltruisticGeneStrategy,
         )
+        from pikaia.strategies.gs_strategies.dominant_strategy import (
+            DominantGeneStrategy,
+        )
+        from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
         from pikaia.strategies.os_strategies.selfish_strategy import (
             SelfishOrgStrategy,
+        )
+
+        has_fixed_unit_mixing = (
+            self._initial_gene_mixing_coeffs == [1.0]
+            and self._initial_org_mixing_coeffs == [1.0]
+            and not isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
+            and not isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
         )
 
         is_altsel = (
@@ -520,17 +534,31 @@ class GeneticModel(ABC):
             and len(self._org_strategies) == 1
             and isinstance(self._gene_strategies[0], AltruisticGeneStrategy)
             and isinstance(self._org_strategies[0], SelfishOrgStrategy)
-            and self._initial_gene_mixing_coeffs == [1.0]
-            and self._initial_org_mixing_coeffs == [1.0]
-            and not isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
-            and not isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
+            and has_fixed_unit_mixing
         )
-        if not is_altsel:
+        is_isolated_dominant = (
+            len(self._gene_strategies) == 1
+            and len(self._org_strategies) == 1
+            and isinstance(self._gene_strategies[0], DominantGeneStrategy)
+            and isinstance(self._org_strategies[0], NoneOrgStrategy)
+            and has_fixed_unit_mixing
+        )
+        if is_isolated_dominant and not np.isclose(
+            np.sum(self._initial_gene_fitness), 1.0, rtol=1e-12, atol=1e-12
+        ):
             raise ValueError(
-                "MATH_PAPER use_d_matrix=True is available only for the "
-                "unmixed AltruisticGeneStrategy + SelfishOrgStrategy "
-                "(Alt-Sel) combination. Use use_d_matrix=False for other "
-                "MATH_PAPER strategies or formulations."
+                "MATH_PAPER DominantGeneStrategy with use_d_matrix=True "
+                "requires initial_gene_fitness to sum to one because its exact "
+                "row-constant D matrix uses the normalized gene-fitness "
+                "simplex."
+            )
+        if not (is_altsel or is_isolated_dominant):
+            raise ValueError(
+                "MATH_PAPER use_d_matrix=True is available only for an "
+                "unmixed DominantGeneStrategy + NoneOrgStrategy model or the "
+                "unmixed AltruisticGeneStrategy + SelfishOrgStrategy (Alt-Sel) "
+                "combination. Use use_d_matrix=False for other MATH_PAPER "
+                "configurations."
             )
 
     @property
@@ -560,13 +588,13 @@ class GeneticModel(ABC):
 
     @property
     def gene_similarity(self) -> np.ndarray:
-        """The gene similarity matrix."""
-        return self._gene_similarity
+        """Return the gene similarity matrix selected by the formulation."""
+        return self._active_gene_similarity
 
     @property
     def org_similarity(self) -> np.ndarray:
-        """The organism similarity matrix."""
-        return self._org_similarity
+        """Return the organism similarity matrix selected by the formulation."""
+        return self._active_org_similarity
 
     @property
     def gene_fitness_history(self) -> np.ndarray:

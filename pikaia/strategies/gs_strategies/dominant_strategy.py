@@ -13,9 +13,10 @@ class DominantGeneStrategy(GeneStrategy):
     """A gene strategy that promotes dominant genes.
 
     This strategy increases the fitness of genes that are highly expressed
-    (dominant), reinforcing their prevalence in the population. The delta is
-    proportional to the square of the gene's fitness and its expression level.
-    This implementation follows the logic from the original `alg.py`.
+    (dominant), reinforcing their prevalence in the population. ``ORIGINAL``
+    makes the direct delta proportional to the square of the focal gene's
+    fitness. ``MATH_PAPER`` reproduces the historical branch's revised delta,
+    which is linear in the focal gene's fitness.
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
@@ -74,7 +75,7 @@ class DominantGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D matrix from population mean expression.
+        """Return the formulation-specific exact dominant-gene D matrix.
 
         Args:
             population: Population providing the ``(N, M)`` data matrix.
@@ -84,23 +85,25 @@ class DominantGeneStrategy(GeneStrategy):
             y: Unused.
 
         Returns:
-            For ``ORIGINAL``, ``(D, None)`` where ``D`` is diagonal with
-            ``D[j, j] = 4 * (x_bar_j - 0.5)``.  ``MATH_PAPER`` returns
-            ``(None, None)`` because its linear-in-fitness formula cannot be
-            represented by the static D-matrix contract.
+            ``(D, None)``. For ``ORIGINAL``, ``D`` is diagonal with
+            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``MATH_PAPER``, every entry
+            in row ``j`` equals ``x_bar_j - 0.5``. Because gene fitness is
+            normalised to sum to one, the row-constant matrix exactly encodes
+            the formulation's signal ``gamma_j * (x_bar_j - 0.5)``.
 
         """
         mean_centered_expression = population.matrix.mean(axis=0) - 0.5
         if self.formulation is StrategyFormulation.MATH_PAPER:
-            # The revised delta is linear in gamma.  The D-matrix engine only
-            # supports population-static d vectors and bilinear D matrices, so
-            # this formulation intentionally uses the iterative path.
-            return None, None
+            D = np.broadcast_to(
+                mean_centered_expression[:, np.newaxis],
+                (population.M, population.M),
+            ).copy()
+            return D, None
 
         D = np.diag(4.0 * mean_centered_expression)
         return D, None
 
     @property
     def supports_d_matrix(self) -> bool:
-        """Support D-matrix execution only for the original quadratic equation."""
-        return self.formulation is StrategyFormulation.ORIGINAL
+        """Indicate that both supported formulations have exact D kernels."""
+        return True

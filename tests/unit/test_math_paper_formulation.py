@@ -16,6 +16,8 @@ from pikaia.strategies.base_strategies import StrategyContext
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
+from pikaia.strategies.gs_strategies.selfish_strategy import SelfishGeneStrategy
+from pikaia.strategies.os_strategies.balanced_strategy import BalancedOrgStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 from pikaia.strategies.strategy_factories import GeneStrategyFactory, OrgStrategyFactory
@@ -204,13 +206,70 @@ def test_math_paper_selfish_kernel_matches_its_isolated_iterative_delta(
     )
 
 
-def test_math_paper_dominant_requires_the_iterative_path():
+@pytest.mark.parametrize(
+    "gene_fitness",
+    [np.array([0.4, 0.35, 0.25]), np.array([0.2, 0.3, 0.5])],
+)
+def test_math_paper_dominant_kernel_matches_its_isolated_iterative_delta(
+    gene_fitness: np.ndarray,
+) -> None:
+    """A row-constant D matrix exactly reproduces the linear dominant signal."""
     pop = _population()
     strategy = DominantGeneStrategy(formulation=StrategyFormulation.MATH_PAPER)
     D, d = strategy.kernel(pop, np.eye(pop.M), np.eye(pop.N), 1.0)
 
-    assert D is None
+    assert D is not None
     assert d is None
+    expected_delta = gene_fitness * (pop.matrix.mean(axis=0) - 0.5)
+    np.testing.assert_allclose(gene_fitness * (D @ gene_fitness), expected_delta)
+
+
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+def test_math_paper_dominant_d_matrix_matches_iterative_path(max_iter: int) -> None:
+    """Isolated math-paper dominant agrees through short and long runs."""
+    arguments = {
+        "gene_strategies": [DominantGeneStrategy()],
+        "org_strategies": [NoneOrgStrategy()],
+        "initial_gene_fitness": [0.4, 0.35, 0.25],
+        "max_iter": max_iter,
+    }
+    iterative = _fit(**arguments, use_d_matrix=False)
+    d_matrix = _fit(**arguments, use_d_matrix=True)
+
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[max_iter],
+        d_matrix.gene_fitness_history[max_iter],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
+@pytest.mark.parametrize("seed", [7, 29, 101])
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+def test_math_paper_dominant_d_matrix_matches_on_deterministic_populations(
+    seed: int, max_iter: int
+) -> None:
+    """Verify the reduction beyond the fixed documentation fixture."""
+    population = PikaiaPopulation(np.random.default_rng(seed).random((7, 4)))
+    shared_arguments = {
+        "population": population,
+        "gene_strategies": [DominantGeneStrategy()],
+        "org_strategies": [NoneOrgStrategy()],
+        "initial_gene_fitness": [0.4, 0.3, 0.2, 0.1],
+        "max_iter": max_iter,
+        "formulation": StrategyFormulation.MATH_PAPER,
+    }
+    iterative = PikaiaModel(**shared_arguments, use_d_matrix=False)
+    d_matrix = PikaiaModel(**shared_arguments, use_d_matrix=True)
+    iterative.fit()
+    d_matrix.fit()
+
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[max_iter],
+        d_matrix.gene_fitness_history[max_iter],
+        rtol=1e-12,
+        atol=1e-12,
+    )
 
 
 def test_original_formulation_is_the_default():
@@ -229,12 +288,13 @@ def test_every_gene_and_organism_strategy_defaults_to_original_formulation():
         assert strategy.formulation is StrategyFormulation.ORIGINAL
 
 
-def test_only_strategies_with_math_paper_equations_accept_math_paper():
+def test_only_math_paper_strategies_and_neutral_noops_accept_math_paper():
     supported_gene_strategies = {
         GeneStrategyEnum.DOMINANT,
         GeneStrategyEnum.ALTRUISTIC,
+        GeneStrategyEnum.NONE,
     }
-    supported_org_strategies = {OrgStrategyEnum.SELFISH}
+    supported_org_strategies = {OrgStrategyEnum.SELFISH, OrgStrategyEnum.NONE}
 
     for strategy_enum in GeneStrategyEnum:
         factory = GeneStrategyFactory.get_strategy
@@ -285,13 +345,22 @@ def test_math_paper_rejects_zero_gene_normalization():
         model.fit()
 
 
-def test_math_paper_model_rejects_original_only_strategies():
+@pytest.mark.parametrize(
+    ("gene_strategy", "org_strategy", "unsupported_name"),
+    [
+        (SelfishGeneStrategy(), SelfishOrgStrategy(), "SelfishGeneStrategy"),
+        (AltruisticGeneStrategy(), BalancedOrgStrategy(), "BalancedOrgStrategy"),
+    ],
+)
+def test_math_paper_model_rejects_original_only_strategies(
+    gene_strategy, org_strategy, unsupported_name: str
+) -> None:
     """Fail at construction rather than silently retaining an original equation."""
-    with pytest.raises(ValueError, match="NoneOrgStrategy"):
+    with pytest.raises(ValueError, match=unsupported_name):
         PikaiaModel(
             population=_population(),
-            gene_strategies=[AltruisticGeneStrategy()],
-            org_strategies=[NoneOrgStrategy()],
+            gene_strategies=[gene_strategy],
+            org_strategies=[org_strategy],
             max_iter=1,
             formulation="MATH_PAPER",
         )
@@ -316,7 +385,7 @@ def test_math_paper_model_applies_its_formulation_to_supported_strategies():
     )
 
 
-def test_math_paper_uses_legacy_similarity_scaling():
+def test_math_paper_uses_formulation_specific_similarity_scaling():
     """Select the old branch's N/M similarity denominators for math-paper runs."""
     model = PikaiaModel(
         population=_population(),
@@ -338,6 +407,36 @@ def test_math_paper_uses_legacy_similarity_scaling():
 
     np.testing.assert_allclose(model._active_gene_similarity, expected_gene)
     np.testing.assert_allclose(model._active_org_similarity, expected_org)
+    np.testing.assert_allclose(model.gene_similarity, expected_gene)
+    np.testing.assert_allclose(model.org_similarity, expected_org)
+
+    gene_distances = np.linalg.norm(
+        X.T[:, np.newaxis, :] - X.T[np.newaxis, :, :], axis=2
+    )
+    org_distances = np.linalg.norm(X[:, np.newaxis, :] - X[np.newaxis, :, :], axis=2)
+    original_gene = 1 - gene_distances / np.max(gene_distances)
+    original_org = 1 - org_distances / np.max(org_distances)
+    assert not np.allclose(model.gene_similarity, original_gene)
+    assert not np.allclose(model.org_similarity, original_org)
+
+
+def test_math_paper_dominant_does_not_compute_unused_original_similarity():
+    """Identical columns remain valid under the math-paper N-scaled equation."""
+    population = PikaiaPopulation(np.array([[0.1, 0.1], [0.8, 0.8], [0.4, 0.4]]))
+    model = PikaiaModel(
+        population=population,
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[NoneOrgStrategy()],
+        initial_gene_fitness=[0.5, 0.5],
+        max_iter=1,
+        use_d_matrix=True,
+        formulation=StrategyFormulation.MATH_PAPER,
+    )
+
+    model.fit()
+
+    np.testing.assert_allclose(model.gene_similarity, np.ones((2, 2)))
+    np.testing.assert_allclose(model.gene_fitness_history[1], [0.5, 0.5])
 
 
 def test_math_paper_clamps_kin_range_to_population_size():
@@ -415,7 +514,8 @@ def test_explicit_original_matches_the_default_model_formulation():
     )
 
 
-def test_math_paper_dominant_rejects_d_matrix_path():
+def test_math_paper_dominant_rejects_non_noop_organism_partner():
+    """Keep the isolated dominant public contract explicit and fail fast."""
     model = PikaiaModel(
         population=_population(),
         gene_strategies=[DominantGeneStrategy(formulation="MATH_PAPER")],
@@ -425,7 +525,34 @@ def test_math_paper_dominant_rejects_d_matrix_path():
         formulation="MATH_PAPER",
     )
 
-    with pytest.raises(ValueError, match="only for the unmixed"):
+    with pytest.raises(ValueError, match="available only"):
+        model.fit()
+
+
+def test_math_paper_dominant_d_matrix_requires_normalized_initial_fitness():
+    """Reject input outside the simplex required by the row-constant proof."""
+    model = PikaiaModel(
+        population=_population(),
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[NoneOrgStrategy()],
+        initial_gene_fitness=[0.8, 0.7, 0.5],
+        max_iter=1,
+        use_d_matrix=True,
+        formulation=StrategyFormulation.MATH_PAPER,
+    )
+
+    with pytest.raises(ValueError, match="initial_gene_fitness to sum to one"):
+        model.fit()
+
+
+def test_math_paper_rejects_original_only_analytical_fixed_point():
+    """Do not label the original Dominant-Balanced solution as math-paper."""
+    model = PikaiaModel(
+        population=_population(),
+        formulation=StrategyFormulation.MATH_PAPER,
+    )
+
+    with pytest.raises(ValueError, match="requires max_iter"):
         model.fit()
 
 
@@ -444,12 +571,24 @@ def test_model_skips_fit_when_uniform_gene_fitness_cannot_rank_organisms():
     np.testing.assert_allclose(model.gene_fitness_history[1], [0.0, 0.0])
 
 
+def test_noop_strategies_are_formulation_neutral():
+    """No-op strategies contribute exact zero in either formulation."""
+    gene_strategy = NoneGeneStrategy()
+    org_strategy = NoneOrgStrategy()
+
+    gene_strategy.set_formulation(StrategyFormulation.MATH_PAPER)
+    org_strategy.set_formulation(StrategyFormulation.MATH_PAPER)
+
+    assert gene_strategy.formulation is StrategyFormulation.MATH_PAPER
+    assert org_strategy.formulation is StrategyFormulation.MATH_PAPER
+
+
 def test_strategy_set_formulation_rejects_unsupported_selection():
-    """Both base strategy families retain formulation validation after construction."""
+    """Original-only strategies retain validation after construction."""
     with pytest.raises(ValueError, match="does not support MATH_PAPER"):
-        NoneGeneStrategy().set_formulation(StrategyFormulation.MATH_PAPER)
+        SelfishGeneStrategy().set_formulation(StrategyFormulation.MATH_PAPER)
     with pytest.raises(ValueError, match="does not support MATH_PAPER"):
-        NoneOrgStrategy().set_formulation(StrategyFormulation.MATH_PAPER)
+        BalancedOrgStrategy().set_formulation(StrategyFormulation.MATH_PAPER)
 
 
 def test_math_paper_kernel_guards_require_normalizations():

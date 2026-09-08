@@ -113,7 +113,7 @@ model = PikaiaModel(
 )
 ```
 
-In `ORIGINAL`, D-matrix execution is limited to fixed mixtures of strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. The strict `MATH_PAPER` compatibility guarantee is available only for the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Any unsupported request raises `ValueError` instead of silently omitting a strategy or using an approximation.
+In `ORIGINAL`, D-matrix execution is limited to fixed mixtures of strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. In `MATH_PAPER`, the exact public configurations are dominant gene paired with a no-op organism strategy and the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Any unsupported request raises `ValueError` instead of silently omitting a strategy or using an approximation.
 
 See the [D-matrix formulation](d-matrix.md) for the exact equations, historical similarity scaling, compatibility table, and limits.
 

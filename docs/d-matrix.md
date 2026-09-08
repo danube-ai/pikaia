@@ -11,7 +11,7 @@ There are two independent formulation choices:
 | Formulation | Purpose | D-matrix scope |
 |---|---|---|
 | `ORIGINAL` | The established Python-package equations and similarity scaling. | Eight individual gene strategies have verified D-matrix kernels. |
-| `MATH_PAPER` | Compatibility with the revised iterative equations in the historical Pikaia branch. | One supported model configuration: altruistic gene plus selfish organism (Alt-Sel). |
+| `MATH_PAPER` | Compatibility with the revised iterative equations in the historical Pikaia branch. | Two supported model configurations: dominant gene plus no-op organism, and altruistic gene plus selfish organism (Alt-Sel). |
 
 `PikaiaModel` owns the formulation for a complete run. It applies that formulation to every selected strategy and rejects a model whose strategies do not implement it. A user therefore cannot accidentally combine an original strategy equation with math-paper similarities or normalisations.
 
@@ -117,17 +117,51 @@ $\odot$ means elementwise multiplication. $D\gamma$ is ordinary matrix-vector mu
 
 ### 1.4.2. Combination rules
 
-The model runs one path per fit. It cannot calculate one strategy through $D$
-while calculating another strategy iteratively. Consequently, every selected
-non-no-op strategy must provide an exact D contribution. In `ORIGINAL`,
-`NoneGeneStrategy` and `NoneOrgStrategy` can accompany a supported strategy
-because each contributes exactly zero. They do not declare `MATH_PAPER`
-support, so they cannot be used to construct an isolated math-paper model; the
-public math-paper D-matrix configuration is Alt-Sel.
+The model runs one path per fit. It cannot calculate one strategy through $D$ while calculating another strategy iteratively. Consequently, every selected non-no-op strategy must provide an exact D contribution. `NoneGeneStrategy` and `NoneOrgStrategy` support both formulations because their contribution is exactly zero under either set of equations. A no-op can therefore isolate a supported strategy without changing its result.
 
 The reduction also requires fixed mixing coefficients. `SelfConsistentMixStrategy` updates coefficients from per-organism deltas, which are unavailable after reduction to $D$ and $d$, so self-consistent mixing is iterative-only.
 
-## 1.5. Math-paper Alt-Sel derivation
+## 1.5. Math-paper dominant derivation
+
+### 1.5.1. Direct signal
+
+For math-paper dominant gene, organism $i$ contributes the following signal to gene $j$:
+
+$$
+\delta^{\mathrm{dom}}_{ij}=\frac{1}{N}\gamma_j\left(X_{ij}-\frac12\right).
+$$
+
+Here $1/N$ averages the contribution over the $N$ organisms, $\gamma_j$ is the current fitness of gene $j$, and $X_{ij}-1/2$ is organism $i$'s centred expression of that gene. Summing over all organisms gives
+
+$$
+\Delta^{\mathrm{dom}}_j(\gamma)=\sum_{i=1}^{N}\delta^{\mathrm{dom}}_{ij}=\gamma_j\left(\bar X_j-\frac12\right),
+$$
+
+where $\bar X_j=N^{-1}\sum_i X_{ij}$ is the mean expression of gene $j$ in the fixed population.
+
+### 1.5.2. Row-constant D matrix
+
+Define $a_j=\bar X_j-1/2$ and assign that value to every entry in row $j$:
+
+$$
+D^{\mathrm{dom}}_{jk}=a_j \qquad \text{for every } k.
+$$
+
+Although the required D-matrix form contains two appearances of $\gamma$, this row-constant construction uses the normalisation $\sum_k\gamma_k=1$:
+
+$$
+\gamma_j(D^{\mathrm{dom}}\gamma)_j
+=\gamma_j\sum_{k=1}^{M}a_j\gamma_k
+=\gamma_j a_j\sum_{k=1}^{M}\gamma_k
+=\gamma_j a_j
+=\Delta^{\mathrm{dom}}_j(\gamma).
+$$
+
+The reduction is therefore exact. The earlier claim that a signal linear in $\gamma_j$ could not satisfy the D-matrix contract was incorrect: the gene-fitness simplex supplies the constant factor through $\sum_k\gamma_k=1$.
+
+The supported model configuration pairs `DominantGeneStrategy` with `NoneOrgStrategy`, both with fixed unit coefficients. The no-op organism contribution is zero, so the comparison isolates the dominant-gene equation. Because the proof uses $\sum_k\gamma_k=1$, the model rejects a math-paper Dominant D-matrix run whose user-supplied `initial_gene_fitness` does not sum to one; every subsequent replicator step preserves this invariant.
+
+## 1.6. Math-paper Alt-Sel derivation
 
 The old Pikaia branch exposed its reduced solver only when the model selected
 one altruistic gene strategy and one selfish organism strategy. That restriction
@@ -138,7 +172,7 @@ does not copy that routine literally. It derives both matrix components from the
 old branch's iterative equations and verifies the resulting update against the
 iterative path.
 
-### 1.5.1. Altruistic gene contribution
+### 1.6.1. Altruistic gene contribution
 
 For math-paper altruistic gene, the direct contribution is
 
@@ -156,7 +190,7 @@ $$
 
 The diagonal is zero because the direct equation excludes $k=j$.
 
-### 1.5.2. Selfish organism contribution
+### 1.6.2. Selfish organism contribution
 
 For each organism $i$, let $\mathcal{R}_i$ be the first $K$ most similar organisms, where $K=\min(\text{requested kin range},N)$. The organism itself is removed from the sum but remains in the denominator $K$, matching the historical implementation. Its direct contribution is
 
@@ -193,9 +227,9 @@ This distinction also determines how to read the end-to-end comparison below.
 The table has one row per strategy, while the partner column identifies the
 complete public model configuration accepted by `PikaiaModel`.
 
-## 1.6. Compatibility comparison
+## 1.7. Compatibility comparison
 
-### 1.6.1. What is being compared
+### 1.7.1. What is being compared
 
 Every row below compares two independently constructed models with the same fixed population, initial gene fitness, strategy configuration, fixed coefficients, and number of iterations:
 
@@ -203,42 +237,36 @@ Every row below compares two independently constructed models with the same fixe
 2. The reduced model uses `use_d_matrix=True` and evaluates the precomputed $D$ matrix and $d$ vector.
 3. After exactly 1, 50, or 100 iterations, the comparison records the largest absolute difference between corresponding final gene-fitness entries: $\max_j|\gamma^{\mathrm{iterative}}_j-\gamma^{\mathrm{D}}_j|$.
 
-The acceptance criterion is `rtol=1e-12` and `atol=1e-12`. A displayed zero means the two floating-point vectors were bitwise equal on that fixture; a small value such as `1.11e-16` is ordinary floating-point roundoff and is far below the acceptance threshold.
+The acceptance criterion is `rtol=1e-12` and `atol=1e-12`. A displayed zero means the two floating-point vectors were bitwise equal on that fixture; a small value such as `1.11e-16` is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.
 
-For each `ORIGINAL` row, the named gene strategy is paired with
-`NoneOrgStrategy`. That no-op partner contributes zero, so the comparison
-isolates the named strategy. The two `MATH_PAPER` rows refer to the same Alt-Sel
-run: one row assesses its altruistic-gene component and the other its
-selfish-organism component. Their numerical results are therefore intentionally
-identical. This does not mean the matrix components are algebraically
-inseparable; isolated math-paper D-matrix models are simply outside the
-package's public compatibility contract.
+For each `ORIGINAL` row, the named gene strategy is paired with `NoneOrgStrategy`. That no-op partner contributes zero, so the comparison isolates the named strategy. The math-paper dominant row uses the same arrangement. The other two `MATH_PAPER` rows refer to the same Alt-Sel run: one row assesses its altruistic-gene component and the other its selfish-organism component. Their numerical results are therefore intentionally identical. This does not mean the matrix components are algebraically inseparable; their isolated D-matrix models are outside the package's public compatibility contract.
 
-### 1.6.2. Results
+### 1.7.2. Results
 
 | Formulation | Strategy assessed | Partner in comparison | 1 iteration | 50 iterations | 100 iterations | D-matrix vs. iterative-path assessment |
 |---|---|---|---:|---:|---:|---|
-| ORIGINAL | Dominant gene | None organism | 0 | 1.11e-16 | 6.51e-18 | Matches iterative path. |
-| ORIGINAL | Selfish gene | None organism | 0 | 5.55e-17 | 2.78e-17 | Matches iterative path. |
-| ORIGINAL | Kin-altruistic gene, default full neighbourhood | None organism | 0 | 1.11e-16 | 5.55e-17 | Matches iterative path. |
-| ORIGINAL | Altruistic gene | None organism | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Sell hard gene | None organism | 1.39e-17 | 2.84e-16 | 5.72e-17 | Matches iterative path. |
-| ORIGINAL | Sell uniform gene | None organism | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Sell easy gene | None organism | 0 | 0 | 0 | Matches iterative path. |
-| ORIGINAL | Variance gene | None organism | 0 | 3.33e-16 | 6.94e-17 | Matches iterative path. |
-| MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches iterative path as part of Alt-Sel. |
-| MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches iterative path as part of Alt-Sel. |
+| ORIGINAL | Dominant gene | None organism | 0 | 1.11e-16 | 6.51e-18 | Matches. 2.33 ms iterative vs 0.69 ms D matrix; D matrix was 3.4 times faster. |
+| ORIGINAL | Selfish gene | None organism | 0 | 5.55e-17 | 2.78e-17 | Matches. 8.32 ms iterative vs 0.67 ms D matrix; D matrix was 12.5 times faster. |
+| ORIGINAL | Kin-altruistic gene, default full neighbourhood | None organism | 0 | 1.11e-16 | 5.55e-17 | Matches. 9.41 ms iterative vs 0.69 ms D matrix; D matrix was 13.6 times faster. |
+| ORIGINAL | Altruistic gene | None organism | 0 | 0 | 0 | Matches. 11.65 ms iterative vs 0.68 ms D matrix; D matrix was 17.1 times faster. |
+| ORIGINAL | Sell hard gene | None organism | 1.39e-17 | 2.84e-16 | 5.72e-17 | Matches. 4.04 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster. |
+| ORIGINAL | Sell uniform gene | None organism | 0 | 0 | 0 | Matches. 3.90 ms iterative vs 0.61 ms D matrix; D matrix was 6.4 times faster. |
+| ORIGINAL | Sell easy gene | None organism | 0 | 0 | 0 | Matches. 4.02 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster. |
+| ORIGINAL | Variance gene | None organism | 0 | 3.33e-16 | 6.94e-17 | Matches. 8.58 ms iterative vs 0.72 ms D matrix; D matrix was 12.0 times faster. |
+| MATH_PAPER | Dominant gene | None organism | 0 | 2.22e-16 | 5.20e-18 | Matches. 2.59 ms iterative vs 0.69 ms D matrix; D matrix was 3.8 times faster. |
+| MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
+| MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
 
-The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The two math-paper rows report the same five-organism, three-gene Alt-Sel run with initial $\gamma=(0.4,0.35,0.25)$ and historical similarity scaling. The original kernels also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Their largest observed discrepancy is $3.4\times10^{-16}$.
+The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and math-paper similarity scaling. The original kernels and the math-paper dominant kernel also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. All satisfy the same `rtol=1e-12`, `atol=1e-12` criterion; the original kernels' largest observed discrepancy is $3.4\times10^{-16}$.
 
 The assertions are implemented in `tests/unit/test_d_matrix_equivalence.py` and `tests/unit/test_math_paper_formulation.py`.
 
-## 1.7. Safe use
+## 1.8. Safe use
 
-### 1.7.1. Selecting a formulation
+### 1.8.1. Selecting a formulation
 
-Use `ORIGINAL` for the Python-package equations. Use `MATH_PAPER` to reproduce the revised historical equations, similarities, normalisations, and Alt-Sel D-matrix formulation. Do not mix formulations in one model.
+Use `ORIGINAL` for the Python-package equations. Use `MATH_PAPER` to reproduce the revised historical equations, similarities, normalisations, and exact math-paper D-matrix configurations. Do not mix formulations in one model. A math-paper fit requires an explicit `max_iter`; the direct analytical Dominant+Balanced fixed point selected by `max_iter=None` implements only `ORIGINAL` and is therefore rejected under `MATH_PAPER`.
 
-### 1.7.2. Selecting the execution path
+### 1.8.2. Selecting the execution path
 
-Use `use_d_matrix=True` only for a configuration represented in the comparison table. In `ORIGINAL`, supported strategies may be combined with fixed coefficients because their direct deltas and D contributions are both added linearly. In `MATH_PAPER`, use only the unmixed Alt-Sel pair. All other strategies remain usable with `use_d_matrix=False`.
+Use `use_d_matrix=True` only for a configuration represented in the comparison table. In `ORIGINAL`, supported strategies may be combined with fixed coefficients because their direct deltas and D contributions are both added linearly. In `MATH_PAPER`, use dominant gene with a no-op organism strategy or the unmixed Alt-Sel pair. All other supported math-paper strategy arrangements remain usable with `use_d_matrix=False`; strategies that implement only `ORIGINAL` are rejected when the model selects `MATH_PAPER`.

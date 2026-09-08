@@ -7,6 +7,7 @@ import numpy as np
 from pikaia.config.logger import logger
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models.genetic_model import GeneticModel
+from pikaia.schemas.strategies import StrategyFormulation
 from pikaia.strategies.base_strategies import (
     GeneStrategy,
     OrgStrategy,
@@ -61,6 +62,16 @@ class PikaiaModel(GeneticModel):
         threshold, indicating convergence.
         """
         import time
+
+        if (
+            self._formulation is StrategyFormulation.MATH_PAPER
+            and self._max_iter is None
+        ):
+            raise ValueError(
+                "MATH_PAPER requires max_iter to be set because the analytical "
+                "Dominant+Balanced fixed point implements only the ORIGINAL "
+                "formulation."
+            )
 
         if self._initial_org_fitness_range == 0:
             logger.info(

@@ -1,7 +1,10 @@
 """Implement the no-op organism strategy."""
 
+from typing import ClassVar
+
 import numpy as np
 
+from pikaia.schemas.strategies import StrategyFormulation
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -10,8 +13,14 @@ class NoneOrgStrategy(OrgStrategy):
 
     This strategy is a neutral placeholder that returns a delta vector of zeros,
     effectively making no change to the organism's fitness contribution. It can
-    be used to disable organism-level selection.
+    be used to disable organism-level selection. Because zero is independent of
+    the selected equations, the strategy supports both ``ORIGINAL`` and
+    ``MATH_PAPER``.
     """
+
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+    )
 
     def __init__(self, **kwargs):
         """Initialise the None (no-op) organism strategy.

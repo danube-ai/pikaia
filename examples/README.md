@@ -63,13 +63,14 @@ an exact reduced implementation:
 
 - `ORIGINAL`: each supported gene strategy paired with `NoneOrgStrategy`, which
   isolates its contribution.
-- `MATH_PAPER`: the supported altruistic-gene plus selfish-organism Alt-Sel
-  configuration.
+- `MATH_PAPER`: dominant gene paired with `NoneOrgStrategy`, plus the supported
+  altruistic-gene and selfish-organism Alt-Sel configuration.
 
 For every row, it independently runs the ordinary and D-matrix paths at 1, 50,
 and 100 iterations and reports the largest absolute difference between their
-final gene-fitness vectors. Unsupported combinations are not benchmarked as if
-they had a valid D-matrix implementation; requesting one in the package raises
+final gene-fitness vectors. It also reports median runtimes over seven complete
+100-iteration fits. Unsupported combinations are not benchmarked as if they
+had a valid D-matrix implementation; requesting one in the package raises
 `ValueError`.
 
 Run it with:
