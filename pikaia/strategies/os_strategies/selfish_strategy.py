@@ -1,19 +1,19 @@
-from typing import Any
+"""Implement the selfish organism strategy and its supported formulations."""
+
+from typing import ClassVar
 
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.schemas.strategies import (
     StrategyFormulation,
-    StrategyFormulationConfig,
     StrategyNormalizations,
 )
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
 class SelfishOrgStrategy(OrgStrategy):
-    """
-    An organism strategy that promotes selfish behavior.
+    """An organism strategy that promotes selfish behavior.
 
     This strategy models selfishness where an organism aims to increase its
     own fitness, potentially at the expense of others. The delta is calculated
@@ -23,24 +23,22 @@ class SelfishOrgStrategy(OrgStrategy):
     This implementation follows the logic from the original `alg.py`.
     """
 
-    def __init__(
-        self,
-        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
-        **kwargs: Any,
-    ):
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+    )
+
+    def __init__(self, **kwargs):
         """Initialise the Selfish organism strategy.
 
         Keyword Args:
             kin_range (int): Maximum number of organisms to consider when
                 computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to `OrgStrategy`
+            **kwargs (object): Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
-        self.formulation = StrategyFormulationConfig.model_validate(
-            {"formulation": formulation}
-        ).formulation
 
     @property
     def name(self) -> str:
@@ -48,14 +46,14 @@ class SelfishOrgStrategy(OrgStrategy):
         return "Selfish"
 
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
-        """
-        Computes deltas for a selfish organism strategy.
+        """Compute deltas for a selfish organism strategy.
 
         Args:
             ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
             np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
+
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
@@ -122,11 +120,14 @@ class SelfishOrgStrategy(OrgStrategy):
             org_similarity: Organism similarity matrix of shape ``(N, N)``.
             initial_org_fitness_range: Used to normalise the D matrix.
             y: Unused.
+            normalizations: Population-derived normalisation values required by
+                the ``MATH_PAPER`` formulation; ignored by ``ORIGINAL``.
 
         Returns:
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
             ``D[j, k] = (-2 / (N * R)) * sum_i[x_ij * sum_l(s^o_il * (x_ik - x_lk))]``,
             summed over kin neighbours of each organism.
+
         """
         X = population.matrix  # (N, M)
         N = population.N
@@ -169,4 +170,9 @@ class SelfishOrgStrategy(OrgStrategy):
 
     @property
     def requires_normalizations(self) -> bool:
+        """Indicate that the strategy requires population normalisations.
+
+        The calculation uses a shared normalisation value supplied by the
+        model before strategy evaluation.
+        """
         return True

@@ -1,3 +1,5 @@
+"""Provide the high-level Pikaia simulation model and iteration workflow."""
+
 import multiprocessing
 
 import numpy as np
@@ -16,8 +18,7 @@ from pikaia.strategies.mix_strategies.self_consistent_strategy import (
 
 
 class PikaiaModel(GeneticModel):
-    """
-    Central organizing class for the Genetic AI model.
+    """Central organizing class for the Genetic AI model.
 
     This class orchestrates the evolutionary simulation. It takes a population,
     a set of gene and organism strategies, and runs a simulation over a specified
@@ -29,12 +30,12 @@ class PikaiaModel(GeneticModel):
     """
 
     def __init__(self, *args, use_d_matrix: bool = False, **kwargs):
-        """
-        Initialises the PikaiaModel.
+        """Initialise the PikaiaModel.
 
         Accepts all arguments of :class:`GeneticModel` plus:
 
         Args:
+            *args (object): Positional arguments forwarded to :class:`GeneticModel`.
             use_d_matrix (bool):
                 When ``True``, the D-matrix fast path is used instead of the
                 standard per-organism loop. Precomputes the ``(M, M)`` D matrix
@@ -43,6 +44,8 @@ class PikaiaModel(GeneticModel):
                 strategies must have a registered D-matrix kernel; a
                 ``ValueError`` is raised at fit time if any do not.
                 Defaults to ``False``.
+            **kwargs (object): Keyword arguments forwarded to :class:`GeneticModel`.
+
         """
         super().__init__(*args, **kwargs)
         self._use_d_matrix = use_d_matrix
@@ -55,8 +58,7 @@ class PikaiaModel(GeneticModel):
         self._d_per_strategy: list = []
 
     def fit(self) -> None:
-        """
-        Fits the genetic model to the population data by running the simulation.
+        """Fit the genetic model by running the simulation.
 
         This method iteratively updates the gene and organism fitness values based on the
         provided strategies. The simulation runs for a maximum number of iterations as
@@ -99,9 +101,9 @@ class PikaiaModel(GeneticModel):
         logger.info(f"Total fit process time: {total_time:.4f} seconds.")
 
     def _run_fix_point(self):
-        """
-        Solves for the optimal gene fitness distribution directly, assuming a dominant
-        gene strategy and a balanced organism strategy.
+        """Solve the optimal gene-fitness distribution directly.
+
+        Assume a dominant gene strategy and a balanced organism strategy.
         """
         import time
 
@@ -119,8 +121,7 @@ class PikaiaModel(GeneticModel):
         logger.debug(f"_run_fix_point completed in {elapsed:.4f} seconds.")
 
     def _run_iterations(self):
-        """
-        Runs the evolutionary simulation for multiple iterations.
+        """Run the evolutionary simulation for multiple iterations.
 
         This method iterates over the specified number of iterations, updating
         the gene and organism fitness values at each step. It checks for convergence
@@ -172,8 +173,7 @@ class PikaiaModel(GeneticModel):
     def _run_iteration(
         self, iter_num: int
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Runs a single evolutionary step of the simulation.
+        """Run a single evolutionary step of the simulation.
 
         This method calculates the change in gene fitness based on the defined gene and
         organism strategies. It then mixes these strategies and applies the updates to
@@ -188,6 +188,7 @@ class PikaiaModel(GeneticModel):
                 - The new organism fitness vector.
                 - The new gene mixing coefficients.
                 - The new organism mixing coefficients.
+
         """
         current_org_fitness = self._org_fitness_hist[iter_num - 1, :]
         current_gene_fitness = self._gene_fitness_hist[iter_num - 1, :]
@@ -222,8 +223,7 @@ class PikaiaModel(GeneticModel):
     def _calculate_deltas(
         self, current_org_fitness: np.ndarray, current_gene_fitness: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Calculates the delta contributions for gene and organism fitness updates.
+        """Calculate delta contributions for gene and organism fitness updates.
 
         This method can run in parallel or sequentially based on the `n_jobs` setting.
 
@@ -233,6 +233,7 @@ class PikaiaModel(GeneticModel):
 
         Returns:
             tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and delta_o matrices.
+
         """
         delta_g = np.zeros(
             [self._population.N, self._population.M, len(self._gene_strategies)]
@@ -308,8 +309,7 @@ class PikaiaModel(GeneticModel):
         gene_id: int | None,
         context_args: dict,
     ) -> np.ndarray | float:
-        """
-        Computes a single delta contribution for either organism or gene strategies.
+        """Compute one delta contribution for an organism or gene strategy.
 
         Args:
             strat (GeneStrategy | OrgStrategy): The strategy to apply.
@@ -319,6 +319,7 @@ class PikaiaModel(GeneticModel):
 
         Returns:
             np.ndarray | float: The computed delta value(s).
+
         """
         return strat(
             StrategyContext(
@@ -345,6 +346,7 @@ class PikaiaModel(GeneticModel):
             epsilon_override: If provided, overrides ``self._epsilon`` as the
                 convergence threshold.  Used internally by
                 ``_run_d_matrix_fix_point()`` to apply a tight tolerance.
+
         """
         import time
 
@@ -447,6 +449,7 @@ class PikaiaModel(GeneticModel):
 
         Returns:
             ``(D_total, d_total)`` with current coefficients applied.
+
         """
         M = self._population.M
         D_total = np.zeros((M, M))
@@ -466,8 +469,7 @@ class PikaiaModel(GeneticModel):
         return (D_total if has_D else None), (d_total if has_d else None)
 
     def predict(self, population: PikaiaPopulation) -> np.ndarray:
-        """
-        Predicts the organism fitness for a new population using the fitted model.
+        """Predicts the organism fitness for a new population using the fitted model.
 
         This method computes the organism fitness values for a given population
         based on the final gene fitness distribution obtained from the last iteration
@@ -476,9 +478,11 @@ class PikaiaModel(GeneticModel):
         Args:
             population (PikaiaPopulation): The new population for which to predict
                 organism fitness.
+
         Returns:
             np.ndarray: A vector of predicted organism fitness values of shape (N,),
                 where N is the number of organisms in the provided population.
+
         """
         if population.M != self._population.M:
             raise ValueError(

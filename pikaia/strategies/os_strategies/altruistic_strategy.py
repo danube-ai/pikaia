@@ -1,3 +1,5 @@
+"""Implement the altruistic organism strategy."""
+
 import numpy as np
 
 from pikaia.config.logger import logger
@@ -6,8 +8,7 @@ from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
 class AltruisticOrgStrategy(OrgStrategy):
-    """
-    An organism strategy that promotes altruistic behavior towards relatives.
+    """An organism strategy that promotes altruistic behavior towards relatives.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -27,8 +28,9 @@ class AltruisticOrgStrategy(OrgStrategy):
             kin_range (int): Maximum number of organisms to consider as kin
                 when computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to `OrgStrategy`
+            **kwargs (object): Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -38,14 +40,14 @@ class AltruisticOrgStrategy(OrgStrategy):
         return "Altruistic"
 
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
-        """
-        Computes deltas for an altruistic organism strategy.
+        """Compute deltas for an altruistic organism strategy.
 
         Args:
             ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
             np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
+
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
@@ -116,6 +118,7 @@ class AltruisticOrgStrategy(OrgStrategy):
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix summing
             outer products of gene-expression vectors weighted by kin
             similarity differences, scaled by ``-2 / (N * R)``.
+
         """
         X = population.matrix  # (N, M)
         N = population.N

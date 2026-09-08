@@ -1,3 +1,5 @@
+"""Implement the entropy-maximising gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class EntropyMaxGeneStrategy(GeneStrategy):
-    """
-    A supervised gene strategy driven by information-theoretic relevance.
+    """A supervised gene strategy driven by information-theoretic relevance.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -37,12 +38,21 @@ class EntropyMaxGeneStrategy(GeneStrategy):
             mutual information estimation.  Default ``10``.
         precomputed_info: Pre-computed info scores of shape ``(n_features,)``.
             If provided, skips the MI computation entirely.
-        **kwargs: Forwarded to `GeneStrategy`.
+        **kwargs (object): Forwarded to `GeneStrategy`.
+
     """
 
     def __init__(
         self, n_bins: int = 10, precomputed_info: np.ndarray | None = None, **kwargs
     ):
+        """Initialise score calculation and optional precomputed information.
+
+        Args:
+            n_bins: Number of histogram bins used for information estimation.
+            precomputed_info: Optional per-feature scores that bypass estimation.
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
         self.n_bins = n_bins
         self._info_scores: np.ndarray | None = precomputed_info
@@ -62,6 +72,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
         Returns:
             1D array of integer-encoded labels.
+
         """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
@@ -82,6 +93,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
         Returns:
             Array of shape ``(n_features,)`` with values in ``[0, 1]``.
+
         """
         from sklearn.metrics import mutual_info_score
 
@@ -127,6 +139,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
         Returns:
             Per-feature information scores of shape ``(n_features,)``.
+
         """
         mode = "supervised" if y is not None else "unsupervised"
         if self._info_scores is None or (
@@ -144,6 +157,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta ``Delta_G(i,j)``.
+
         """
         scores = self._get_scores(ctx.population.matrix, ctx.y)
         return float(
@@ -171,6 +185,7 @@ class EntropyMaxGeneStrategy(GeneStrategy):
 
         Returns:
             ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix.
+
         """
         scores = self._get_scores(population.matrix, y)
         D = np.diag(4.0 * (scores - 0.5))

@@ -1,3 +1,5 @@
+"""Implement the kin-altruistic gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class KinAltruisticGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that promotes altruism towards kin (similar genes).
+    """A gene strategy that promotes altruism towards kin (similar genes).
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -25,8 +26,9 @@ class KinAltruisticGeneStrategy(GeneStrategy):
             kin_range (int): Number of most-similar genes to consider as kin
                 when computing the interaction term.  Defaults to ``M``
                 (the full feature dimension).
-            **kwargs: Additional options forwarded to `GeneStrategy`
+            **kwargs (object): Additional options forwarded to `GeneStrategy`
                 and stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -36,8 +38,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
         return "KinAltruistic"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for a kin-altruistic gene.
+        """Compute the delta for a kin-altruistic gene.
 
         The formula considers the interaction with other genes, weighted by a
         factor of `(0.5 - similarity)`.
@@ -47,6 +48,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.M)
@@ -111,6 +113,7 @@ class KinAltruisticGeneStrategy(GeneStrategy):
             ``D[j, k] = (16/M) * (0.5 - gene_sim_masked[j, k])``
             ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
             and the diagonal set to zero.
+
         """
         X = population.matrix  # (N, M)
         M = population.M

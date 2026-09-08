@@ -5,31 +5,21 @@ All notable changes to **pikaia** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-09-08
+## 1. [0.4.0] - 2026-09-08
 
-### Added
+### 1.1. Added
 
-- **Math-paper strategy formulations.** `DominantGeneStrategy`,
-  `AltruisticGeneStrategy`, and `SelfishOrgStrategy` now accept the validated
-  `StrategyFormulation` enum. `ORIGINAL` remains the default; `MATH_PAPER`
-  enables the revised equations and population-derived normalizations from the
-  mathematical paper.
-- **D-matrix formulation reference.** Added a dedicated documentation page
-  deriving the D-matrix contract from the iterative equations and recording
-  exact, approximate, iterative-only, and unsupported strategy mappings.
-- **Math-paper equivalence tests.** Added iterative versus D-matrix regression
-  coverage for multiple non-uniform initial gene-fitness vectors.
+- **Math-paper strategy formulations.** `DominantGeneStrategy`, `AltruisticGeneStrategy`, and `SelfishOrgStrategy` now accept the validated `StrategyFormulation` enum. `ORIGINAL` remains the default; `MATH_PAPER` enables the revised equations and population-derived normalizations from the mathematical paper.
+- **D-matrix formulation reference.** Added a dedicated documentation page deriving the D-matrix contract from the iterative equations and recording exact, approximate, iterative-only, and unsupported strategy mappings.
+- **Math-paper equivalence tests.** Added iterative versus D-matrix regression coverage for multiple non-uniform initial gene-fitness vectors.
 
-### Changed
+### 1.2. Changed
 
-- **D-matrix documentation and safeguards.** Corrected the documented fast
-  update equation, clarified reduced-dynamics organism kernels, and make
-  `MATH_PAPER` dominant fail fast when `use_d_matrix=True` is selected because
-  its linear-in-fitness formulation has no static D-matrix representation.
+- **D-matrix documentation and safeguards.** Corrected the documented fast update equation, clarified reduced-dynamics organism kernels, and make `MATH_PAPER` dominant fail fast when `use_d_matrix=True` is selected because its linear-in-fitness formulation has no static D-matrix representation.
 
-## [0.3.3] - 2026-08-11
+## 2. [0.3.3] - 2026-08-11
 
-### Fixed
+### 2.1. Fixed
 
 - **Zero org-fitness range no longer raises.** When features are perfectly
   inversely symmetric (balanced anti-correlations that cancel under uniform
@@ -43,9 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   can appear with small, carefully constructed examples such as two items
   with perfectly anti-correlated features.
 
-## [0.3.2] - 2026-08-10
+## 3. [0.3.2] - 2026-08-10
 
-### Fixed
+### 3.1. Fixed
 
 - **Trading strategy multi-iteration accuracy.** All three sell/buy pairs now
   hold their intended dynamics across many iterations, not just the first:
@@ -59,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **BuyUniform** capital now excludes genes with trivial exclusiveness (same
     mask as SellUniform), keeping per-organism capital ratios correct.
 
-### Added
+### 3.2. Added
 
 - **100-iteration convergence tests** for all three trading pairs:
   - `SellHard + BuyHard`: stable match at k = 1 … 100 (atol 1e-5).
@@ -68,18 +58,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     because this inverse pair is inherently divergent (values grow
     exponentially).
 
-## [0.3.1] - 2026-08-07
+## 4. [0.3.1] - 2026-08-07
 
-### Added
+### 4.1. Added
 
 - **`VarianceGeneStrategy`** (`VARIANCE`) — rewards genes with high
   cross-organism dispersion (variance of expression across the population).
   Registered in `GeneStrategyEnum` and `GeneStrategyFactory`; unit tests and
   `kernel()` included.
 
-## [0.3.0] - 2026-08-04
+## 5. [0.3.0] - 2026-08-04
 
-### Changed
+### 5.1. Changed
 
 - **Release process moved to a single-branch (trunk-based) model.** `main` is
   now the only long-lived branch. Every merge to `main` publishes to TestPyPI
@@ -88,13 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   replaces the previous GitFlow-style `develop → main` sync flow. See
   [`docs/releasing.md`](docs/releasing.md).
 
-### Added
+### 5.2. Added
 
 - **`docs/releasing.md`** — maintainer release guide covering the day-to-day
   contribution flow, cutting a release via a version tag, the `pypi` approval
   gate, and the rationale for trunk-based over GitFlow. Added to the docs nav.
 
-### Removed
+### 5.3. Removed
 
 - Retired the `develop` branch and the `develop → main` sync workflow.
 - Removed the CI `version-check` job (a per-PR version bump is no longer
@@ -104,43 +94,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > This release contains no functional changes to the `pikaia` package itself; it
 > marks the release-infrastructure overhaul.
 
-## [0.2.10] - 2026-08-03
+## 6. [0.2.10] - 2026-08-03
 
-### Changed
+### 6.1. Changed
 
 - Documentation deploy now redirects the site root URL to the latest released
   version on `main` deploys (#29).
 
-## [0.2.9] - 2026-08-03
+## 7. [0.2.9] - 2026-08-03
 
-### Changed
+### 7.1. Changed
 
 - Cleaned up supervision documentation, corrected the strategy tables and
   README, and added a supervised-mode note (#27).
 
-### Removed
+### 7.2. Removed
 
 - `adaptive_supervision.md`, superseded by the consolidated supervision docs
   (#26).
 
-## [0.2.8] - 2026-08-03
+## 8. [0.2.8] - 2026-08-03
 
-### Changed
+### 8.1. Changed
 
 - **Sell strategy relocated** from a gene strategy to an organism strategy
   (`pikaia/strategies/os_strategies/sell_strategy.py`); strategy docstrings and
   type annotations cleaned up across the package (#24).
 
-## [0.2.7] - 2026-08-03
+## 9. [0.2.7] - 2026-08-03
 
-### Added
+### 9.1. Added
 
 - **MkDocs Material documentation site** with `mike` version management and
   `mkdocstrings`-generated API reference, replacing the Sphinx build (#24).
 
-## [0.2.6] - 2026-07-30
+## 10. [0.2.6] - 2026-07-30
 
-### Added
+### 10.1. Added
 
 - **Information-theoretic and redundancy-aware gene strategies** — four new
   `GeneStrategy` implementations validated across 65 experiments on 18
@@ -167,9 +157,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `example8_entropymax_fast_selection.py` — EntropyMax convergence at 5 iterations
   - `example9_archetypal_organisms.py` — SELFISH organism archetype detection
 
-## [0.2.5] - 2026-07-28
+## 11. [0.2.5] - 2026-07-28
 
-### Added
+### 11.1. Added
 
 - **Trading strategies** (RewardHard, RewardEasy, ValuationBlend) — three new
   `GeneStrategy` implementations:
@@ -185,40 +175,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **D-matrix comparison benchmark** updated to cover all 8 gene strategies
   (40 strategy combinations instead of 25)
 
-### Changed
+### 11.2. Changed
 
 - `d_matrix_comparison.py` and strategy documentation now reflect 8 gene
   strategies / 40 combinations (was 5 strategies / 25 combinations)
 
-## [0.2.4] - 2026-07-20
+## 12. [0.2.4] - 2026-07-20
 
-### Added
+### 12.1. Added
 
 - **Adaptive supervision** — an optional target `y` is threaded through
   `StrategyContext` and every strategy `kernel()`, enabling supervised strategy
   behaviour while remaining fully optional for unsupervised use (#18).
 
-## [0.2.3] - 2026-07-20
+## 13. [0.2.3] - 2026-07-20
 
-### Added
+### 13.1. Added
 
 - Groundwork for adaptive supervision, released together with 0.2.4 (#18).
 
-## [0.2.2] - 2026-05-29
+## 14. [0.2.2] - 2026-05-29
 
-### Changed
+### 14.1. Changed
 
 - Updated README status shields; version bump (#12).
 
-## [0.2.1] - 2026-05-29
+## 15. [0.2.1] - 2026-05-29
 
-### Changed
+### 15.1. Changed
 
 - Synced `main` with `develop`; version bump (#10).
 
-## [0.2.0] - 2026-05-29
+## 16. [0.2.0] - 2026-05-29
 
-### Added
+### 16.1. Added
 
 - **D-matrix acceleration path** for `PikaiaModel` (`use_d_matrix=True`), with
   `kernel()` methods implemented across every strategy in `pikaia.strategies`.
@@ -246,7 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `uv lock --locked` check to prevent unsynced lockfile drift.
   - Dependabot configuration for weekly grouped GitHub-Actions SHA bumps.
 
-### Changed
+### 16.2. Changed
 
 - **Python requirement bumped to `>=3.14`**; all dependencies upgraded.
 - Restructured workspace: research experiments moved from `examples/` to
@@ -261,27 +251,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `examples/` and `research/`, and reference notes cleaned of HTML artefacts
   (`&nbsp;` entities, broken external paths).
 
-### Fixed
+### 16.3. Fixed
 
 - Broken module imports across the package after the examples/research split.
 
-### Testing
+### 16.4. Testing
 
 - Unit-test coverage expanded to **≥99%** across the `pikaia` package;
   strategy-kernel tests added; model and population tests updated.
 
-## [0.1.0] - 2025-10-06
+## 17. [0.1.0] - 2025-10-06
 
 Consolidated release migrating internal development work into the public
 repository. Includes the genetic-layer architecture with input projection,
 refreshed examples, updated README with preprint links, and improved mixing-
 coefficient validation in `PikaiaModel`.
 
-## [0.0.3] - 2025-05-05
+## 18. [0.0.3] - 2025-05-05
 
 Maintenance release.
 
-## [0.0.2] - 2025-02-06
+## 19. [0.0.2] - 2025-02-06
 
 Initial public release.
 

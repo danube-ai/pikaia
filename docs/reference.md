@@ -1,26 +1,26 @@
 # API Reference
 
-## Core
+## 1. Core
 
-### Population
+### 1.1. Population
 
 ::: pikaia.data.population.PikaiaPopulation
 
-### Model
+### 1.2. Model
 
 ::: pikaia.models.pikaia_model.PikaiaModel
 
-### Preprocessor
+### 1.3. Preprocessor
 
 ::: pikaia.preprocessing.pikaia_preprocessor.PikaiaPreprocessor
 
-### Plotter
+### 1.4. Plotter
 
 ::: pikaia.plotting.pikaia_plotter.PikaiaPlotter
 
 ::: pikaia.plotting.pikaia_plotter.PlotType
 
-## Schemas
+## 2. Schemas
 
 ::: pikaia.schemas.strategies.GeneStrategyEnum
 
@@ -34,9 +34,9 @@
 
 ::: pikaia.schemas.strategies.StrategyNormalizations
 
-## Strategies
+## 3. Strategies
 
-### Base Classes
+### 3.1. Base Classes
 
 ::: pikaia.strategies.base_strategies.GeneStrategy
 
@@ -46,7 +46,7 @@
 
 ::: pikaia.strategies.base_strategies.StrategyContext
 
-### Factories
+### 3.2. Factories
 
 ::: pikaia.strategies.strategy_factories.GeneStrategyFactory
 
@@ -54,7 +54,7 @@
 
 ::: pikaia.strategies.strategy_factories.MixStrategyFactory
 
-### Gene Strategies
+### 3.3. Gene Strategies
 
 ::: pikaia.strategies.gs_strategies.dominant_strategy.DominantGeneStrategy
 
@@ -80,7 +80,7 @@
 
 ::: pikaia.strategies.gs_strategies.redundancy_penalty_strategy.RedundancyPenaltyGeneStrategy
 
-### Organism Strategies
+### 3.4. Organism Strategies
 
 ::: pikaia.strategies.os_strategies.balanced_strategy.BalancedOrgStrategy
 
@@ -96,7 +96,7 @@
 
 ::: pikaia.strategies.os_strategies.buy_easy_strategy.BuyEasyOrgStrategy
 
-### Mix Strategies
+### 3.5. Mix Strategies
 
 ::: pikaia.strategies.mix_strategies.fixed_strategy.FixedMixStrategy
 

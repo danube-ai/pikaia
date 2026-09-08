@@ -1,9 +1,10 @@
+"""Declare validated configuration schemas for data preprocessing."""
+
 from enum import Enum
 
 
 class FeatureType(str, Enum):
-    """
-    Enum representing types of features in the dataset.
+    """Enum representing types of features in the dataset.
 
     Members:
         COST: A cost feature — lower values are more desirable.

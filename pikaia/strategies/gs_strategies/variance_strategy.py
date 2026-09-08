@@ -1,3 +1,5 @@
+"""Implement the variance-weighted gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -11,8 +13,7 @@ def _normalized_std(matrix: np.ndarray) -> np.ndarray:
 
 
 class VarianceGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that rewards features with high cross-organism dispersion.
+    """A gene strategy that rewards features with high cross-organism dispersion.
 
     Scales a Dominant-style expression signal by the column's normalised
     standard deviation so that genes which separate organisms more strongly
@@ -23,8 +24,9 @@ class VarianceGeneStrategy(GeneStrategy):
         """Initialise the Variance gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `GeneStrategy` and
+            **kwargs (object): Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -34,14 +36,14 @@ class VarianceGeneStrategy(GeneStrategy):
         return "Variance"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for a variance-weighted gene.
+        """Compute the delta for a variance-weighted gene.
 
         Args:
             ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+
         """
         s_hat = _normalized_std(ctx.population.matrix)
         return float(
@@ -71,6 +73,7 @@ class VarianceGeneStrategy(GeneStrategy):
         Returns:
             Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
             with ``D[j, j] = 4 * s_hat_j * (x_bar_j - 0.5)``.
+
         """
         s_hat = _normalized_std(population.matrix)
         D = np.diag(4.0 * s_hat * (population.matrix.mean(axis=0) - 0.5))

@@ -6,12 +6,17 @@ from pydantic import ValidationError
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models.pikaia_model import PikaiaModel
-from pikaia.schemas.strategies import StrategyFormulation
+from pikaia.schemas.strategies import (
+    GeneStrategyEnum,
+    OrgStrategyEnum,
+    StrategyFormulation,
+)
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
 from pikaia.strategies.gs_strategies.none_strategy import NoneGeneStrategy
 from pikaia.strategies.os_strategies.none_strategy import NoneOrgStrategy
 from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
+from pikaia.strategies.strategy_factories import GeneStrategyFactory, OrgStrategyFactory
 
 
 def _population() -> PikaiaPopulation:
@@ -97,6 +102,46 @@ def test_original_formulation_is_the_default():
     assert DominantGeneStrategy().formulation is StrategyFormulation.ORIGINAL
     assert AltruisticGeneStrategy().formulation is StrategyFormulation.ORIGINAL
     assert SelfishOrgStrategy().formulation is StrategyFormulation.ORIGINAL
+
+
+def test_every_gene_and_organism_strategy_defaults_to_original_formulation():
+    for strategy_enum in GeneStrategyEnum:
+        strategy = GeneStrategyFactory.get_strategy(strategy_enum)
+        assert strategy.formulation is StrategyFormulation.ORIGINAL
+
+    for strategy_enum in OrgStrategyEnum:
+        strategy = OrgStrategyFactory.get_strategy(strategy_enum)
+        assert strategy.formulation is StrategyFormulation.ORIGINAL
+
+
+def test_only_strategies_with_math_paper_equations_accept_math_paper():
+    supported_gene_strategies = {
+        GeneStrategyEnum.DOMINANT,
+        GeneStrategyEnum.ALTRUISTIC,
+    }
+    supported_org_strategies = {OrgStrategyEnum.SELFISH}
+
+    for strategy_enum in GeneStrategyEnum:
+        factory = GeneStrategyFactory.get_strategy
+        if strategy_enum in supported_gene_strategies:
+            assert (
+                factory(strategy_enum, formulation="MATH_PAPER").formulation
+                is StrategyFormulation.MATH_PAPER
+            )
+        else:
+            with pytest.raises(ValueError, match="does not support MATH_PAPER"):
+                factory(strategy_enum, formulation="MATH_PAPER")
+
+    for strategy_enum in OrgStrategyEnum:
+        factory = OrgStrategyFactory.get_strategy
+        if strategy_enum in supported_org_strategies:
+            assert (
+                factory(strategy_enum, formulation="MATH_PAPER").formulation
+                is StrategyFormulation.MATH_PAPER
+            )
+        else:
+            with pytest.raises(ValueError, match="does not support MATH_PAPER"):
+                factory(strategy_enum, formulation="MATH_PAPER")
 
 
 def test_formulation_is_validated_by_pydantic():

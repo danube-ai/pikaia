@@ -1,3 +1,5 @@
+"""Implement the score-based strategy that preferentially sells hard genes."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class SellHardGeneStrategy(GeneStrategy):
-    """
-    Trading sell signal weighted by gene difficulty.
+    r"""Trading sell signal weighted by gene difficulty.
 
     Hard genes (low mean expression, high exclusiveness) lose more value per
     unit of performance — organisms that solved them "sell" at a premium.
@@ -27,13 +28,29 @@ class SellHardGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the strategy with options accepted by ``GeneStrategy``.
+
+        Args:
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
 
     @property
     def name(self) -> str:
+        """Return the stable registry name for this strategy."""
         return "SellHard"
 
     def __call__(self, ctx: StrategyContext) -> float:
+        """Return this organism's difficulty-weighted sell contribution.
+
+        Args:
+            ctx: Evaluation context identifying the organism and gene.
+
+        Returns:
+            Signed gene-fitness delta for the selected organism and gene.
+
+        """
         X = ctx.population.matrix
         N = ctx.population.N
         mean_j = X[:, ctx.gene_id].mean()

@@ -1,3 +1,5 @@
+"""Implement the redundancy-penalty gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class RedundancyPenaltyGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that penalises redundant (highly correlated) features.
+    """A gene strategy that penalises redundant (highly correlated) features.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -36,10 +37,18 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
     Args:
         precomputed_redundancy: Pre-computed redundancy scores of shape
             ``(n_features,)``.  If provided, skips computation entirely.
-        **kwargs: Forwarded to `GeneStrategy`.
+        **kwargs (object): Forwarded to `GeneStrategy`.
+
     """
 
     def __init__(self, precomputed_redundancy: np.ndarray | None = None, **kwargs):
+        """Initialise score calculation and optional redundancy scores.
+
+        Args:
+            precomputed_redundancy: Optional per-feature redundancy scores.
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
         self._redundancy: np.ndarray | None = precomputed_redundancy
         self._mode: str | None = None
@@ -58,6 +67,7 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
 
         Returns:
             1D float array with values ``+1.0`` (≥ median) or ``-1.0`` (< median).
+
         """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
@@ -77,6 +87,7 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
 
         Returns:
             Array of shape ``(n_cols,)`` with values in ``[0, 1]``.
+
         """
         if X.shape[1] <= 1:
             return np.array([0.0])
@@ -95,6 +106,7 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
 
         Returns:
             Per-feature redundancy scores of shape ``(n_features,)``.
+
         """
         mode = "supervised" if y is not None else "unsupervised"
         if self._redundancy is None or self._mode != mode:
@@ -116,6 +128,7 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta ``Delta_G(i,j)``.
+
         """
         scores = self._get_scores(ctx.population.matrix, ctx.y)
         return float(
@@ -143,6 +156,7 @@ class RedundancyPenaltyGeneStrategy(GeneStrategy):
 
         Returns:
             ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix.
+
         """
         scores = self._get_scores(population.matrix, y)
         D = np.diag(4.0 * (0.5 - scores))

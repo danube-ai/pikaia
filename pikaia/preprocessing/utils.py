@@ -1,9 +1,10 @@
+"""Supply numerical transformations used by Pikaia preprocessing pipelines."""
+
 import numpy as np
 
 
 def max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
-    """
-    Scales the input array by dividing each value by the maximum value.
+    """Scales the input array by dividing each value by the maximum value.
 
     This method normalizes the data so the largest value becomes 1. Other values
     are scaled proportionally. Does not guarantee the minimum is 0 unless min is 0.
@@ -16,6 +17,7 @@ def max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
     Raises:
         ValueError: If the input array is empty or max value is zero.
+
     """
     arr = np.asarray(arr)
     if arr.size == 0:
@@ -29,8 +31,7 @@ def max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
 
 def min_max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
-    """
-    Scales the input array to the range [0, 1] using min-max scaling.
+    """Scales the input array to the range [0, 1] using min-max scaling.
 
     This function performs min-max normalization, which transforms the data
     by subtracting the minimum value and dividing by the range (max - min).
@@ -45,6 +46,7 @@ def min_max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
     Raises:
         ValueError: If the input array is empty.
+
     """
     arr = np.asarray(arr)
     if arr.size == 0:
@@ -60,8 +62,7 @@ def min_max_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
 
 def robust_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
-    """
-    Scales the input array using robust scaling (median and IQR) and then normalizes to [0, 1].
+    """Scales the input array using robust scaling (median and IQR) and then normalizes to [0, 1].
 
     Robust scaling uses the median and interquartile range (IQR) to scale the data,
     making it less sensitive to outliers compared to standard scaling methods.
@@ -76,6 +77,7 @@ def robust_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
     Raises:
         ValueError: If the input array is empty.
+
     """
     arr = np.asarray(arr)
     if arr.size == 0:
@@ -101,8 +103,7 @@ def robust_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 def power_transform(
     arr: list[int | float] | np.ndarray, power: float = 0.5
 ) -> np.ndarray:
-    """
-    Applies a power transformation to the input array and scales to [0, 1].
+    """Apply a power transformation to the input array and scale to [0, 1].
 
     Power transformation raises each value to the specified power, which can
     help stabilize variance and make the data more Gaussian-like. This is
@@ -118,6 +119,7 @@ def power_transform(
 
     Raises:
         ValueError: If the input array contains non-positive values or is empty.
+
     """
     arr = np.asarray(arr)
     if arr.size == 0:
@@ -137,8 +139,7 @@ def power_transform(
 
 
 def z_score_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
-    """
-    Applies z-score normalization and scales to [0, 1].
+    """Apply z-score normalization and scale to [0, 1].
 
     Z-score normalization (standardization) centers the data around the mean
     with a standard deviation of 1. This is useful for algorithms that assume
@@ -153,6 +154,7 @@ def z_score_scaler(arr: list[int | float] | np.ndarray) -> np.ndarray:
 
     Raises:
         ValueError: If the input array is empty.
+
     """
     arr = np.asarray(arr)
     if arr.size == 0:

@@ -1,3 +1,5 @@
+"""Implement the selfish gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class SelfishGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that promotes selfish behavior.
+    """A gene strategy that promotes selfish behavior.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -25,8 +26,9 @@ class SelfishGeneStrategy(GeneStrategy):
         """Initialise the Selfish gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `GeneStrategy` and
+            **kwargs (object): Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -36,8 +38,7 @@ class SelfishGeneStrategy(GeneStrategy):
         return "Selfish"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for a selfish gene.
+        """Compute the delta for a selfish gene.
 
         The formula calculates a negative delta contribution, effectively
         penalizing other genes to benefit the current one.
@@ -47,6 +48,7 @@ class SelfishGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+
         """
         # Get all gene indices except the current gene
         indices = np.arange(ctx.population.M) != ctx.gene_id
@@ -96,6 +98,7 @@ class SelfishGeneStrategy(GeneStrategy):
         Returns:
             Tuple ``(D, None)`` where ``D = -D_altruistic``; an ``(M, M)``
             matrix with the diagonal set to zero.
+
         """
         X = population.matrix  # (N, M)
         M = population.M

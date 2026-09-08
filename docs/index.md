@@ -14,7 +14,7 @@ Welcome to the documentation for **pikaia**, a Python package for data analysis 
 
 New to pikaia? Start with the [Tutorial](tutorial.md). For a conceptual introduction, see the [Overview](overview.md). For the full API, see the [Reference](reference.md). To add new strategies, see the [Contributor Guide](contributing.md).
 
-## Quick Start
+## 1. Quick Start
 
 ```python
 import numpy as np

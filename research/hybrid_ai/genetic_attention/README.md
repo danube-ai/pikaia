@@ -2,7 +2,7 @@
 
 This directory contains the ablation study comparing **Multi-Head Genetic Attention (MGA)** against standard multi-head attention in a BERT dual-encoder setup for passage retrieval on MS-MARCO.
 
-## Overview
+## 1. Overview
 
 | | |
 |---|---|
@@ -12,7 +12,7 @@ This directory contains the ablation study comparing **Multi-Head Genetic Attent
 | **Loss** | InfoNCE with in-batch negatives |
 | **Training steps** | 2,048 (≈ 2 epochs) |
 
-## Directory Structure
+## 2. Directory Structure
 
 ```text
 research/hybrid_ai/genetic_attention/
@@ -22,7 +22,7 @@ research/hybrid_ai/genetic_attention/
 └── artefacts/                 # Saved training outputs and plots
 ```
 
-## Quick Start
+## 3. Quick Start
 
 Install the required extras, then run the ablation:
 
@@ -40,7 +40,7 @@ python research/hybrid_ai/genetic_attention/run_ablation.py -m 500 -b 8 -lr 1e-5
 
 The script runs both configurations (standard then genetic) sequentially and saves results to `artefacts/`.
 
-## Results Summary
+## 4. Results Summary
 
 Results from the full 2,048-step run (see [ABLATION_REPORT.md](ABLATION_REPORT.md) for full analysis):
 
@@ -51,7 +51,7 @@ Results from the full 2,048-step run (see [ABLATION_REPORT.md](ABLATION_REPORT.m
 
 > Standard attention outperforms genetic attention across all metrics after extended training, with a 52% increase in training time for the genetic variant.
 
-## MGA Module Parameters
+## 5. MGA Module Parameters
 
 `MultiheadGeneticAttention` (from `pikaia.models.nn_modules.mga`) accepts the following constructor arguments:
 
@@ -64,7 +64,7 @@ Results from the full 2,048-step run (see [ABLATION_REPORT.md](ABLATION_REPORT.m
 | `dropout` | `float` | `0.0` | Attention dropout probability |
 | `bias` | `bool` | `True` | Whether to include bias in projections |
 
-## Architecture: BERT Dual-Encoder
+## 6. Architecture: BERT Dual-Encoder
 
 Both configurations use BERT-base with the following settings:
 
@@ -80,7 +80,7 @@ Both configurations use BERT-base with the following settings:
 | Training steps | 2,048 |
 | Pooling | Mean pooling over valid tokens |
 
-## References
+## 7. References
 
 - [BERT: Pre-training of Deep Bidirectional Transformers](https://arxiv.org/abs/1810.04805)
 - [MS MARCO: A Human Generated MAchine Reading COmprehension Dataset](https://arxiv.org/abs/1611.09268)

@@ -1,3 +1,5 @@
+"""Plot simulation histories and similarity matrices produced by Pikaia models."""
+
 from enum import StrEnum
 from pathlib import Path
 
@@ -10,9 +12,7 @@ from pikaia.models.pikaia_model import PikaiaModel
 
 
 class PlotType(StrEnum):
-    """
-    Enum for the different types of plots.
-    """
+    """Enum for the different types of plots."""
 
     GENE_FITNESS_HISTORY = "gene_fitness_history"
     ORGANISM_FITNESS_HISTORY = "organism_fitness_history"
@@ -23,8 +23,7 @@ class PlotType(StrEnum):
 
 
 class PikaiaPlotter:
-    """
-    A class for plotting results from a PikaiaModel.
+    """A class for plotting results from a PikaiaModel.
 
     This class provides a set of methods to visualize the outputs of an evolutionary
     simulation, including fitness histories, mixing coefficients, and similarity matrices.
@@ -32,8 +31,7 @@ class PikaiaPlotter:
     """
 
     def __init__(self, model: PikaiaModel):
-        """
-        Initializes the PikaiaPlotter with a PikaiaModel instance.
+        """Initialise the plotter with a PikaiaModel instance.
 
         Args:
             model (PikaiaModel):
@@ -52,8 +50,7 @@ class PikaiaPlotter:
         org_labels: list[str] | None = None,
         title: str | None = None,
     ) -> tuple[Figure, Axes]:
-        """
-        Plots the specified data from the model.
+        """Plot the specified data from the model.
 
         Args:
             plot_type (PlotType):
@@ -66,7 +63,7 @@ class PikaiaPlotter:
                 Custom labels for genes.
             org_labels (list[str] | None):
                 Custom labels for organisms.
-            title : str | None
+            title (str | None):
                 Custom title for the plot. If None, a default title is used.
 
         Returns:
@@ -151,8 +148,7 @@ class PikaiaPlotter:
         show: bool = False,
         save_path: Path | None = None,
     ) -> tuple[Figure, Axes]:
-        """
-        Helper function to plot 2D history data.
+        """Plot two-dimensional history data.
 
         Args:
             data (np.ndarray):
@@ -204,8 +200,7 @@ class PikaiaPlotter:
         show: bool = False,
         save_path: Path | None = None,
     ) -> tuple[Figure, Axes]:
-        """
-        Helper function to plot a similarity matrix as a heatmap.
+        """Plot a similarity matrix as a heatmap.
 
         Args:
             data (np.ndarray):

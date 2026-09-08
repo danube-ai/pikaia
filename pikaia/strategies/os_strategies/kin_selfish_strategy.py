@@ -1,3 +1,5 @@
+"""Implement the kin-selfish organism strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -8,8 +10,7 @@ from pikaia.strategies.base_strategies import (
 
 
 class KinSelfishOrgStrategy(OrgStrategy):
-    """
-    An organism strategy that promotes selfish behavior towards non-kin.
+    """An organism strategy that promotes selfish behavior towards non-kin.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -29,8 +30,9 @@ class KinSelfishOrgStrategy(OrgStrategy):
             kin_range (int): Maximum number of organisms to consider as kin
                 when computing the interaction term.  Defaults to ``N``
                 (the full population size).
-            **kwargs: Additional options forwarded to `OrgStrategy`
+            **kwargs (object): Additional options forwarded to `OrgStrategy`
                 and stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -40,14 +42,14 @@ class KinSelfishOrgStrategy(OrgStrategy):
         return "KinSelfish"
 
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
-        """
-        Computes deltas for a kin-selfish organism strategy.
+        """Compute deltas for a kin-selfish organism strategy.
 
         Args:
             ctx (StrategyContext): Context object containing all required and optional fields.
 
         Returns:
             np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
+
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
@@ -113,6 +115,7 @@ class KinSelfishOrgStrategy(OrgStrategy):
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
             ``D[j, k] = (+2 / (N * R)) * sum_i[x_ij * sum_l((0.5 - s^o_il) * (x_ik - x_lk))]``,
             summed over kin neighbours of each organism.
+
         """
         X = population.matrix  # (N, M)
         N = population.N

@@ -1,3 +1,5 @@
+"""Prepare tabular data for constructing Pikaia populations and simulations."""
+
 from typing import Callable, Sequence
 
 import numpy as np
@@ -7,8 +9,7 @@ from pikaia.schemas.preprocessing import FeatureType
 
 
 class PikaiaPreprocessor:
-    """
-    Preprocessor for Pikaia genetic algorithm data.
+    """Preprocessor for Pikaia genetic algorithm data.
 
     This class preprocesses feature data for use with the Pikaia genetic algorithm.
     It applies specified transformation functions to each feature and checks whether
@@ -25,8 +26,7 @@ class PikaiaPreprocessor:
         feature_types: Sequence[FeatureType],
         feature_transforms: Sequence[Callable[[np.ndarray], np.ndarray] | None],
     ):
-        """
-        Initialize the PikaiaPreprocessor.
+        """Initialize the PikaiaPreprocessor.
 
         Sets up the preprocessor with the specified number of features, their types,
         and the transformation functions to apply to each feature.
@@ -48,6 +48,7 @@ class PikaiaPreprocessor:
         Raises:
             ValueError: If the lengths of feature_types or feature_transforms do not
                 match num_features.
+
         """
         if len(feature_types) != num_features:
             raise ValueError(
@@ -66,8 +67,7 @@ class PikaiaPreprocessor:
         self.feature_transforms = feature_transforms
 
     def fit(self, X: np.ndarray) -> "PikaiaPreprocessor":
-        """
-        Fit the preprocessor to the input data.
+        """Fit the preprocessor to the input data.
 
         This method validates that the input data X has the correct number of features
         as specified during initialization. No actual fitting (e.g., parameter
@@ -82,6 +82,7 @@ class PikaiaPreprocessor:
 
         Raises:
             ValueError: If the number of features in X does not match num_features.
+
         """
         if not np.issubdtype(X.dtype, np.number):
             raise ValueError("Input data must be numeric.")
@@ -96,8 +97,7 @@ class PikaiaPreprocessor:
         return self
 
     def transform(self, X: np.ndarray) -> np.ndarray:
-        """
-        Transform the input data using the specified transformation functions.
+        """Transform the input data using the specified transformation functions.
 
         Applies the transformation function to each feature column if provided. For
         features marked as COST type, the values are inverted using the formula
@@ -116,8 +116,9 @@ class PikaiaPreprocessor:
                 feature column has been processed according to the specified
                 transformation and COST features have been inverted.
 
-        Warns:
-            Logs a warning if any values in the transformed data fall outside [0, 1].
+        Note:
+            A warning is logged if any transformed values fall outside ``[0, 1]``.
+
         """
         if np.any(np.isnan(X.astype(float))):
             raise ValueError("Input data must not contain NaN values.")
@@ -150,8 +151,7 @@ class PikaiaPreprocessor:
         return X_transformed
 
     def fit_transform(self, X: np.ndarray) -> np.ndarray:
-        """
-        Fit the preprocessor and transform the data in one step.
+        """Fit the preprocessor and transform the data in one step.
 
         Equivalent to calling fit(X, y).transform(X). This is a convenience method
         for scikit-learn compatibility.
@@ -162,5 +162,6 @@ class PikaiaPreprocessor:
 
         Returns:
             np.ndarray: The transformed data array with the same shape as X.
+
         """
         return self.fit(X).transform(X)

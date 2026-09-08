@@ -1,3 +1,5 @@
+"""Declare validated enums and configuration models for evolutionary strategies."""
+
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field

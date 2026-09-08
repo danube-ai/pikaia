@@ -1,11 +1,12 @@
+"""Implement a fixed-coefficient strategy mixer."""
+
 import numpy as np
 
 from pikaia.strategies.base_strategies import MixStrategy
 
 
 class FixedMixStrategy(MixStrategy):
-    """
-    Applies a fixed set of mixing coefficients to a delta tensor.
+    """Applies a fixed set of mixing coefficients to a delta tensor.
 
     This strategy multiplies the input delta tensor by the provided mixing coefficients
     using Einstein summation, without updating or adapting the coefficients.
@@ -14,14 +15,16 @@ class FixedMixStrategy(MixStrategy):
     Example:
         strategy = FixedMixStrategy()
         mixed_delta, coeffs = strategy(delta, mix_coeffs)
+
     """
 
     def __init__(self, **kwargs):
         """Initialise the Fixed mix strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `MixStrategy` and
+            **kwargs (object): Keyword options forwarded to `MixStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -33,8 +36,7 @@ class FixedMixStrategy(MixStrategy):
     def __call__(
         self, delta: np.ndarray, mix_coeffs: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Apply fixed mixing coefficients to the input delta tensor.
+        """Apply fixed mixing coefficients to the input delta tensor.
 
         Args:
             delta (np.ndarray):
@@ -46,6 +48,7 @@ class FixedMixStrategy(MixStrategy):
             tuple[np.ndarray, np.ndarray]:
                 - The mixed delta array of shape (n, m) after applying the coefficients.
                 - The unchanged mixing coefficients array.
+
         """
         # Weighted sum over the last axis (k) of delta using mix_coeffs,
         # resulting in shape (n, m)

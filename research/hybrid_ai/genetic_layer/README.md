@@ -11,7 +11,7 @@ This directory contains comprehensive benchmarks comparing **Genetic Neural Netw
 
 ---
 
-## 📋 Table of Contents
+## 1. 📋 Table of Contents
 
 1. What is a Genetic Layer?
 2. Architecture Overview
@@ -23,18 +23,18 @@ This directory contains comprehensive benchmarks comparing **Genetic Neural Netw
 
 ---
 
-## 🧬 What is a Genetic Layer?
+## 2. 🧬 What is a Genetic Layer?
 
 The **GeneticLayer** is a novel neural network component inspired by evolutionary biology and genetic algorithms. Unlike traditional linear layers that perform simple matrix multiplication, the GeneticLayer models a "population" of organisms and genes, computing fitness values through biologically-inspired mechanisms.
 
-### 1.1 Key Concepts
+### 2.1. Key Concepts
 
 - **🧬 Organisms**: Latent representations analogous to individuals in a population
 - **🧫 Genes**: Feature components that define organism characteristics
 - **🏆 Fitness**: Computed values that determine organism survival/strength
 - **🎯 Strategy**: The algorithm used to compute fitness from the population matrix
 
-### 1.2 Mathematical Foundation
+### 2.2. Mathematical Foundation
 
 The GeneticLayer implements a **fixed-point strategy** that combines both dominant gene and balanced organism strategies in a unified computation:
 
@@ -53,9 +53,9 @@ This creates a feedback loop where genes and organisms mutually influence fitnes
 
 ---
 
-## 🏗️ Architecture Overview
+## 3. 🏗️ Architecture Overview
 
-### 2.1 GeneticLayer Internal Architecture
+### 3.1. GeneticLayer Internal Architecture
 
 ```text
 Input (batch, seq, features)
@@ -81,9 +81,9 @@ Output Projection (LayerNorm → Linear → SiLU → Dropout)
 Output (batch, seq, output_size)
 ```
 
-### 2.2 Network Architectures Benchmarked
+### 3.2. Network Architectures Benchmarked
 
-#### 2.2.1 Feedforward Networks
+#### 3.2.1. Feedforward Networks
 
 **Classical Feedforward**:
 
@@ -99,7 +99,7 @@ Input → GeneticLayer → ... (depth layers) → Output
 (each GeneticLayer contains the full genetic computation pipeline)
 ```
 
-#### 2.2.2 Heads Networks
+#### 3.2.2. Heads Networks
 
 **Classical Heads**:
 
@@ -121,9 +121,9 @@ Input ───────────┼─ GeneticHead2 ─┼─ Concat → 
 
 ---
 
-## ⚙️ Benchmark Setup
+## 4. ⚙️ Benchmark Setup
 
-### 3.1 Datasets
+### 4.1. Datasets
 
 We evaluated on 7 diverse classification datasets:
 
@@ -137,7 +137,7 @@ We evaluated on 7 diverse classification datasets:
 | Olivetti Faces | 400     | 4,096    | 40      | Vision     |
 | Forest Cover   | 10,000  | 54       | 7       | Geospatial |
 
-### 3.2 Configuration
+### 4.2. Configuration
 
 - **🏗️ Architectures**: Feedforward (depth: 2, 4, 6) and Heads (n_heads: 1, 2, 3)
 - **🧬 Network Types**: Classical and Genetic
@@ -146,15 +146,15 @@ We evaluated on 7 diverse classification datasets:
 
 ---
 
-## 📊 Results and Findings
+## 5. 📊 Results and Findings
 
-### 4.1 Overall Performance Summary
+### 5.1. Overall Performance Summary
 
 The benchmark results show clear performance differences between genetic and classical architectures across different network depths and head configurations. Genetic layers perform best in multi-head architectures, achieving competitive accuracy with classical approaches on several datasets. Feedforward genetic networks use fewer parameters but achieve significantly lower accuracy than their classical counterparts.
 
-### 4.2 Key Findings by Dataset
+### 5.2. Key Findings by Dataset
 
-#### 4.2.1 High-Dimensional Datasets (Olivetti Faces, Digits)
+#### 5.2.1. High-Dimensional Datasets (Olivetti Faces, Digits)
 
 **Feedforward Architectures:**
 
@@ -197,7 +197,7 @@ The significant performance difference on high-dimensional datasets suggests sev
 
 5. **Parameter Allocation Hypothesis**: While genetic feedforward uses fewer total parameters concentrated in projection layers rather than core transformations, whether this distribution is suboptimal for high-dimensional learning remains an open question requiring ablation studies.
 
-#### 4.2.2 Low-Dimensional Datasets (Iris, Wine)
+#### 5.2.2. Low-Dimensional Datasets (Iris, Wine)
 
 **Feedforward Architectures:**
 
@@ -240,7 +240,7 @@ The near-parity performance on low-dimensional datasets, particularly with genet
 
 5. **Convergence Stability Conjecture**: On simpler tasks, the genetic layer's complex gradient pathways may converge adequately while benefiting from regularization. This trade-off between complexity and constraint requires systematic optimization analysis to validate.
 
-#### 4.2.3 Medium Complexity (Breast Cancer, Synthetic, CovType)
+#### 5.2.3. Medium Complexity (Breast Cancer, Synthetic, CovType)
 
 **Feedforward Architectures:**
 
@@ -297,9 +297,9 @@ The variable results on medium-complexity datasets hint at possible task-specifi
 
 5. **Expressiveness-Generalization Trade-off Hypothesis**: We observe different strengths across tasks but cannot definitively attribute them to expressiveness vs. generalization without controlled experiments isolating these factors.
 
-### 4.3 Architecture-Specific Insights
+### 5.3. Architecture-Specific Insights
 
-#### 4.3.1 Feedforward Networks
+#### 5.3.1. Feedforward Networks
 
 **Classical Advantages**:
 
@@ -319,7 +319,7 @@ The variable results on medium-complexity datasets hint at possible task-specifi
 - Genetic heads use ~7% more parameters but can achieve competitive accuracy
 - Classical networks generally provide better accuracy per parameter despite higher parameter counts
 
-#### 4.3.2 Heads Networks
+#### 5.3.2. Heads Networks
 
 **Genetic Success Story**:
 
@@ -335,9 +335,9 @@ The variable results on medium-complexity datasets hint at possible task-specifi
 
 ---
 
-## 📈 Performance Analysis
+## 6. 📈 Performance Analysis
 
-### 5.1 Summary Statistics
+### 6.1. Summary Statistics
 
 The following table shows average performance across all datasets for each architecture and network type:
 
@@ -348,7 +348,7 @@ The following table shows average performance across all datasets for each archi
 | heads        | classical   | 0.795           | 0.794            | 2.86s            | 41,330    |
 | heads        | genetic     | 0.808           | 0.791            | 3.35s            | 44,235    |
 
-### 5.2 Accuracy Comparison
+### 6.2. Accuracy Comparison
 
 **Performance by Accuracy Range**:
 
@@ -361,7 +361,7 @@ The following table shows average performance across all datasets for each archi
 | 75-95% | Genetic Heads | 4/7 |
 | 75-95% | Classical Networks | All competitive datasets |
 
-### 5.3 Efficiency Metrics
+### 6.3. Efficiency Metrics
 
 **Training Time** (seconds per training run):
 
@@ -402,7 +402,7 @@ The following table shows average performance across all datasets for each archi
 - Classical networks generally process more parameters per second
 - Genetic layers add computational overhead for fitness calculations
 
-### 5.4 Scalability
+### 6.4. Scalability
 
 **Depth Scaling (Feedforward):**
 
@@ -426,9 +426,9 @@ The following table shows average performance across all datasets for each archi
 
 ---
 
-## 🎯 Conclusions
+## 7. 🎯 Conclusions
 
-### 6.1 When to Use Genetic Layers
+### 7.1. When to Use Genetic Layers
 
 **✅ Recommended For**:
 
@@ -444,21 +444,21 @@ The following table shows average performance across all datasets for each archi
 3. **⚡ Performance-critical applications** requiring maximum accuracy
 4. **💻 Resource-constrained environments** (due to training overhead)
 
-### 6.2 Advantages of Genetic Layers
+### 7.2. Advantages of Genetic Layers
 
 1. **🧬 Novel Representation**: Biologically-inspired population dynamics
 2. **⚖️ Reduced Parameters**: Can achieve competitive results with fewer parameters in heads architectures
 3. **🔍 Interpretability**: Organism and gene fitness values may offer insights
 4. **🎭 Diverse Heads**: Multiple genetic heads capture different "evolutionary strategies"
 
-### 6.3 Disadvantages of Genetic Layers
+### 7.3. Disadvantages of Genetic Layers
 
 1. **📉 Lower Accuracy**: Generally 5-30% worse than classical on most datasets
 2. **⏱️ Slower Training**: 15-30% longer training time
 3. **📚 Depth Issues**: Performance degrades with deep feedforward stacks
 4. **🖼️ High-Dimensional Weakness**: Struggles with large feature spaces
 
-### 6.4 Future Directions
+### 7.4. Future Directions
 
 **Potential Improvements**:
 
@@ -477,13 +477,13 @@ The following table shows average performance across all datasets for each archi
 
 ---
 
-## 🔮 Future Work
+## 8. 🔮 Future Work
 
-### 7.1 Attention Mechanism Comparison
+### 8.1. Attention Mechanism Comparison
 
 Given the promising performance of **genetic heads architectures**, the most compelling next step is to develop a **genetic attention mechanism** and compare it against modern attention variants in small language models. This comparison would provide insights into whether biologically-inspired computation can compete with or complement attention-based approaches in sequence modeling tasks.
 
-#### 7.1.1 Preliminary Study Design
+#### 8.1.1. Preliminary Study Design
 
 **Comparison Architectures**:
 
@@ -502,7 +502,7 @@ Given the promising performance of **genetic heads architectures**, the most com
 - **📏 Scalability**: Performance across different sequence lengths and model sizes
 - **🔍 Interpretability**: Analysis of attention patterns vs genetic fitness distributions
 
-#### 7.1.2 Key Research Questions
+#### 8.1.2. Key Research Questions
 
 1. **Can genetic attention mechanisms achieve competitive perplexity compared to standard attention variants?**
 2. **What are the computational trade-offs (speed, memory) between genetic and traditional attention?**
@@ -510,11 +510,11 @@ Given the promising performance of **genetic heads architectures**, the most com
 4. **How does genetic attention scale with sequence length and model capacity?**
 5. **Are there specific language modeling tasks where genetic attention excels?**
 
-### 7.2 Genetic Layer Architecture Refinement
+### 8.2. Genetic Layer Architecture Refinement
 
 Building on the current benchmark findings, several architectural improvements warrant investigation:
 
-#### 7.2.1 Adaptive Population Matrix Dimensions
+#### 8.2.1. Adaptive Population Matrix Dimensions
 
 **Current Limitation**: Fixed 32×8 (organisms×genes) population matrix across all datasets.
 
@@ -524,7 +524,7 @@ Building on the current benchmark findings, several architectural improvements w
 - **Dataset-Specific Tuning**: Systematically explore population matrix sizes for different problem complexities (low/medium/high-dimensional)
 - **Theoretical Analysis**: Develop capacity bounds relating input features, population size, and representational power
 
-#### 7.2.2 Alternative Fitness Strategies
+#### 8.2.2. Alternative Fitness Strategies
 
 **Current Limitation**: Only fixed-point strategy (dominant gene + balanced organism) implemented.
 
@@ -534,7 +534,7 @@ Building on the current benchmark findings, several architectural improvements w
 - **Learned Strategy Components**: Investigate parameterizing parts of fitness computation to be optimized via gradient descent
 - **Multi-Strategy Approaches**: Combine multiple fitness calculation methods within or across genetic heads
 
-#### 7.2.3 Advanced Network Integration
+#### 8.2.3. Advanced Network Integration
 
 **Current Finding**: Genetic heads outperform genetic feedforward; depth hurts genetic networks.
 
@@ -546,11 +546,11 @@ Building on the current benchmark findings, several architectural improvements w
 - **Genetic Ensembles**: Multiple genetic layers with different strategies combined via voting/averaging
 - **Domain-Specific Architectures**: Specialized genetic layer variants for vision, text, tabular data
 
-### 7.3 Expanded Benchmark Coverage
+### 8.3. Expanded Benchmark Coverage
 
 Current benchmarks provide initial insights but have limited scope:
 
-#### 7.3.1 Dataset Diversity
+#### 8.3.1. Dataset Diversity
 
 **Current Limitation**: 7 tabular classification datasets, mostly small-scale.
 
@@ -562,7 +562,7 @@ Current benchmarks provide initial insights but have limited scope:
 - **Graph-Structured Data**: Molecular structures, social networks, knowledge graphs
 - **Multi-Modal Data**: Datasets combining different feature types
 
-#### 7.3.2 Training Regime Analysis
+#### 8.3.2. Training Regime Analysis
 
 **Current Limitation**: Single training configuration (Adam, 128 epochs, fixed batch size).
 
@@ -574,7 +574,7 @@ Current benchmarks provide initial insights but have limited scope:
 - **Initialization Strategies**: Population matrix initialization impact on convergence
 - **Training Duration**: Do genetic layers need more epochs? Different convergence patterns?
 
-#### 7.3.3 Interpretability Studies
+#### 8.3.3. Interpretability Studies
 
 **Hypothesis**: Organism/gene fitness values may offer interpretable insights.
 
@@ -588,7 +588,7 @@ Current benchmarks provide initial insights but have limited scope:
 
 ---
 
-## 📁 Repository Structure
+## 9. 📁 Repository Structure
 
 ```text
 research/hybrid_ai/genetic_layer/
@@ -608,7 +608,7 @@ research/hybrid_ai/genetic_layer/
 
 ---
 
-## 📚 References
+## 10. 📚 References
 
 For more information on the underlying Pikaia framework and genetic strategies, see:
 
@@ -618,7 +618,7 @@ For more information on the underlying Pikaia framework and genetic strategies, 
 
 ---
 
-**📅 Last Updated**: November 2025  
-**🏷️ Benchmark Version**: 1.0  
-**🔧 Framework**: PyTorch + PyTorch Lightning  
+**📅 Last Updated**: November 2025
+**🏷️ Benchmark Version**: 1.0
+**🔧 Framework**: PyTorch + PyTorch Lightning
 **🎯 Status**: Exploratory Research

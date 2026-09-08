@@ -4,7 +4,7 @@ This directory contains example scripts and notebooks demonstrating the capabili
 
 ---
 
-## Quick Start
+## 1. Quick Start
 
 Install the `examples` extras before running any script:
 
@@ -14,7 +14,7 @@ uv sync --extra examples
 
 ---
 
-## Scripts
+## 2. Scripts
 
 | File | Description |
 |------|-------------|
@@ -33,7 +33,7 @@ uv sync --extra examples
 
 ---
 
-## Notebooks
+## 3. Notebooks
 
 | File | Description |
 |------|-------------|
@@ -42,7 +42,7 @@ uv sync --extra examples
 
 ---
 
-## Data
+## 4. Data
 
 | File | Description |
 |------|-------------|
@@ -50,13 +50,13 @@ uv sync --extra examples
 
 ---
 
-## Artefacts
+## 5. Artefacts
 
 The `artefacts/` directory is used as the default output location for generated plots and saved figures.
 
 ---
 
-## Strategy Combinations Benchmark
+## 6. Strategy Combinations Benchmark
 
 `d_matrix_comparison.py` is the most comprehensive example. It benchmarks every combination of these two independent lists (8 gene × 5 org = 40 combinations):
 

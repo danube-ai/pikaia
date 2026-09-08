@@ -1,3 +1,5 @@
+"""Implement a self-consistent mixer that adapts strategy coefficients."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -6,8 +8,7 @@ from pikaia.strategies.base_strategies import MixStrategy
 
 
 class SelfConsistentMixStrategy(MixStrategy):
-    """
-    Adaptively updates mixing coefficients based on the mean absolute delta.
+    """Adaptively updates mixing coefficients based on the mean absolute delta.
 
     This strategy computes a weighted sum of the input delta tensor using the
     current mixing coefficients, then updates the coefficients in a
@@ -16,14 +17,16 @@ class SelfConsistentMixStrategy(MixStrategy):
     Example:
         strategy = SelfConsistentMixStrategy()
         mixed_delta, updated_coeffs = strategy(delta, mix_coeffs)
+
     """
 
     def __init__(self, **kwargs):
         """Initialise the SelfConsistent mix strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `MixStrategy` and
+            **kwargs (object): Keyword options forwarded to `MixStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -35,9 +38,9 @@ class SelfConsistentMixStrategy(MixStrategy):
     def __call__(
         self, delta: np.ndarray, mix_coeffs: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Apply self-consistent mixing to the input delta tensor and update mixing
-            coefficients.
+        """Apply self-consistent mixing and update mixing coefficients.
+
+        Combine the input delta tensor while updating its mixing coefficients.
 
         Args:
             delta (np.ndarray):
@@ -55,6 +58,7 @@ class SelfConsistentMixStrategy(MixStrategy):
             The mixing coefficients are updated by applying a function to the mean
             absolute value of the mixed deltas, scaled by the number of columns in
             the delta array.
+
         """
         # Compute per-strategy mean magnitude BEFORE mixing so that strategies with
         # larger deltas genuinely grow their coefficients relative to others.
@@ -95,6 +99,7 @@ class SelfConsistentMixStrategy(MixStrategy):
 
         Returns:
             Updated and renormalized mixing coefficients, shape ``(K,)``.
+
         """
         M = len(gamma)
         magnitudes = np.array(

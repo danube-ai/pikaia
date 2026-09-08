@@ -2,7 +2,7 @@
 
 > Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
-## Introduction
+## 1. Introduction
 
 Grouped-Query Attention (GQA) offers a computational-efficiency workaround for MHA, and ablation studies (such as those in the [original GQA paper](https://arxiv.org/abs/2305.13245) and the [Llama 2 paper](https://arxiv.org/abs/2307.09288)) show it performs comparably to standard MHA in terms of LLM modeling performance.
 
@@ -22,7 +22,7 @@ As shown in the figure above, GQA appears to perform worse than MHA, whereas MLA
 
 To summarize this section, before we move on to the next architecture component, MLA is a clever trick to reduce KV cache memory use while even slightly outperforming MHA in terms of modeling performance.
 
-## MLA Memory Savings
+## 2. MLA Memory Savings
 
 The memory savings are mostly reflected in the KV storage. We can compute the KV storage size with the following formula:
 
@@ -76,7 +76,7 @@ The savings when using MLA over MHA are further shown in the plot below for diff
 
 You can reproduce the plot via `uv run plot_memory_estimates_mla.py`.
 
-## MLA Code Examples
+## 3. MLA Code Examples
 
 The [gpt_with_kv_mha.py](gpt_with_kv_mha.py) and [gpt_with_kv_mla.py](gpt_with_kv_mla.py) scripts in this folder provide hands-on examples for comparing the MHA and MLA memory usage in the context of a GPT model implementation.
 

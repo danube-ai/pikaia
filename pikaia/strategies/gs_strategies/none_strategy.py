@@ -1,9 +1,10 @@
+"""Implement the no-op gene strategy."""
+
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class NoneGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that applies no evolutionary pressure.
+    """A gene strategy that applies no evolutionary pressure.
 
     This strategy is a neutral placeholder that returns a delta value of 0,
     effectively making no change to the gene's fitness. It serves as a baseline
@@ -16,6 +17,7 @@ class NoneGeneStrategy(GeneStrategy):
         Args:
             **kwargs: Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -25,8 +27,7 @@ class NoneGeneStrategy(GeneStrategy):
         return "None"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Returns a delta of 0, representing no change.
+        """Return a delta of 0, representing no change.
 
         This method ignores all input parameters and simply returns 0.0,
         indicating that this strategy does not contribute to any change in
@@ -38,5 +39,6 @@ class NoneGeneStrategy(GeneStrategy):
 
         Returns:
             float: A delta value of 0.0.
+
         """
         return 0.0

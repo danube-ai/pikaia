@@ -13,7 +13,7 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 ---
 
-## ✨ Key Features
+## 1. ✨ Key Features
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
@@ -25,26 +25,26 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 ---
 
-## 📚 Table of Contents
+## 2. 📚 Table of Contents
 
 - [🧬 Pikaia](#-pikaia)
-  - [✨ Key Features](#-key-features)
-  - [📚 Table of Contents](#-table-of-contents)
-  - [📖 Documentation](#-documentation)
-  - [🚀 Installation](#-installation)
-  - [🛠️ Local Development](#️-local-development)
-    - [Prerequisites](#prerequisites)
-    - [Install UV](#install-uv)
-    - [Set up a Local Environment](#set-up-a-local-environment)
-  - [📝 Quickstart](#-quickstart)
-  - [🧬 Scientific Background](#-scientific-background)
-  - [👥 Authors \& Contact](#-authors--contact)
-  - [📄 License](#-license)
-  - [📚 How to Cite](#-how-to-cite)
+  - [✨ Key Features](#1--key-features)
+  - [📚 Table of Contents](#2--table-of-contents)
+  - [📖 Documentation](#3--documentation)
+  - [🚀 Installation](#4--installation)
+  - [Local Development](#5-local-development)
+    - [Prerequisites](#51-prerequisites)
+    - [Install UV](#52-install-uv)
+    - [Set up a Local Environment](#53-set-up-a-local-environment)
+  - [📝 Quickstart](#6--quickstart)
+  - [🧬 Scientific Background](#7--scientific-background)
+  - [👥 Authors \& Contact](#8--authors--contact)
+  - [📄 License](#9--license)
+  - [📚 How to Cite](#10--how-to-cite)
 
 ---
 
-## 📖 Documentation
+## 3. 📖 Documentation
 
 Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai.github.io/pikaia/)**.
 
@@ -57,7 +57,7 @@ Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai
 
 ---
 
-## 🚀 Installation
+## 4. 🚀 Installation
 
 Install the package using pip:
 
@@ -69,11 +69,11 @@ pip install pikaia
 
 ---
 
-## 🛠️ Local Development
+## 5. Local Development
 
 For local development, we recommend using [UV](https://astral.sh/uv), a fast Python package installer and resolver.
 
-### Prerequisites
+### 5.1. Prerequisites
 
 Clone the repository and navigate to the project directory:
 
@@ -82,7 +82,7 @@ git clone https://github.com/danube-ai/pikaia.git
 cd pikaia
 ```
 
-### Install UV
+### 5.2. Install UV
 
 Install UV using the official installer:
 
@@ -92,7 +92,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 For more installation options, visit the [UV installation guide](https://astral.sh/uv/installation).
 
-### Set up a Local Environment
+### 5.3. Set up a Local Environment
 
 1. Create a virtual environment:
 
@@ -118,7 +118,7 @@ For more installation options, visit the [UV installation guide](https://astral.
 
 ---
 
-## 📝 Quickstart
+## 6. 📝 Quickstart
 
 Here's a minimal example to get you started:
 
@@ -186,7 +186,7 @@ model.fit()
 
 ---
 
-## 🧬 Scientific Background
+## 7. 🧬 Scientific Background
 
 Genetic AI is a framework for evolutionary simulation and data analysis. In Genetic AI, a data problem is converted into a model of genes and organisms, and evolutionary simulations are run to gain insight into the input data.
 
@@ -199,7 +199,7 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 
 ---
 
-## 👥 Authors & Contact
+## 8. 👥 Authors & Contact
 
 - Philipp Wissgott (<philipp@danube.ai>)
 - Andreas Roschal (<andreas@danube.ai>)
@@ -212,7 +212,7 @@ For questions, suggestions, or contributions, please feel free to open an issue 
 
 ---
 
-## 📄 License
+## 9. 📄 License
 
 This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
 
@@ -220,7 +220,7 @@ This project is licensed under the terms of the MIT License. See the [LICENSE](L
 
 ---
 
-## 📚 How to Cite
+## 10. 📚 How to Cite
 
 If you use Pikaia in your research, please cite our preprint:
 

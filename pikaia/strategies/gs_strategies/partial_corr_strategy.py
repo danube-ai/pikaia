@@ -1,3 +1,5 @@
+"""Implement the partial-correlation gene strategy."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class PartialCorrGeneStrategy(GeneStrategy):
-    """
-    A gene strategy driven by partial correlation with the target.
+    """A gene strategy driven by partial correlation with the target.
 
     !!! warning
         This strategy is experimental and its behavior may change in future
@@ -38,12 +39,21 @@ class PartialCorrGeneStrategy(GeneStrategy):
         precomputed_pc: Pre-computed partial correlations of shape
             ``(n_features,)``.  If provided, no computation is done.
         n_bins: Unused; kept for API compatibility.
-        **kwargs: Forwarded to `GeneStrategy`.
+        **kwargs (object): Forwarded to `GeneStrategy`.
+
     """
 
     def __init__(
         self, precomputed_pc: np.ndarray | None = None, n_bins: int = 10, **kwargs
     ):
+        """Initialise score calculation and optional partial correlations.
+
+        Args:
+            precomputed_pc: Optional per-feature partial-correlation scores.
+            n_bins: Retained for compatibility; not used by this strategy.
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
         self._partial_corrs: np.ndarray | None = precomputed_pc
         self._n_bins = n_bins
@@ -63,6 +73,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         Returns:
             1D float array with values ``+1.0`` (≥ median) or ``-1.0`` (< median).
+
         """
         y = np.asarray(y).flatten()
         if not np.issubdtype(y.dtype, np.number):
@@ -90,6 +101,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         Returns:
             Array of shape ``(n_features,)`` with values in ``[0, 1]``.
+
         """
         n_features = X.shape[1]
         if y is None:
@@ -127,6 +139,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         Returns:
             Per-feature partial correlation scores of shape ``(n_features,)``.
+
         """
         mode = "supervised" if y is not None else "unsupervised"
         if self._partial_corrs is None or (
@@ -144,6 +157,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta ``Delta_G(i,j)``.
+
         """
         scores = self._get_scores(ctx.population.matrix, ctx.y)
         return float(
@@ -171,6 +185,7 @@ class PartialCorrGeneStrategy(GeneStrategy):
 
         Returns:
             ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix.
+
         """
         scores = self._get_scores(population.matrix, y)
         D = np.diag(4.0 * (scores - 0.5))

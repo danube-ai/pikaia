@@ -1,3 +1,5 @@
+"""Configure package-wide logging with a consistent Pikaia logger name."""
+
 import logging
 import sys
 

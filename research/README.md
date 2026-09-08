@@ -6,9 +6,9 @@ This directory contains exploratory research work investigating hybrid approache
 
 ---
 
-## Structure
+## 1. Structure
 
-```
+```text
 research/
 └── hybrid_ai/                  # Hybrid Genetic AI + deep learning research
     ├── hybrid_ai.md            # Overview: where genetic sorting could replace ML components
@@ -22,19 +22,19 @@ research/
 
 ---
 
-## hybrid_ai/
+## 2. hybrid_ai/
 
-### `hybrid_ai.md`
+### 2.1. `hybrid_ai.md`
 
 High-level overview of where genetic sorting could replace or augment traditional neural network components. Covers attention mechanisms (Scaled Dot-Product, MHA, GQA, MLA, DeltaNet) and how evolutionary fitness scoring can be used as an alternative to query-key similarity.
 
-### `genetic_ablation_summary.md`
+### 2.2. `genetic_ablation_summary.md`
 
 Consolidated summary of all genetic attention mechanism attempts across encoder-only and decoder-only architectures. Each section documents a distinct iteration of the concept, including architecture details, results, and lessons learned.
 
 ---
 
-## hybrid_ai/genetic_layer/
+## 3. hybrid_ai/genetic_layer/
 
 Benchmarks comparing **GeneticLayer** (a neural network layer that computes fitness via evolutionary simulation) against classical linear layers across multiple architectures and datasets.
 
@@ -45,7 +45,7 @@ Benchmarks comparing **GeneticLayer** (a neural network layer that computes fitn
 
 ---
 
-## hybrid_ai/genetic_attention/
+## 4. hybrid_ai/genetic_attention/
 
 Experiments training BERT models with **Multi-Head Genetic Attention (MGA)** for text retrieval on MS-MARCO, comparing genetic attention against standard multi-head attention in a dual-encoder setup.
 
@@ -56,7 +56,7 @@ Experiments training BERT models with **Multi-Head Genetic Attention (MGA)** for
 
 ---
 
-## hybrid_ai/genetic_adapter/
+## 5. hybrid_ai/genetic_adapter/
 
 Multi-task BERT experiment using a genetic adapter on the **Bias-in-Bios** dataset. Demonstrates shared encoder with separate classification heads and counterfactual flip-rate evaluation via pronoun swapping.
 
@@ -64,7 +64,7 @@ Multi-task BERT experiment using a genetic adapter on the **Bias-in-Bios** datas
 
 ---
 
-## hybrid_ai/references/
+## 6. hybrid_ai/references/
 
 Background notes on attention mechanisms and related architectures referenced in the hybrid AI work:
 
@@ -78,7 +78,7 @@ Background notes on attention mechanisms and related architectures referenced in
 
 ---
 
-## hybrid_ai/_white_paper/
+## 7. hybrid_ai/_white_paper/
 
 LaTeX source for the hybrid AI white paper, including bibliography.
 

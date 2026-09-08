@@ -1,6 +1,4 @@
-"""
-Multihead Genetic Attention Module
-"""
+"""Multihead Genetic Attention Module."""
 
 import math
 from typing import Optional
@@ -11,8 +9,7 @@ import torch.nn.functional as F
 
 
 class MultiheadGeneticAttention(nn.Module):
-    """
-    Multihead Genetic Attention module with GQA and MLA support.
+    """Multihead Genetic Attention module with GQA and MLA support.
 
     Implements multihead attention extended with Grouped Query Attention (GQA,
     fewer key-value heads) and optional Multi-Head Latent Attention (MLA,
@@ -43,6 +40,7 @@ class MultiheadGeneticAttention(nn.Module):
                 to ``0.0``.
             bias: Whether to include bias terms in linear projections. Defaults
                 to ``True``.
+
         """
         super().__init__()
         self.embed_dim = embed_dim
@@ -95,8 +93,7 @@ class MultiheadGeneticAttention(nn.Module):
         attn_mask: Optional[torch.Tensor] = None,
         disable_genetic: bool = False,
     ) -> torch.Tensor:
-        """
-        Forward pass of MultiheadGeneticAttention.
+        """Forward pass of MultiheadGeneticAttention.
 
         Args:
             x (torch.Tensor):
@@ -111,6 +108,7 @@ class MultiheadGeneticAttention(nn.Module):
         Returns:
             torch.Tensor:
                 Output tensor of shape (batch_size, seq_len, embed_dim).
+
         """
         batch_size, seq_len, _ = x.shape
 
@@ -191,8 +189,7 @@ class MultiheadGeneticAttention(nn.Module):
     def _compute_gene_fitness(
         self, v: torch.Tensor, attn_mask: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
-        """
-        Compute gene fitness scores using genetic algorithm formulation.
+        """Compute gene fitness scores using genetic algorithm formulation.
 
         Args:
             v (torch.Tensor):
@@ -203,6 +200,7 @@ class MultiheadGeneticAttention(nn.Module):
         Returns:
             torch.Tensor:
                 Gene fitness scores of shape (batch_size, n_heads, head_dim)
+
         """
         batch_size, n_heads, seq_len, head_dim = v.shape
 

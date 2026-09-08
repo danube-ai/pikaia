@@ -1,3 +1,5 @@
+"""Implement the stateful genetic-model core and its fitness calculations."""
+
 import multiprocessing
 from abc import ABC, abstractmethod
 from typing import Iterable
@@ -25,8 +27,7 @@ def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
 
 
 class GeneticModel(ABC):
-    """
-    Abstract base class for Genetic AI models.
+    """Abstract base class for Genetic AI models.
 
     This class handles input validation, preprocessing, and provides the interface
     for fitting and predicting with genetic models.
@@ -47,8 +48,7 @@ class GeneticModel(ABC):
         n_jobs: int = 1,
         y: np.ndarray | None = None,
     ):
-        """
-        Initializes the GeneticModel.
+        """Initialise the GeneticModel.
 
         Args:
             population (Population):
@@ -85,6 +85,9 @@ class GeneticModel(ABC):
             n_jobs (int):
                 The number of parallel processes to use for strategy evaluations.
                 Defaults to 1. If -1, all available CPUs are used.
+            y (np.ndarray | None, optional):
+                Optional target values for supervised strategies.
+
         """
         # Population and strategies
         self._population = population
@@ -219,8 +222,7 @@ class GeneticModel(ABC):
         strategies: list,
         param_name: str,
     ) -> list[float]:
-        """
-        Initializes, validates, and normalizes mixing coefficients to sum to 1.
+        """Initialise, validate, and normalise mixing coefficients to sum to 1.
 
         Args:
             coeffs (list[float] | None): User-provided coefficients or None.
@@ -233,6 +235,7 @@ class GeneticModel(ABC):
         Raises:
             ValueError: If the length doesn't match or all coefficients
                 are zero/negative.
+
         """
         if not strategies:
             return []
@@ -276,8 +279,7 @@ class GeneticModel(ABC):
         return normalized.tolist()
 
     def _compute_similarity(self, mode: str = "org") -> np.ndarray:
-        """
-        Computes the similarity/kinship matrix for organisms or genes.
+        """Compute the similarity/kinship matrix for organisms or genes.
 
         The similarity is defined as 1 minus the normalized Euclidean distance
         between the vectors representing each organism or gene.
@@ -294,6 +296,7 @@ class GeneticModel(ABC):
 
         Raises:
             ValueError: If an unknown mode is provided or if all items are identical.
+
         """
         if mode == "gene":
             matrix = self._population.matrix.T
@@ -459,14 +462,15 @@ class GeneticModel(ABC):
 
     @property
     def ESE_iter(self) -> int:
-        """The iteration number at which the simulation converged (ESE).
-        -1 if not converged."""
+        """Return the iteration at which the simulation converged (ESE).
+
+        Return ``-1`` when the simulation has not converged.
+        """
         return self._ESE_iter
 
     @abstractmethod
     def fit(self) -> None:
-        """
-        Fits the genetic model to the population data.
+        """Fits the genetic model to the population data.
 
         This method should be implemented by subclasses to perform the fitting process.
         """
@@ -474,8 +478,7 @@ class GeneticModel(ABC):
 
     @abstractmethod
     def predict(self, population: PikaiaPopulation) -> np.ndarray:
-        """
-        Predicts the organism fitness for a new population using the fitted model.
+        """Predicts the organism fitness for a new population using the fitted model.
 
         Args:
             population (PikaiaPopulation): The new population for which to predict
@@ -483,5 +486,6 @@ class GeneticModel(ABC):
 
         Returns:
             np.ndarray: A vector of predicted organism fitness values.
+
         """
         pass  # pragma: no cover
