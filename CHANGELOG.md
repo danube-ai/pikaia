@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **D-matrix safeguards.** Removed kernels that diverged from their iterative equations, restricted acceleration to exact kernels with the built-in `FixedMixStrategy`, and made unsupported, adaptive, custom, or overridden-mixer configurations fail fast instead of silently dropping strategy contributions. Zero-valued gene-fitness components are preserved exactly, and configuration validation occurs before degenerate-population short-circuiting. `MATH_PAPER` acceleration supports the historical altruistic-gene plus selfish-organism (Alt-Sel) configuration and the independently exact dominant-gene strategy paired with a no-op organism strategy.
 - **D-matrix comparison example.** Replaced the obsolete all-combinations benchmark with direct iterative-versus-reduced checks for every supported configuration at 1, 50, and 100 iterations.
 
+### 1.3. Fixed
+
+- **Zero-range result history.** When all organisms have equal initial fitness, `fit()` now records the initial state as the equilibrium (`ESE_iter = 0`) and preserves it across the preallocated history. Final-row access therefore returns the unchanged fitness and mixing values instead of artificial zeros, and the D matrix is not needlessly constructed.
+
 ## 2. [0.3.3] - 2026-08-11
 
 ### 2.1. Fixed

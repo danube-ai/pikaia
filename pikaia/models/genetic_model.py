@@ -201,9 +201,8 @@ class GeneticModel(ABC):
         if self._initial_org_fitness_range == 0:
             logger.warning(
                 "All organisms have equal initial fitness (range = 0). "
-                "The data has balanced inverse-symmetric features that cancel out "
-                "under uniform gene weighting — no organism can be distinguished. "
-                "Scores will be returned as uniform (no ranking is possible)."
+                "No organism can be ranked, so the initial gene and organism "
+                "fitness values will be returned unchanged."
             )
 
         # These fixed-population values are only used by MATH_PAPER strategies.
@@ -444,11 +443,6 @@ class GeneticModel(ABC):
         ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
 
         for strat, coeff in all_pairs:
-            if not strat.supports_d_matrix:
-                raise ValueError(
-                    f"{type(strat).__name__} in its selected formulation does "
-                    "not support use_d_matrix=True. Use use_d_matrix=False."
-                )
             kernel_kwargs = (
                 {"normalizations": self._strategy_normalizations}
                 if strat.requires_normalizations
@@ -493,12 +487,20 @@ class GeneticModel(ABC):
         by adaptive, custom, or overridden mixers.
 
         Raises:
-            ValueError: If either mixer is not fixed or a math-paper request is
-                neither historical Alt-Sel nor isolated dominant gene, or if
-                isolated math-paper dominant starts outside the gene-fitness
-                simplex required by its row-constant kernel.
+            ValueError: If a strategy lacks D-matrix support, either mixer is
+                not fixed, a math-paper request is neither historical Alt-Sel
+                nor isolated dominant gene, or isolated math-paper dominant
+                starts outside the gene-fitness simplex required by its
+                row-constant kernel.
 
         """
+        for strategy in (*self._gene_strategies, *self._org_strategies):
+            if not strategy.supports_d_matrix:
+                raise ValueError(
+                    f"{type(strategy).__name__} in its selected formulation does "
+                    "not support use_d_matrix=True. Use use_d_matrix=False."
+                )
+
         has_fixed_mixing = all(
             type(strategy) is FixedMixStrategy
             for strategy in (self._gene_mix_strategy, self._org_mix_strategy)

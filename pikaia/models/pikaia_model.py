@@ -75,7 +75,6 @@ class PikaiaModel(GeneticModel):
                 "formulation."
             )
 
-        start_time = time.perf_counter()
         if self._use_d_matrix:
             if self._max_iter is None:
                 raise ValueError(
@@ -85,17 +84,20 @@ class PikaiaModel(GeneticModel):
                     "epsilon for convergence detection, or use use_d_matrix=False for the "
                     "analytical Dominant+Balanced fixed point."
                 )
-            logger.info("D-matrix path selected. Precomputing D matrix...")
-            self._compute_d_matrix()
+            self._validate_d_matrix_configuration()
 
         if self._initial_org_fitness_range == 0:
+            self._record_initial_equilibrium()
             logger.info(
-                "Skipping fit: organism fitness range is 0, so no organism "
-                "ranking is possible."
+                "Skipping fit: organism fitness range is 0, so the initial "
+                "state is the equilibrium (ESE_iter=0)."
             )
             return
 
+        start_time = time.perf_counter()
         if self._use_d_matrix:
+            logger.info("D-matrix path selected. Precomputing D matrix...")
+            self._compute_d_matrix()
             logger.info(
                 f"Running D-matrix simulation for up to {self._max_iter} iterations."
             )
@@ -108,6 +110,22 @@ class PikaiaModel(GeneticModel):
             self._run_iterations()
         total_time = time.perf_counter() - start_time
         logger.info(f"Total fit process time: {total_time:.4f} seconds.")
+
+    def _record_initial_equilibrium(self) -> None:
+        """Record an unrankable initial state as the converged result.
+
+        When all organisms have equal initial fitness, no strategy can derive
+        an organism ranking and no iteration should run. History arrays are
+        preallocated, however, so leaving their later rows untouched would make
+        common final-row access return artificial zeros. Copying row zero across
+        the unused rows preserves the unchanged state, while ``ESE_iter = 0``
+        records that convergence occurred before the first iteration.
+        """
+        self._gene_fitness_hist[1:, :] = self._gene_fitness_hist[0, :]
+        self._org_fitness_hist[1:, :] = self._org_fitness_hist[0, :]
+        self._gene_mixing_coeffs_hist[1:, :] = self._gene_mixing_coeffs_hist[0, :]
+        self._org_mixing_coeffs_hist[1:, :] = self._org_mixing_coeffs_hist[0, :]
+        self._ESE_iter = 0
 
     def _run_fix_point(self):
         """Solve the optimal gene-fitness distribution directly.

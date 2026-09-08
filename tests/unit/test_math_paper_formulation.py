@@ -617,19 +617,44 @@ def test_math_paper_rejects_original_only_analytical_fixed_point():
         model.fit()
 
 
-def test_model_skips_fit_when_uniform_gene_fitness_cannot_rank_organisms():
-    """A zero initial organism-fitness range returns before selecting a path."""
+def test_model_skips_fit_when_initial_fitness_cannot_rank_organisms():
+    """A zero initial organism-fitness range preserves the initial state."""
     model = PikaiaModel(
-        population=PikaiaPopulation(np.array([[0.2, 0.8], [0.8, 0.2]])),
+        population=PikaiaPopulation(np.array([[0.2, 0.8], [0.5, 0.1]])),
         gene_strategies=[AltruisticGeneStrategy()],
         org_strategies=[NoneOrgStrategy()],
-        initial_gene_fitness=[0.5, 0.5],
+        initial_gene_fitness=[0.7, 0.3],
         max_iter=1,
     )
 
     model.fit()
-    np.testing.assert_allclose(model.gene_fitness_history[0], [0.5, 0.5])
-    np.testing.assert_allclose(model.gene_fitness_history[1], [0.0, 0.0])
+    assert model.ESE_iter == 0
+    np.testing.assert_allclose(model.gene_fitness_history, [[0.7, 0.3], [0.7, 0.3]])
+    np.testing.assert_allclose(model.organism_fitness_history, [[0.38, 0.38]] * 2)
+    np.testing.assert_allclose(model.gene_mixing_history, [[1.0], [1.0]])
+    np.testing.assert_allclose(model.organism_mixing_history, [[1.0], [1.0]])
+
+
+def test_zero_fitness_range_skips_d_matrix_precomputation():
+    """An already stable state must not build an unnecessary D matrix."""
+    model = PikaiaModel(
+        population=PikaiaPopulation(np.array([[0.2, 0.8], [0.8, 0.2]])),
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[NoneOrgStrategy()],
+        initial_gene_fitness=[0.5, 0.5],
+        max_iter=3,
+        use_d_matrix=True,
+        formulation=StrategyFormulation.MATH_PAPER,
+    )
+
+    model.fit()
+
+    assert model.ESE_iter == 0
+    assert model._D_matrix is None
+    np.testing.assert_allclose(
+        model.gene_fitness_history,
+        np.full((4, 2), 0.5),
+    )
 
 
 def test_noop_strategies_are_formulation_neutral():
