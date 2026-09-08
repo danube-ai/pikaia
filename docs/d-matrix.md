@@ -237,29 +237,69 @@ Every row below compares two independently constructed models with the same fixe
 
 1. The iterative model uses `use_d_matrix=False` and evaluates the direct strategy equations.
 2. The reduced model uses `use_d_matrix=True` and evaluates the precomputed $D$ matrix and $d$ vector.
-3. After exactly 1, 50, or 100 iterations, the comparison records the largest absolute difference between corresponding final gene-fitness entries: $\max_j|\gamma^{\mathrm{iterative}}_j-\gamma^{\mathrm{D}}_j|$.
+3. After exactly 1, 50, or 100 iterations, the comparison records the largest absolute differences between corresponding entries in both final fitness outputs.
 
-The acceptance criterion is `rtol=1e-12` and `atol=1e-12`. A displayed zero means the two floating-point vectors were bitwise equal on that fixture; a small value such as `1.11e-16` is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.
+For gene fitness, the reported difference at iteration $t$ is:
+
+$$
+E_{\gamma}(t)
+=
+\max_j
+\left|
+\gamma^{\mathrm{iterative}}_j(t)
+-
+\gamma^{\mathrm{D}}_j(t)
+\right|.
+$$
+
+Here, $\gamma^{\mathrm{iterative}}_j(t)$ and $\gamma^{\mathrm{D}}_j(t)$ are the fitness values of gene $j$ after iteration $t$ in the iterative and D-matrix models, respectively. The maximum runs over every gene $j$.
+
+For organism fitness, the reported difference is:
+
+$$
+E_o(t)
+=
+\max_i
+\left|
+o^{\mathrm{iterative}}_i(t)
+-
+o^{\mathrm{D}}_i(t)
+\right|.
+$$
+
+Here, $o^{\mathrm{iterative}}_i(t)$ and $o^{\mathrm{D}}_i(t)$ are the fitness values of organism $i$ after iteration $t$. The maximum runs over every organism $i$.
+
+Organism fitness is derived from gene fitness in both execution paths using the same population matrix:
+
+$$
+o_i(t)
+=
+\sum_j X_{ij}\gamma_j(t).
+$$
+
+Consequently, equal gene-fitness vectors imply equal organism-fitness vectors for the same $X$. The tests still compare organism fitness explicitly. This protects the public output against implementation errors such as storing the wrong iteration or using inconsistent state even though there is no separate organism-fitness evolution equation.
+
+Each table cell is written as $E_{\gamma}(t) / E_o(t)$, or gene difference followed by organism difference. The acceptance criterion for both outputs is `rtol=1e-12` and `atol=1e-12`. A displayed zero means the corresponding floating-point vectors were bitwise equal on that fixture; a small value such as `1.11e-16` is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.
 
 For each `ORIGINAL` row, the named gene strategy is paired with `NoneOrgStrategy`. That no-op partner contributes zero, so the comparison isolates the named strategy. The math-paper dominant row uses the same arrangement. The other two `MATH_PAPER` rows refer to the same Alt-Sel run: one row assesses its altruistic-gene component and the other its selfish-organism component. Their numerical results are therefore intentionally identical. This does not mean the matrix components are algebraically inseparable; their isolated D-matrix models are outside the package's public compatibility contract.
 
 ### 1.7.2. Iterative vs. D-matrix path differences
 
-| Formulation | Strategy | Partner | Max. absolute difference (1 iter.) | Max. absolute difference (50 iter.) | Max. absolute difference (100 iter.) | Result and timing (100 iter.) |
+| Formulation | Strategy | Partner | 1 iter. (G/O) | 50 iter. (G/O) | 100 iter. (G/O) | Result and timing (100 iter.) |
 |---|---|---|---:|---:|---:|---|
-| ORIGINAL | Dominant gene | None organism | 0 | 1.11e-16 | 6.51e-18 | Matches. 2.33 ms iterative vs 0.69 ms D matrix; D matrix was 3.4 times faster. |
-| ORIGINAL | Selfish gene | None organism | 0 | 5.55e-17 | 2.78e-17 | Matches. 8.32 ms iterative vs 0.67 ms D matrix; D matrix was 12.5 times faster. |
-| ORIGINAL | Kin-altruistic gene, default full neighbourhood | None organism | 0 | 1.11e-16 | 5.55e-17 | Matches. 9.41 ms iterative vs 0.69 ms D matrix; D matrix was 13.6 times faster. |
-| ORIGINAL | Altruistic gene | None organism | 0 | 0 | 0 | Matches. 11.65 ms iterative vs 0.68 ms D matrix; D matrix was 17.1 times faster. |
-| ORIGINAL | Sell hard gene | None organism | 1.39e-17 | 2.84e-16 | 5.72e-17 | Matches. 4.04 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster. |
-| ORIGINAL | Sell uniform gene | None organism | 0 | 0 | 0 | Matches. 3.90 ms iterative vs 0.61 ms D matrix; D matrix was 6.4 times faster. |
-| ORIGINAL | Sell easy gene | None organism | 0 | 0 | 0 | Matches. 4.02 ms iterative vs 0.61 ms D matrix; D matrix was 6.6 times faster. |
-| ORIGINAL | Variance gene | None organism | 0 | 3.33e-16 | 6.94e-17 | Matches. 8.58 ms iterative vs 0.72 ms D matrix; D matrix was 12.0 times faster. |
-| MATH_PAPER | Dominant gene | None organism | 0 | 2.22e-16 | 5.20e-18 | Matches. 2.59 ms iterative vs 0.69 ms D matrix; D matrix was 3.8 times faster. |
-| MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
-| MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
+| ORIGINAL | Dominant gene | None organism | 0 / 0 | 1.11e-16 / 1.11e-16 | 6.51e-18 / 0 | Matches. 3.16 ms iterative vs 1.11 ms D matrix; D matrix was 2.9 times faster. |
+| ORIGINAL | Selfish gene | None organism | 0 / 0 | 5.55e-17 / 1.11e-16 | 2.78e-17 / 0 | Matches. 11.36 ms iterative vs 1.10 ms D matrix; D matrix was 10.3 times faster. |
+| ORIGINAL | Kin-altruistic gene, default full neighbourhood | None organism | 0 / 0 | 1.11e-16 / 1.11e-16 | 5.55e-17 / 1.11e-16 | Matches. 12.77 ms iterative vs 1.12 ms D matrix; D matrix was 11.4 times faster. |
+| ORIGINAL | Altruistic gene | None organism | 0 / 0 | 0 / 0 | 0 / 0 | Matches. 15.66 ms iterative vs 1.10 ms D matrix; D matrix was 14.2 times faster. |
+| ORIGINAL | Sell hard gene | None organism | 1.39e-17 / 0 | 2.84e-16 / 2.22e-16 | 5.72e-17 / 5.55e-17 | Matches. 5.23 ms iterative vs 1.29 ms D matrix; D matrix was 4.0 times faster. |
+| ORIGINAL | Sell uniform gene | None organism | 0 / 0 | 0 / 0 | 0 / 0 | Matches. 5.16 ms iterative vs 1.03 ms D matrix; D matrix was 5.0 times faster. |
+| ORIGINAL | Sell easy gene | None organism | 0 / 0 | 0 / 0 | 0 / 0 | Matches. 5.29 ms iterative vs 1.04 ms D matrix; D matrix was 5.1 times faster. |
+| ORIGINAL | Variance gene | None organism | 0 / 0 | 3.33e-16 / 2.22e-16 | 6.94e-17 / 1.11e-16 | Matches. 11.50 ms iterative vs 1.21 ms D matrix; D matrix was 9.5 times faster. |
+| MATH_PAPER | Dominant gene | None organism | 0 / 0 | 2.22e-16 / 1.11e-16 | 5.20e-18 / 0 | Matches. 3.53 ms iterative vs 1.14 ms D matrix; D matrix was 3.1 times faster. |
+| MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 / 1.11e-16 | 5.55e-17 / 0 | 1.11e-16 / 2.22e-16 | Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster. |
+| MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 / 1.11e-16 | 5.55e-17 / 0 | 1.11e-16 / 2.22e-16 | Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster. |
 
-The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than $N$. All comparisons satisfy the same `rtol=1e-12`, `atol=1e-12` criterion; the original kernels' largest observed discrepancy is $3.4\times10^{-16}$.
+The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than $N$. The automated tests compare every gene- and organism-fitness history entry from the initial state through the requested final iteration. All comparisons satisfy the same `rtol=1e-12`, `atol=1e-12` criterion.
 
 The assertions are implemented in `tests/unit/test_d_matrix_equivalence.py` and `tests/unit/test_math_paper_formulation.py`.
 

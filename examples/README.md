@@ -67,11 +67,11 @@ an exact reduced implementation:
   altruistic-gene and selfish-organism Alt-Sel configuration.
 
 For every row, it independently runs the ordinary and D-matrix paths at 1, 50,
-and 100 iterations and reports the largest absolute difference between their
-final gene-fitness vectors. It also reports median runtimes over seven complete
-100-iteration fits. Unsupported combinations are not benchmarked as if they
-had a valid D-matrix implementation; requesting one in the package raises
-`ValueError`.
+and 100 iterations and reports the largest absolute differences between both
+their final gene-fitness vectors and their final organism-fitness vectors. It
+also reports median runtimes over seven complete 100-iteration fits. Unsupported
+combinations are not benchmarked as if they had a valid D-matrix implementation;
+requesting one in the package raises `ValueError`.
 
 Run it with:
 

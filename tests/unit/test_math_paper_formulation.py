@@ -61,6 +61,37 @@ def _fit(
     return model
 
 
+def _assert_fitness_histories_match(
+    iterative: PikaiaModel,
+    d_matrix: PikaiaModel,
+    max_iter: int,
+) -> None:
+    """Assert that both public fitness histories agree through ``max_iter``.
+
+    Organism fitness is derived from gene fitness after each step, but the
+    explicit assertion protects both public model outputs against regressions.
+
+    Args:
+        iterative: Model fitted through direct strategy evaluation.
+        d_matrix: Model fitted through the reduced D-matrix path.
+        max_iter: Final iteration included in the comparison.
+
+    """
+    history_slice = slice(0, max_iter + 1)
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[history_slice],
+        d_matrix.gene_fitness_history[history_slice],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(
+        iterative.organism_fitness_history[history_slice],
+        d_matrix.organism_fitness_history[history_slice],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
 @pytest.mark.parametrize(
     "initial_gene_fitness",
     [[0.4, 0.35, 0.25]],
@@ -85,12 +116,7 @@ def test_math_paper_altsel_d_matrix_matches_iterative_path(
         max_iter=max_iter,
     )
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 @pytest.mark.parametrize("seed", [7, 101, 103])
@@ -114,12 +140,7 @@ def test_math_paper_altsel_d_matrix_matches_on_deterministic_populations(
     iterative.fit()
     d_matrix.fit()
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 @pytest.mark.parametrize("max_iter", [1, 50, 100])
@@ -139,12 +160,7 @@ def test_math_paper_d_matrix_paths_preserve_zero_gene_fitness(max_iter: int) -> 
         iterative = _fit(**arguments, use_d_matrix=False)
         d_matrix = _fit(**arguments, use_d_matrix=True)
 
-        np.testing.assert_allclose(
-            iterative.gene_fitness_history[max_iter],
-            d_matrix.gene_fitness_history[max_iter],
-            rtol=1e-12,
-            atol=1e-12,
-        )
+        _assert_fitness_histories_match(iterative, d_matrix, max_iter)
         assert d_matrix.gene_fitness_history[max_iter, 2] == 0.0
 
 
@@ -291,12 +307,7 @@ def test_math_paper_dominant_d_matrix_matches_iterative_path(max_iter: int) -> N
     iterative = _fit(**arguments, use_d_matrix=False)
     d_matrix = _fit(**arguments, use_d_matrix=True)
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 @pytest.mark.parametrize("seed", [7, 29, 101])
@@ -319,12 +330,7 @@ def test_math_paper_dominant_d_matrix_matches_on_deterministic_populations(
     iterative.fit()
     d_matrix.fit()
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[max_iter],
-        d_matrix.gene_fitness_history[max_iter],
-        rtol=1e-12,
-        atol=1e-12,
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, max_iter)
 
 
 def test_original_formulation_is_the_default():
@@ -511,9 +517,7 @@ def test_math_paper_clamps_kin_range_to_population_size():
         max_iter=1,
     )
 
-    np.testing.assert_allclose(
-        iterative.gene_fitness_history[1], d_matrix.gene_fitness_history[1]
-    )
+    _assert_fitness_histories_match(iterative, d_matrix, 1)
 
 
 def test_math_paper_explicit_none_kin_range_uses_the_population_size():
