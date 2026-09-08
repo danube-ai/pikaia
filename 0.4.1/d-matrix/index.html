@@ -1,0 +1,1462 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Genetic AI for tabular data analysis using evolutionary simulation">
+      
+      
+      
+        <link rel="canonical" href="https://danube-ai.github.io/pikaia/0.4.1/d-matrix/">
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>D-matrix formulation - pikaia</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#1-d-matrix-formulation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pikaia" class="md-header__button md-logo" aria-label="pikaia" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pikaia
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              D-matrix formulation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/danube-ai/pikaia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danube-ai/pikaia
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../tutorial/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Tutorial
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../overview/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  D-matrix formulation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../releasing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Releasing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pikaia" class="md-nav__button md-logo" aria-label="pikaia" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pikaia
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/danube-ai/pikaia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    danube-ai/pikaia
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    D-matrix formulation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    D-matrix formulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1. Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-population-fitness-and-symbols" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2. Population, fitness, and symbols
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.2. Population, fitness, and symbols">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-fixed-population" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2.1. Fixed population
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-similarity-matrices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2.2. Similarity matrices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-math-paper-normalisations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2.3. Math-paper normalisations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-ordinary-iterative-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3. Ordinary iterative update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3. Ordinary iterative update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-per-strategy-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3.1. Per-strategy contributions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-replicator-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3.2. Replicator step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-d-matrix-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4. D-matrix reduction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.4. D-matrix reduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#141-required-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4.1. Required form
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#142-combination-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4.2. Combination rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-math-paper-dominant-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5. Math-paper dominant derivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.5. Math-paper dominant derivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#151-direct-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5.1. Direct signal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#152-row-constant-d-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5.2. Row-constant D matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-math-paper-alt-sel-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6. Math-paper Alt-Sel derivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.6. Math-paper Alt-Sel derivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#161-altruistic-gene-contribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6.1. Altruistic gene contribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#162-selfish-organism-contribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6.2. Selfish organism contribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-compatibility-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7. Compatibility comparison
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.7. Compatibility comparison">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#171-what-is-being-compared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7.1. What is being compared
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#172-iterative-vs-d-matrix-path-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7.2. Iterative vs. D-matrix path differences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#173-historical-iterative-implementation-cross-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7.3. Historical iterative implementation cross-check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18-safe-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.8. Safe use
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.8. Safe use">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#181-selecting-a-formulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.8.1. Selecting a formulation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#182-selecting-the-execution-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.8.2. Selecting the execution path
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="1-d-matrix-formulation">1. D-matrix formulation<a class="headerlink" href="#1-d-matrix-formulation" title="Permanent link">&para;</a></h1>
+<p>The D-matrix path is an exact, faster way to execute a limited set of Pikaia strategy updates. It is not an approximation mode. When a selected strategy cannot be represented exactly by the D-matrix update, it remains available through the ordinary iterative path and is rejected if <code>use_d_matrix=True</code> is requested.</p>
+<p>This document explains the ordinary update first, derives the reduced update from it, then records the configurations for which the two paths have been tested to give the same results.</p>
+<h2 id="11-scope">1.1. Scope<a class="headerlink" href="#11-scope" title="Permanent link">&para;</a></h2>
+<p>There are two independent formulation choices:</p>
+<table>
+<thead>
+<tr>
+<th>Formulation</th>
+<th>Purpose</th>
+<th>D-matrix scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ORIGINAL</code></td>
+<td>The established Python-package equations and similarity scaling.</td>
+<td>Eight individual gene strategies have verified D-matrix kernels.</td>
+</tr>
+<tr>
+<td><code>MATH_PAPER</code></td>
+<td>Compatibility with the revised iterative equations in the historical Pikaia branch.</td>
+<td>Two supported model configurations: dominant gene plus no-op organism, and altruistic gene plus selfish organism (Alt-Sel).</td>
+</tr>
+</tbody>
+</table>
+<p><code>PikaiaModel</code> owns the formulation for a complete run. It applies that formulation to every selected strategy and rejects a model whose strategies do not implement it. A user therefore cannot accidentally combine an original strategy equation with math-paper similarities or normalisations.</p>
+<h2 id="12-population-fitness-and-symbols">1.2. Population, fitness, and symbols<a class="headerlink" href="#12-population-fitness-and-symbols" title="Permanent link">&para;</a></h2>
+<h3 id="121-fixed-population">1.2.1. Fixed population<a class="headerlink" href="#121-fixed-population" title="Permanent link">&para;</a></h3>
+<p>Let <span class="arithmatex">\(X \in \mathbb{R}^{N\times M}\)</span> be the fixed population matrix. Each row is an organism and each column is a gene. The entry <span class="arithmatex">\(X_{ij}\)</span> is the value of gene <span class="arithmatex">\(j\)</span> in organism <span class="arithmatex">\(i\)</span>.</p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Meaning</th>
+<th>Shape or range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(N\)</span></td>
+<td>Number of organisms.</td>
+<td>Positive integer.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(M\)</span></td>
+<td>Number of genes.</td>
+<td>Positive integer.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(X\)</span></td>
+<td>Fixed population matrix.</td>
+<td><span class="arithmatex">\(N\times M\)</span>.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(X_{ij}\)</span></td>
+<td>Value of gene <span class="arithmatex">\(j\)</span> in organism <span class="arithmatex">\(i\)</span>.</td>
+<td>Usually in <span class="arithmatex">\([0,1]\)</span>.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>Current gene-fitness vector.</td>
+<td>Length <span class="arithmatex">\(M\)</span>, normalised.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\gamma_j\)</span></td>
+<td>Fitness assigned to gene <span class="arithmatex">\(j\)</span>.</td>
+<td><span class="arithmatex">\(\gamma_j\geq0\)</span>.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(o_i\)</span></td>
+<td>Current fitness of organism <span class="arithmatex">\(i\)</span>.</td>
+<td>Scalar.</td>
+</tr>
+</tbody>
+</table>
+<p>The mathematical state is a normalised gene-fitness vector:</p>
+<div class="arithmatex">\[
+\gamma_j \geq 0, \qquad \sum_{j=1}^{M}\gamma_j=1.
+\]</div>
+<p>The model uses a uniform vector when <code>initial_gene_fitness</code> is omitted, and every completed replicator step normalises the next vector. The derivations therefore assume that a user-supplied initial vector also lies on this simplex. The math-paper dominant D-matrix path explicitly requires finite, non-negative values that sum to one because its row-constant construction depends on that invariant.</p>
+<p>The organism fitness is the population row weighted by the current gene fitness:</p>
+<div class="arithmatex">\[
+o_i=\sum_{k=1}^{M}X_{ik}\gamma_k.
+\]</div>
+<p>In this equation, <span class="arithmatex">\(k\)</span> is only a summation index over genes. The value <span class="arithmatex">\(o_i\)</span> changes when <span class="arithmatex">\(\gamma\)</span> changes, while <span class="arithmatex">\(X\)</span> does not change during a fit.</p>
+<h3 id="122-similarity-matrices">1.2.2. Similarity matrices<a class="headerlink" href="#122-similarity-matrices" title="Permanent link">&para;</a></h3>
+<p>Strategies that use kinship receive one gene-similarity matrix <span class="arithmatex">\(s^g\)</span> and one organism-similarity matrix <span class="arithmatex">\(s^o\)</span>. The formulation selects how the Euclidean distance is normalised.</p>
+<table>
+<thead>
+<tr>
+<th>Formulation</th>
+<th>Gene similarity <span class="arithmatex">\(s^g_{jk}\)</span></th>
+<th>Organism similarity <span class="arithmatex">\(s^o_{il}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ORIGINAL</code></td>
+<td>One minus distance divided by the largest observed gene distance.</td>
+<td>One minus distance divided by the largest observed organism distance.</td>
+</tr>
+<tr>
+<td><code>MATH_PAPER</code></td>
+<td><span class="arithmatex">\(1-\lVert X_{:j}-X_{:k}\rVert_2/N\)</span></td>
+<td><span class="arithmatex">\(1-\lVert X_{i:}-X_{l:}\rVert_2/M\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><span class="arithmatex">\(X_{:j}\)</span> denotes column <span class="arithmatex">\(j\)</span> of <span class="arithmatex">\(X\)</span>, and <span class="arithmatex">\(X_{i:}\)</span> denotes row <span class="arithmatex">\(i\)</span>. The math-paper definitions deliberately reproduce the historical <span class="arithmatex">\(N\)</span> and <span class="arithmatex">\(M\)</span> divisors; they do not modify original-formulation results.</p>
+<h3 id="123-math-paper-normalisations">1.2.3. Math-paper normalisations<a class="headerlink" href="#123-math-paper-normalisations" title="Permanent link">&para;</a></h3>
+<p>The historical formulations also use fixed quantities derived from <span class="arithmatex">\(X\)</span>:</p>
+<div class="arithmatex">\[
+g_{\mathrm{mpd}}=\operatorname{mean}_{j&lt;k}|\bar X_j-\bar X_k|, \qquad h_{\mathrm{mpd}}=\operatorname{mean}_{i&lt;l}|\bar X_{i:}-\bar X_{l:}|.
+\]</div>
+<p>Here <span class="arithmatex">\(\bar X_j\)</span> is the mean of column <span class="arithmatex">\(j\)</span>, <span class="arithmatex">\(\bar X_{i:}\)</span> is the mean of row <span class="arithmatex">\(i\)</span>, and <code>mpd</code> means mean pairwise absolute difference. The implementation names these values <code>gene_mean_pairwise_difference</code> and <code>harmonic_fitness_mean_pairwise_difference</code>. A math-paper run raises an error if a required normalisation is zero, because division by zero would make the equation undefined.</p>
+<h2 id="13-ordinary-iterative-update">1.3. Ordinary iterative update<a class="headerlink" href="#13-ordinary-iterative-update" title="Permanent link">&para;</a></h2>
+<h3 id="131-per-strategy-contributions">1.3.1. Per-strategy contributions<a class="headerlink" href="#131-per-strategy-contributions" title="Permanent link">&para;</a></h3>
+<p>For a strategy <span class="arithmatex">\(q\)</span>, let <span class="arithmatex">\(\delta^{(q)}_{ij}(\gamma)\)</span> denote its contribution for organism <span class="arithmatex">\(i\)</span> and gene <span class="arithmatex">\(j\)</span>. A gene strategy returns a scalar contribution for each <span class="arithmatex">\((i,j)\)</span> pair; an organism strategy returns one contribution per gene for organism <span class="arithmatex">\(i\)</span>.</p>
+<p>If fixed mixing is active, each strategy has a fixed non-negative coefficient <span class="arithmatex">\(w_q\)</span> and the coefficients in each strategy family sum to one. The model first combines the strategy contributions using those coefficients and then sums over organisms:</p>
+<div class="arithmatex">\[
+\Delta_j(\gamma)=\sum_{i=1}^{N}\sum_q w_q\,\delta^{(q)}_{ij}(\gamma).
+\]</div>
+<p><span class="arithmatex">\(\Delta_j(\gamma)\)</span> is therefore the total update signal for gene <span class="arithmatex">\(j\)</span> in one iteration. This is the quantity a D-matrix kernel must reproduce exactly.</p>
+<h3 id="132-replicator-step">1.3.2. Replicator step<a class="headerlink" href="#132-replicator-step" title="Permanent link">&para;</a></h3>
+<p>The ordinary iterative path applies the total signal and normalises the result:</p>
+<div class="arithmatex">\[
+\gamma_j^+=\frac{\gamma_j[1+\Delta_j(\gamma)]}{\sum_{r=1}^{M}\gamma_r[1+\Delta_r(\gamma)]}.
+\]</div>
+<p><span class="arithmatex">\(\gamma_j^+\)</span> is the next gene-fitness value. The denominator is the same expression summed over every gene <span class="arithmatex">\(r\)</span>; it keeps the next vector normalised. This calculation evaluates each selected strategy directly for every organism and gene.</p>
+<h2 id="14-d-matrix-reduction">1.4. D-matrix reduction<a class="headerlink" href="#14-d-matrix-reduction" title="Permanent link">&para;</a></h2>
+<h3 id="141-required-form">1.4.1. Required form<a class="headerlink" href="#141-required-form" title="Permanent link">&para;</a></h3>
+<p>A strategy is eligible for the reduced path only when its total iterative signal can be written as a population-static linear term plus a bilinear term:</p>
+<div class="arithmatex">\[
+\Delta_j(\gamma)=d_j+\gamma_j\sum_{k=1}^{M}D_{jk}\gamma_k.
+\]</div>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(d_j\)</span></td>
+<td>A fixed, population-derived linear contribution for gene <span class="arithmatex">\(j\)</span>.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(D\)</span></td>
+<td>An <span class="arithmatex">\(M\times M\)</span> matrix whose entries are fixed for the current population.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(D_{jk}\)</span></td>
+<td>Contribution coupling output gene <span class="arithmatex">\(j\)</span> to input gene <span class="arithmatex">\(k\)</span>.</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\gamma_j\gamma_k\)</span></td>
+<td>The two current-fitness factors represented by the bilinear term.</td>
+</tr>
+</tbody>
+</table>
+<p>Substituting this expression for <span class="arithmatex">\(\Delta_j(\gamma)\)</span> into the ordinary replicator step gives the D-matrix update:</p>
+<div class="arithmatex">\[
+\gamma^+=\frac{\gamma\odot[1+d+\gamma\odot(D\gamma)]}{\sum_{r=1}^{M}\gamma_r[1+d_r+\gamma_r(D\gamma)_r]}.
+\]</div>
+<p><span class="arithmatex">\(\odot\)</span> means elementwise multiplication. <span class="arithmatex">\(D\gamma\)</span> is ordinary matrix-vector multiplication. The expression is fast because <span class="arithmatex">\(D\)</span> and <span class="arithmatex">\(d\)</span> are computed once before the iteration loop instead of re-evaluating every strategy for every organism at every step.</p>
+<h3 id="142-combination-rules">1.4.2. Combination rules<a class="headerlink" href="#142-combination-rules" title="Permanent link">&para;</a></h3>
+<p>The model runs one path per fit. It cannot calculate one strategy through <span class="arithmatex">\(D\)</span> while calculating another strategy iteratively. Consequently, every selected non-no-op strategy must provide an exact D contribution. <code>NoneGeneStrategy</code> and <code>NoneOrgStrategy</code> support both formulations because their contribution is exactly zero under either set of equations. A no-op can therefore isolate a supported strategy without changing its result.</p>
+<p>The reduction requires the built-in <code>FixedMixStrategy</code> for both strategy families. Adaptive mixers such as <code>SelfConsistentMixStrategy</code>, custom mixers, and subclasses that override fixed-mixer behaviour may update coefficients from per-organism deltas that are unavailable after reduction to <span class="arithmatex">\(D\)</span> and <span class="arithmatex">\(d\)</span>; the model therefore rejects them in D-matrix mode.</p>
+<h2 id="15-math-paper-dominant-derivation">1.5. Math-paper dominant derivation<a class="headerlink" href="#15-math-paper-dominant-derivation" title="Permanent link">&para;</a></h2>
+<h3 id="151-direct-signal">1.5.1. Direct signal<a class="headerlink" href="#151-direct-signal" title="Permanent link">&para;</a></h3>
+<p>For math-paper dominant gene, organism <span class="arithmatex">\(i\)</span> contributes the following signal to gene <span class="arithmatex">\(j\)</span>:</p>
+<div class="arithmatex">\[
+\delta^{\mathrm{dom}}_{ij}=\frac{1}{N}\gamma_j\left(X_{ij}-\frac12\right).
+\]</div>
+<p>Here <span class="arithmatex">\(1/N\)</span> averages the contribution over the <span class="arithmatex">\(N\)</span> organisms, <span class="arithmatex">\(\gamma_j\)</span> is the current fitness of gene <span class="arithmatex">\(j\)</span>, and <span class="arithmatex">\(X_{ij}-1/2\)</span> is organism <span class="arithmatex">\(i\)</span>'s centred expression of that gene. Summing over all organisms gives</p>
+<div class="arithmatex">\[
+\Delta^{\mathrm{dom}}_j(\gamma)=\sum_{i=1}^{N}\delta^{\mathrm{dom}}_{ij}=\gamma_j\left(\bar X_j-\frac12\right),
+\]</div>
+<p>where <span class="arithmatex">\(\bar X_j=N^{-1}\sum_i X_{ij}\)</span> is the mean expression of gene <span class="arithmatex">\(j\)</span> in the fixed population.</p>
+<h3 id="152-row-constant-d-matrix">1.5.2. Row-constant D matrix<a class="headerlink" href="#152-row-constant-d-matrix" title="Permanent link">&para;</a></h3>
+<p>Define <span class="arithmatex">\(a_j=\bar X_j-1/2\)</span> and assign that value to every entry in row <span class="arithmatex">\(j\)</span>:</p>
+<div class="arithmatex">\[
+D^{\mathrm{dom}}_{jk}=a_j \qquad \text{for every } k.
+\]</div>
+<p>Although the required D-matrix form contains two appearances of <span class="arithmatex">\(\gamma\)</span>, this row-constant construction uses the normalisation <span class="arithmatex">\(\sum_k\gamma_k=1\)</span>:</p>
+<div class="arithmatex">\[
+\gamma_j(D^{\mathrm{dom}}\gamma)_j
+=\gamma_j\sum_{k=1}^{M}a_j\gamma_k
+=\gamma_j a_j\sum_{k=1}^{M}\gamma_k
+=\gamma_j a_j
+=\Delta^{\mathrm{dom}}_j(\gamma).
+\]</div>
+<p>The reduction is therefore exact. The earlier claim that a signal linear in <span class="arithmatex">\(\gamma_j\)</span> could not satisfy the D-matrix contract was incorrect: the gene-fitness simplex supplies the constant factor through <span class="arithmatex">\(\sum_k\gamma_k=1\)</span>.</p>
+<p>The supported model configuration pairs <code>DominantGeneStrategy</code> with <code>NoneOrgStrategy</code>, both with fixed unit coefficients. The no-op organism contribution is zero, so the comparison isolates the dominant-gene equation. Because the proof uses <span class="arithmatex">\(\sum_k\gamma_k=1\)</span>, the model rejects a math-paper Dominant D-matrix run whose user-supplied <code>initial_gene_fitness</code> is non-finite, negative, or does not sum to one; every subsequent valid replicator step preserves the simplex invariant.</p>
+<h2 id="16-math-paper-alt-sel-derivation">1.6. Math-paper Alt-Sel derivation<a class="headerlink" href="#16-math-paper-alt-sel-derivation" title="Permanent link">&para;</a></h2>
+<p>The old Pikaia branch exposed its reduced solver only when the model selected
+one altruistic gene strategy and one selfish organism strategy. That restriction
+identifies the configuration for which the reduced formulation was designed.
+The old reduced-solver code itself was experimental: it contained a hard-coded
+matrix adjustment and an interactive debugger breakpoint. The package therefore
+does not copy that routine literally. It derives both matrix components from the
+old branch's iterative equations and verifies the resulting update against the
+iterative path.</p>
+<h3 id="161-altruistic-gene-contribution">1.6.1. Altruistic gene contribution<a class="headerlink" href="#161-altruistic-gene-contribution" title="Permanent link">&para;</a></h3>
+<p>For math-paper altruistic gene, the direct contribution is</p>
+<div class="arithmatex">\[
+\delta^G_{ij}=\frac{1}{N g_{\mathrm{mpd}}}\sum_{k\ne j}s^g_{jk}\gamma_j\left(X_{ij}-\frac12\right)\gamma_k(X_{ik}-X_{ij}).
+\]</div>
+<p>The outer factor <span class="arithmatex">\(1/(N g_{\mathrm{mpd}})\)</span> normalises over organisms and the historical gene-difference scale. The sum visits every other gene <span class="arithmatex">\(k\)</span>. <span class="arithmatex">\(s^g_{jk}\)</span> weights that gene by similarity to <span class="arithmatex">\(j\)</span>; <span class="arithmatex">\(X_{ij}-1/2\)</span> centres the focal gene; and <span class="arithmatex">\(X_{ik}-X_{ij}\)</span> measures the other gene relative to the focal gene in the same organism.</p>
+<p>After summing the direct contribution over <span class="arithmatex">\(i\)</span>, the factors <span class="arithmatex">\(\gamma_j\gamma_k\)</span> have exactly the required bilinear form. The corresponding matrix entries are</p>
+<div class="arithmatex">\[
+D^G_{jk}=\frac{s^g_{jk}}{g_{\mathrm{mpd}}}\frac{1}{N}\sum_{i=1}^{N}\left(X_{ij}-\frac12\right)(X_{ik}-X_{ij}), \qquad D^G_{jj}=0.
+\]</div>
+<p>The diagonal is zero because the direct equation excludes <span class="arithmatex">\(k=j\)</span>.</p>
+<h3 id="162-selfish-organism-contribution">1.6.2. Selfish organism contribution<a class="headerlink" href="#162-selfish-organism-contribution" title="Permanent link">&para;</a></h3>
+<p>For each organism <span class="arithmatex">\(i\)</span>, let <span class="arithmatex">\(\mathcal{R}_i\)</span> be the first <span class="arithmatex">\(K\)</span> most similar organisms, where <span class="arithmatex">\(K=\min(\text{requested kin range},N)\)</span>. The organism itself is removed from the sum but remains in the denominator <span class="arithmatex">\(K\)</span>, matching the historical implementation. Its direct contribution is</p>
+<div class="arithmatex">\[
+\delta^O_{ij}=-\frac{2}{N K h_{\mathrm{mpd}}}X_{ij}\gamma_j\sum_{l\in\mathcal{R}_i\setminus\{i\}}s^o_{il}(o_i-o_l).
+\]</div>
+<p><span class="arithmatex">\(l\)</span> indexes relatives of organism <span class="arithmatex">\(i\)</span>. <span class="arithmatex">\(s^o_{il}\)</span> weights a relative by organism similarity. The difference <span class="arithmatex">\(o_i-o_l\)</span> is not fixed, but substituting the organism-fitness definition gives</p>
+<div class="arithmatex">\[
+o_i-o_l=\sum_{k=1}^{M}(X_{ik}-X_{lk})\gamma_k.
+\]</div>
+<p>The result is again bilinear in <span class="arithmatex">\(\gamma_j\)</span> and <span class="arithmatex">\(\gamma_k\)</span>:</p>
+<div class="arithmatex">\[
+D^O_{jk}=-\frac{2}{N K h_{\mathrm{mpd}}}\sum_{i=1}^{N}X_{ij}\sum_{l\in\mathcal{R}_i\setminus\{i\}}s^o_{il}(X_{ik}-X_{lk}).
+\]</div>
+<p>Each component is independently representable in D-matrix form: <span class="arithmatex">\(D^G\)</span>
+reproduces the altruistic-gene contribution and <span class="arithmatex">\(D^O\)</span> reproduces the
+selfish-organism contribution. Neither component needs the other for its
+algebra to be valid. For compatibility with the scope of the old reduced
+solver, however, the package exposes only their sum, <span class="arithmatex">\(D=D^G+D^O\)</span>, as a
+<code>MATH_PAPER</code> model configuration. That supported configuration contains one
+strategy of each type with a fixed coefficient of one.</p>
+<table>
+<thead>
+<tr>
+<th>Math-paper component</th>
+<th>Iterative contribution reproduced</th>
+<th>Role in the supported model configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Altruistic gene, <span class="arithmatex">\(D^G\)</span></td>
+<td>The sum of <span class="arithmatex">\(\delta^G_{ij}\)</span> over all organisms <span class="arithmatex">\(i\)</span>.</td>
+<td>Gene component of Alt-Sel.</td>
+</tr>
+<tr>
+<td>Selfish organism, <span class="arithmatex">\(D^O\)</span></td>
+<td>The sum of <span class="arithmatex">\(\delta^O_{ij}\)</span> over all organisms <span class="arithmatex">\(i\)</span>.</td>
+<td>Organism component of Alt-Sel.</td>
+</tr>
+</tbody>
+</table>
+<p>This distinction also determines how to read the end-to-end comparison below.
+The table has one row per strategy, while the partner column identifies the
+complete public model configuration accepted by <code>PikaiaModel</code>.</p>
+<h2 id="17-compatibility-comparison">1.7. Compatibility comparison<a class="headerlink" href="#17-compatibility-comparison" title="Permanent link">&para;</a></h2>
+<h3 id="171-what-is-being-compared">1.7.1. What is being compared<a class="headerlink" href="#171-what-is-being-compared" title="Permanent link">&para;</a></h3>
+<p>Every row below compares two independently constructed models with the same fixed population, initial gene fitness, strategy configuration, fixed coefficients, and number of iterations:</p>
+<ol>
+<li>The iterative model uses <code>use_d_matrix=False</code> and evaluates the direct strategy equations.</li>
+<li>The reduced model uses <code>use_d_matrix=True</code> and evaluates the precomputed <span class="arithmatex">\(D\)</span> matrix and <span class="arithmatex">\(d\)</span> vector.</li>
+<li>After exactly 1, 50, or 100 iterations, the comparison records the largest absolute differences between corresponding entries in both final fitness outputs.</li>
+</ol>
+<p>For gene fitness, the reported difference at iteration <span class="arithmatex">\(t\)</span> is:</p>
+<div class="arithmatex">\[
+E_{\gamma}(t)
+=
+\max_j
+\left|
+\gamma^{\mathrm{iterative}}_j(t)
+-
+\gamma^{\mathrm{D}}_j(t)
+\right|.
+\]</div>
+<p>Here, <span class="arithmatex">\(\gamma^{\mathrm{iterative}}_j(t)\)</span> and <span class="arithmatex">\(\gamma^{\mathrm{D}}_j(t)\)</span> are the fitness values of gene <span class="arithmatex">\(j\)</span> after iteration <span class="arithmatex">\(t\)</span> in the iterative and D-matrix models, respectively. The maximum runs over every gene <span class="arithmatex">\(j\)</span>.</p>
+<p>For organism fitness, the reported difference is:</p>
+<div class="arithmatex">\[
+E_o(t)
+=
+\max_i
+\left|
+o^{\mathrm{iterative}}_i(t)
+-
+o^{\mathrm{D}}_i(t)
+\right|.
+\]</div>
+<p>Here, <span class="arithmatex">\(o^{\mathrm{iterative}}_i(t)\)</span> and <span class="arithmatex">\(o^{\mathrm{D}}_i(t)\)</span> are the fitness values of organism <span class="arithmatex">\(i\)</span> after iteration <span class="arithmatex">\(t\)</span>. The maximum runs over every organism <span class="arithmatex">\(i\)</span>.</p>
+<p>Organism fitness is derived from gene fitness in both execution paths using the same population matrix:</p>
+<div class="arithmatex">\[
+o_i(t)
+=
+\sum_j X_{ij}\gamma_j(t).
+\]</div>
+<p>Consequently, equal gene-fitness vectors imply equal organism-fitness vectors for the same <span class="arithmatex">\(X\)</span>. The tests still compare organism fitness explicitly. This protects the public output against implementation errors such as storing the wrong iteration or using inconsistent state even though there is no separate organism-fitness evolution equation.</p>
+<p>Each table cell is written as <span class="arithmatex">\(E_{\gamma}(t) / E_o(t)\)</span>, or gene difference followed by organism difference. The acceptance criterion for both outputs is <code>rtol=1e-12</code> and <code>atol=1e-12</code>. A displayed zero means the corresponding floating-point vectors were bitwise equal on that fixture; a small value such as <code>1.11e-16</code> is ordinary floating-point roundoff and is far below the acceptance threshold. Each assessment also compares the median runtime of seven complete 100-iteration fits. These local timings include D-matrix construction, are rounded to two decimal places, and are illustrative rather than a portable performance guarantee.</p>
+<p>For each <code>ORIGINAL</code> row, the named gene strategy is paired with <code>NoneOrgStrategy</code>. That no-op partner contributes zero, so the comparison isolates the named strategy. The math-paper dominant row uses the same arrangement. The other two <code>MATH_PAPER</code> rows refer to the same Alt-Sel run: one row assesses its altruistic-gene component and the other its selfish-organism component. Their numerical results are therefore intentionally identical. This does not mean the matrix components are algebraically inseparable; their isolated D-matrix models are outside the package's public compatibility contract.</p>
+<h3 id="172-iterative-vs-d-matrix-path-differences">1.7.2. Iterative vs. D-matrix path differences<a class="headerlink" href="#172-iterative-vs-d-matrix-path-differences" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Formulation</th>
+<th>Strategy</th>
+<th>Partner</th>
+<th style="text-align: right;">1 iter. (G/O)</th>
+<th style="text-align: right;">50 iter. (G/O)</th>
+<th style="text-align: right;">100 iter. (G/O)</th>
+<th>Result and timing (100 iter.)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ORIGINAL</td>
+<td>Dominant gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">1.11e-16 / 1.11e-16</td>
+<td style="text-align: right;">6.51e-18 / 0</td>
+<td>Matches. 3.16 ms iterative vs 1.11 ms D matrix; D matrix was 2.9 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Selfish gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">2.78e-17 / 0</td>
+<td>Matches. 11.36 ms iterative vs 1.10 ms D matrix; D matrix was 10.3 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Kin-altruistic gene, default full neighbourhood</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">1.11e-16 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td>Matches. 12.77 ms iterative vs 1.12 ms D matrix; D matrix was 11.4 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Altruistic gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 15.66 ms iterative vs 1.10 ms D matrix; D matrix was 14.2 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Sell hard gene</td>
+<td>None organism</td>
+<td style="text-align: right;">1.39e-17 / 0</td>
+<td style="text-align: right;">2.84e-16 / 2.22e-16</td>
+<td style="text-align: right;">5.72e-17 / 5.55e-17</td>
+<td>Matches. 5.23 ms iterative vs 1.29 ms D matrix; D matrix was 4.0 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Sell uniform gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 5.16 ms iterative vs 1.03 ms D matrix; D matrix was 5.0 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Sell easy gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">0 / 0</td>
+<td>Matches. 5.29 ms iterative vs 1.04 ms D matrix; D matrix was 5.1 times faster.</td>
+</tr>
+<tr>
+<td>ORIGINAL</td>
+<td>Variance gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">3.33e-16 / 2.22e-16</td>
+<td style="text-align: right;">6.94e-17 / 1.11e-16</td>
+<td>Matches. 11.50 ms iterative vs 1.21 ms D matrix; D matrix was 9.5 times faster.</td>
+</tr>
+<tr>
+<td>MATH_PAPER</td>
+<td>Dominant gene</td>
+<td>None organism</td>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;">2.22e-16 / 1.11e-16</td>
+<td style="text-align: right;">5.20e-18 / 0</td>
+<td>Matches. 3.53 ms iterative vs 1.14 ms D matrix; D matrix was 3.1 times faster.</td>
+</tr>
+<tr>
+<td>MATH_PAPER</td>
+<td>Altruistic gene</td>
+<td>Selfish organism, unit fixed coefficient</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 0</td>
+<td style="text-align: right;">1.11e-16 / 2.22e-16</td>
+<td>Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster.</td>
+</tr>
+<tr>
+<td>MATH_PAPER</td>
+<td>Selfish organism</td>
+<td>Altruistic gene, unit fixed coefficient</td>
+<td style="text-align: right;">5.55e-17 / 1.11e-16</td>
+<td style="text-align: right;">5.55e-17 / 0</td>
+<td style="text-align: right;">1.11e-16 / 2.22e-16</td>
+<td>Matches as part of Alt-Sel. 17.89 ms iterative vs 2.11 ms D matrix; D matrix was 8.5 times faster.</td>
+</tr>
+</tbody>
+</table>
+<p>The original rows use a fixed four-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.6,0.3,0.1)\)</span>. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial <span class="arithmatex">\(\gamma=(0.4,0.35,0.25)\)</span> and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than <span class="arithmatex">\(N\)</span>. The automated tests compare every gene- and organism-fitness history entry from the initial state through the requested final iteration. All comparisons satisfy the same <code>rtol=1e-12</code>, <code>atol=1e-12</code> criterion.</p>
+<p>The assertions are implemented in <code>tests/unit/test_d_matrix_equivalence.py</code> and <code>tests/unit/test_math_paper_formulation.py</code>.</p>
+<h3 id="173-historical-iterative-implementation-cross-check">1.7.3. Historical iterative implementation cross-check<a class="headerlink" href="#173-historical-iterative-implementation-cross-check" title="Permanent link">&para;</a></h3>
+<p>The math-paper iterative path was also compared numerically with the actual <code>pikaia-gitlab-old/public/src/pikaia/alg.py</code> implementation rather than only with equations transcribed into tests. Three deterministic populations of shapes <span class="arithmatex">\(5\times3\)</span>, <span class="arithmatex">\(7\times4\)</span>, and <span class="arithmatex">\(9\times5\)</span> were checked at 1, 50, and 100 iterations. Dominant gene was paired with a no-op organism strategy; Alt-Sel was checked with <span class="arithmatex">\(K=1\)</span>, <span class="arithmatex">\(K=2\)</span>, <span class="arithmatex">\(K=N\)</span>, and <span class="arithmatex">\(K&gt;N\)</span>.</p>
+<p>The gene and organism similarity matrices and both mean-pairwise-difference normalisations matched the historical implementation within an absolute tolerance of <span class="arithmatex">\(10^{-15}\)</span>. Dominant trajectories were bitwise equal. The largest Alt-Sel trajectory difference was <span class="arithmatex">\(3.33\times10^{-16}\)</span>, well below the <code>rtol=1e-12</code>, <code>atol=1e-12</code> acceptance criterion. This cross-check concerns the historical iterative equations; the old experimental reduced solver is not used because, as explained in Section 1.6, it contains a hard-coded matrix adjustment and an interactive debugger breakpoint.</p>
+<h2 id="18-safe-use">1.8. Safe use<a class="headerlink" href="#18-safe-use" title="Permanent link">&para;</a></h2>
+<h3 id="181-selecting-a-formulation">1.8.1. Selecting a formulation<a class="headerlink" href="#181-selecting-a-formulation" title="Permanent link">&para;</a></h3>
+<p>Use <code>ORIGINAL</code> for the Python-package equations. Use <code>MATH_PAPER</code> to reproduce the revised historical equations, similarities, normalisations, and exact math-paper D-matrix configurations. Do not mix formulations in one model. A math-paper fit requires an explicit <code>max_iter</code>; the direct analytical Dominant+Balanced fixed point selected by <code>max_iter=None</code> implements only <code>ORIGINAL</code> and is therefore rejected under <code>MATH_PAPER</code>.</p>
+<h3 id="182-selecting-the-execution-path">1.8.2. Selecting the execution path<a class="headerlink" href="#182-selecting-the-execution-path" title="Permanent link">&para;</a></h3>
+<p>Use <code>use_d_matrix=True</code> only for a configuration represented in the comparison table. In <code>ORIGINAL</code>, supported strategies may be combined with fixed coefficients because their direct deltas and D contributions are both added linearly. In <code>MATH_PAPER</code>, use dominant gene with a no-op organism strategy or the unmixed Alt-Sel pair. All other supported math-paper strategy arrangements remain usable with <code>use_d_matrix=False</code>; strategies that implement only <code>ORIGINAL</code> are rejected when the model selects <code>MATH_PAPER</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.integrate", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
