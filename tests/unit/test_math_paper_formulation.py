@@ -93,6 +93,61 @@ def test_math_paper_altsel_d_matrix_matches_iterative_path(
     )
 
 
+@pytest.mark.parametrize("seed", [7, 101, 103])
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+@pytest.mark.parametrize("kin_range", [1, 2, 10])
+def test_math_paper_altsel_d_matrix_matches_on_deterministic_populations(
+    seed: int, max_iter: int, kin_range: int
+) -> None:
+    """Verify Alt-Sel across populations, run lengths, and kin-range bounds."""
+    population = PikaiaPopulation(np.random.default_rng(seed).random((7, 4)))
+    shared_arguments = {
+        "population": population,
+        "gene_strategies": [AltruisticGeneStrategy()],
+        "org_strategies": [SelfishOrgStrategy(kin_range=kin_range)],
+        "initial_gene_fitness": [0.4, 0.3, 0.2, 0.1],
+        "max_iter": max_iter,
+        "formulation": StrategyFormulation.MATH_PAPER,
+    }
+    iterative = PikaiaModel(**shared_arguments, use_d_matrix=False)
+    d_matrix = PikaiaModel(**shared_arguments, use_d_matrix=True)
+    iterative.fit()
+    d_matrix.fit()
+
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[max_iter],
+        d_matrix.gene_fitness_history[max_iter],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+def test_math_paper_d_matrix_paths_preserve_zero_gene_fitness(max_iter: int) -> None:
+    """Both exact math-paper configurations accept simplex boundary values."""
+    configurations = [
+        ([DominantGeneStrategy()], [NoneOrgStrategy()]),
+        ([AltruisticGeneStrategy()], [SelfishOrgStrategy()]),
+    ]
+    for gene_strategies, org_strategies in configurations:
+        arguments = {
+            "gene_strategies": gene_strategies,
+            "org_strategies": org_strategies,
+            "initial_gene_fitness": [0.6, 0.4, 0.0],
+            "max_iter": max_iter,
+        }
+        iterative = _fit(**arguments, use_d_matrix=False)
+        d_matrix = _fit(**arguments, use_d_matrix=True)
+
+        np.testing.assert_allclose(
+            iterative.gene_fitness_history[max_iter],
+            d_matrix.gene_fitness_history[max_iter],
+            rtol=1e-12,
+            atol=1e-12,
+        )
+        assert d_matrix.gene_fitness_history[max_iter, 2] == 0.0
+
+
 @pytest.mark.parametrize(
     "gene_fitness",
     [np.array([0.4, 0.35, 0.25]), np.array([0.2, 0.3, 0.5])],
@@ -529,19 +584,25 @@ def test_math_paper_dominant_rejects_non_noop_organism_partner():
         model.fit()
 
 
-def test_math_paper_dominant_d_matrix_requires_normalized_initial_fitness():
-    """Reject input outside the simplex required by the row-constant proof."""
+@pytest.mark.parametrize(
+    "initial_gene_fitness",
+    ([0.8, 0.7, 0.5], [1.1, -0.1, 0.0], [0.5, np.nan, 0.5]),
+)
+def test_math_paper_dominant_d_matrix_requires_normalized_initial_fitness(
+    initial_gene_fitness: list[float],
+) -> None:
+    """Reject non-normalized, negative, and non-finite simplex inputs."""
     model = PikaiaModel(
         population=_population(),
         gene_strategies=[DominantGeneStrategy()],
         org_strategies=[NoneOrgStrategy()],
-        initial_gene_fitness=[0.8, 0.7, 0.5],
+        initial_gene_fitness=initial_gene_fitness,
         max_iter=1,
         use_d_matrix=True,
         formulation=StrategyFormulation.MATH_PAPER,
     )
 
-    with pytest.raises(ValueError, match="initial_gene_fitness to sum to one"):
+    with pytest.raises(ValueError, match="finite, non-negative values that sum to one"):
         model.fit()
 
 

@@ -241,7 +241,7 @@ current organism-level example.
 
 ## 5. The D-matrix fast path
 
-When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. The practical speed-up depends on population size, gene count, and the selected strategies.
+When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. The practical speed-up depends on population size, gene count, and the selected strategies. This mode requires the built-in `FixedMixStrategy` for both strategy families; adaptive, custom, and overridden mixers are iterative-only because the reduced path cannot observe their per-organism mixing behaviour.
 
 For your strategy to support this path:
 

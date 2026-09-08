@@ -7,7 +7,7 @@ import pytest
 
 from pikaia.data.population import PikaiaPopulation
 from pikaia.models.pikaia_model import PikaiaModel
-from pikaia.strategies.base_strategies import GeneStrategy, OrgStrategy
+from pikaia.strategies.base_strategies import GeneStrategy, MixStrategy, OrgStrategy
 from pikaia.strategies.gs_strategies.altruistic_strategy import AltruisticGeneStrategy
 from pikaia.strategies.gs_strategies.dominant_strategy import DominantGeneStrategy
 from pikaia.strategies.gs_strategies.entropy_max_strategy import EntropyMaxGeneStrategy
@@ -29,6 +29,7 @@ from pikaia.strategies.gs_strategies.sell_uniform_strategy import (
     SellUniformGeneStrategy,
 )
 from pikaia.strategies.gs_strategies.variance_strategy import VarianceGeneStrategy
+from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
 from pikaia.strategies.mix_strategies.self_consistent_strategy import (
     SelfConsistentMixStrategy,
 )
@@ -88,6 +89,25 @@ EXACT_GENE_STRATEGIES: list[tuple[str, Callable[[], GeneStrategy]]] = [
     ("sell-easy", SellEasyGeneStrategy),
     ("variance", VarianceGeneStrategy),
 ]
+
+
+class CustomPassThroughMixStrategy(MixStrategy):
+    """A custom mixer used to prove that D mode accepts only fixed mixing."""
+
+    @property
+    def name(self) -> str:
+        """Return the test mixer's display name."""
+        return "Custom pass-through"
+
+    def __call__(
+        self, delta: np.ndarray, mix_coeffs: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Combine deltas while returning unchanged coefficients."""
+        return np.einsum("ijk,k->ij", delta, mix_coeffs), mix_coeffs
+
+
+class FixedMixSubclass(FixedMixStrategy):
+    """A subclass used to prove that overridden fixed mixers are rejected."""
 
 
 @pytest.mark.parametrize("max_iter", [1, 50, 100])
@@ -222,6 +242,21 @@ def test_d_matrix_rejects_a_mixed_supported_and_unsupported_combination() -> Non
         rejected.fit()
 
 
+def test_d_matrix_validates_before_zero_fitness_range_short_circuit() -> None:
+    """A degenerate population must not hide an unsupported D configuration."""
+    rejected = PikaiaModel(
+        population=PikaiaPopulation(np.array([[0.2, 0.8], [0.8, 0.2]])),
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[BalancedOrgStrategy()],
+        initial_gene_fitness=[0.5, 0.5],
+        max_iter=1,
+        use_d_matrix=True,
+    )
+
+    with pytest.raises(ValueError, match="BalancedOrgStrategy.*does not support"):
+        rejected.fit()
+
+
 def test_d_matrix_rejects_self_consistent_mixing() -> None:
     """D-matrix mode rejects dynamic weights derived from per-organism deltas."""
     rejected = PikaiaModel(
@@ -234,7 +269,36 @@ def test_d_matrix_rejects_self_consistent_mixing() -> None:
         use_d_matrix=True,
     )
 
-    with pytest.raises(ValueError, match="requires fixed mixing coefficients"):
+    with pytest.raises(ValueError, match="requires FixedMixStrategy"):
+        rejected.fit()
+
+
+@pytest.mark.parametrize(
+    ("gene_mix_strategy", "org_mix_strategy"),
+    [
+        (CustomPassThroughMixStrategy(), None),
+        (FixedMixSubclass(), None),
+        (None, CustomPassThroughMixStrategy()),
+        (None, FixedMixSubclass()),
+    ],
+)
+def test_d_matrix_rejects_custom_mixing(
+    gene_mix_strategy: MixStrategy | None,
+    org_mix_strategy: MixStrategy | None,
+) -> None:
+    """Neither strategy family permits custom or overridden mixers in D mode."""
+    rejected = PikaiaModel(
+        population=_population(),
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[NoneOrgStrategy()],
+        gene_mix_strategy=gene_mix_strategy,
+        org_mix_strategy=org_mix_strategy,
+        initial_gene_fitness=[0.6, 0.3, 0.1],
+        max_iter=1,
+        use_d_matrix=True,
+    )
+
+    with pytest.raises(ValueError, match="requires FixedMixStrategy"):
         rejected.fit()
 
 
@@ -270,3 +334,27 @@ def test_fixed_mixture_of_exact_kernels_matches_iterative_path(max_iter: int) ->
         rtol=1e-12,
         atol=1e-12,
     )
+
+
+@pytest.mark.parametrize("max_iter", [1, 50, 100])
+def test_d_matrix_preserves_zero_gene_fitness(max_iter: int) -> None:
+    """Zero-valued simplex components remain zero in both execution paths."""
+    shared_arguments = {
+        "population": _population(),
+        "gene_strategies": [DominantGeneStrategy()],
+        "org_strategies": [NoneOrgStrategy()],
+        "initial_gene_fitness": [0.7, 0.3, 0.0],
+        "max_iter": max_iter,
+    }
+    iterative = PikaiaModel(**shared_arguments, use_d_matrix=False)
+    d_matrix = PikaiaModel(**shared_arguments, use_d_matrix=True)
+    iterative.fit()
+    d_matrix.fit()
+
+    np.testing.assert_allclose(
+        iterative.gene_fitness_history[max_iter],
+        d_matrix.gene_fitness_history[max_iter],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+    assert d_matrix.gene_fitness_history[max_iter, 2] == 0.0

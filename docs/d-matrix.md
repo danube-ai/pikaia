@@ -31,11 +31,13 @@ Let $X \in \mathbb{R}^{N\times M}$ be the fixed population matrix. Each row is a
 | $\gamma_j$ | Fitness assigned to gene $j$. | $\gamma_j\geq0$. |
 | $o_i$ | Current fitness of organism $i$. | Scalar. |
 
-The gene-fitness vector is always normalised:
+The mathematical state is a normalised gene-fitness vector:
 
 $$
 \gamma_j \geq 0, \qquad \sum_{j=1}^{M}\gamma_j=1.
 $$
+
+The model uses a uniform vector when `initial_gene_fitness` is omitted, and every completed replicator step normalises the next vector. The derivations therefore assume that a user-supplied initial vector also lies on this simplex. The math-paper dominant D-matrix path explicitly requires finite, non-negative values that sum to one because its row-constant construction depends on that invariant.
 
 The organism fitness is the population row weighted by the current gene fitness:
 
@@ -119,7 +121,7 @@ $\odot$ means elementwise multiplication. $D\gamma$ is ordinary matrix-vector mu
 
 The model runs one path per fit. It cannot calculate one strategy through $D$ while calculating another strategy iteratively. Consequently, every selected non-no-op strategy must provide an exact D contribution. `NoneGeneStrategy` and `NoneOrgStrategy` support both formulations because their contribution is exactly zero under either set of equations. A no-op can therefore isolate a supported strategy without changing its result.
 
-The reduction also requires fixed mixing coefficients. `SelfConsistentMixStrategy` updates coefficients from per-organism deltas, which are unavailable after reduction to $D$ and $d$, so self-consistent mixing is iterative-only.
+The reduction requires the built-in `FixedMixStrategy` for both strategy families. Adaptive mixers such as `SelfConsistentMixStrategy`, custom mixers, and subclasses that override fixed-mixer behaviour may update coefficients from per-organism deltas that are unavailable after reduction to $D$ and $d$; the model therefore rejects them in D-matrix mode.
 
 ## 1.5. Math-paper dominant derivation
 
@@ -159,7 +161,7 @@ $$
 
 The reduction is therefore exact. The earlier claim that a signal linear in $\gamma_j$ could not satisfy the D-matrix contract was incorrect: the gene-fitness simplex supplies the constant factor through $\sum_k\gamma_k=1$.
 
-The supported model configuration pairs `DominantGeneStrategy` with `NoneOrgStrategy`, both with fixed unit coefficients. The no-op organism contribution is zero, so the comparison isolates the dominant-gene equation. Because the proof uses $\sum_k\gamma_k=1$, the model rejects a math-paper Dominant D-matrix run whose user-supplied `initial_gene_fitness` does not sum to one; every subsequent replicator step preserves this invariant.
+The supported model configuration pairs `DominantGeneStrategy` with `NoneOrgStrategy`, both with fixed unit coefficients. The no-op organism contribution is zero, so the comparison isolates the dominant-gene equation. Because the proof uses $\sum_k\gamma_k=1$, the model rejects a math-paper Dominant D-matrix run whose user-supplied `initial_gene_fitness` is non-finite, negative, or does not sum to one; every subsequent valid replicator step preserves the simplex invariant.
 
 ## 1.6. Math-paper Alt-Sel derivation
 
@@ -257,9 +259,15 @@ For each `ORIGINAL` row, the named gene strategy is paired with `NoneOrgStrategy
 | MATH_PAPER | Altruistic gene | Selfish organism, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
 | MATH_PAPER | Selfish organism | Altruistic gene, unit fixed coefficient | 5.55e-17 | 5.55e-17 | 1.11e-16 | Matches as part of Alt-Sel. 13.43 ms iterative vs 0.74 ms D matrix; D matrix was 18.1 times faster. |
 
-The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and math-paper similarity scaling. The original kernels and the math-paper dominant kernel also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. All satisfy the same `rtol=1e-12`, `atol=1e-12` criterion; the original kernels' largest observed discrepancy is $3.4\times10^{-16}$.
+The original rows use a fixed four-organism, three-gene fixture with initial $\gamma=(0.6,0.3,0.1)$. The math-paper dominant row and the two rows representing the same Alt-Sel run use a fixed five-organism, three-gene fixture with initial $\gamma=(0.4,0.35,0.25)$ and math-paper similarity scaling. The original kernels, math-paper dominant kernel, and complete math-paper Alt-Sel reduction also run against three additional deterministic seven-organism, four-gene fixtures at all three iteration counts. Alt-Sel is checked with kin ranges of 1, 2, and 10, so the tests cover an empty relative set, a bounded neighbourhood, the full population, and clamping a requested range larger than $N$. All comparisons satisfy the same `rtol=1e-12`, `atol=1e-12` criterion; the original kernels' largest observed discrepancy is $3.4\times10^{-16}$.
 
 The assertions are implemented in `tests/unit/test_d_matrix_equivalence.py` and `tests/unit/test_math_paper_formulation.py`.
+
+### 1.7.3. Historical iterative implementation cross-check
+
+The math-paper iterative path was also compared numerically with the actual `pikaia-gitlab-old/public/src/pikaia/alg.py` implementation rather than only with equations transcribed into tests. Three deterministic populations of shapes $5\times3$, $7\times4$, and $9\times5$ were checked at 1, 50, and 100 iterations. Dominant gene was paired with a no-op organism strategy; Alt-Sel was checked with $K=1$, $K=2$, $K=N$, and $K>N$.
+
+The gene and organism similarity matrices and both mean-pairwise-difference normalisations matched the historical implementation within an absolute tolerance of $10^{-15}$. Dominant trajectories were bitwise equal. The largest Alt-Sel trajectory difference was $3.33\times10^{-16}$, well below the `rtol=1e-12`, `atol=1e-12` acceptance criterion. This cross-check concerns the historical iterative equations; the old experimental reduced solver is not used because, as explained in Section 1.6, it contains a hard-coded matrix adjustment and an interactive debugger breakpoint.
 
 ## 1.8. Safe use
 

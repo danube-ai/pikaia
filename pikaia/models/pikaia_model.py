@@ -40,7 +40,9 @@ class PikaiaModel(GeneticModel):
                 and ``(M,)`` d-vector once before the iteration loop, reducing
                 per-step cost from ``O(N·M²)`` to ``O(M²)``.  All active
                 strategies must have a registered D-matrix kernel; a
-                ``ValueError`` is raised at fit time if any do not.
+                ``ValueError`` is raised at fit time if any do not. Both
+                strategy families must use the built-in ``FixedMixStrategy``;
+                adaptive, custom, and overridden mixers are iterative-only.
                 Defaults to ``False``.
             **kwargs (object): Keyword arguments forwarded to :class:`GeneticModel`.
 
@@ -73,13 +75,6 @@ class PikaiaModel(GeneticModel):
                 "formulation."
             )
 
-        if self._initial_org_fitness_range == 0:
-            logger.info(
-                "Skipping fit: organism fitness range is 0. "
-                "Returning uniform scores unchanged."
-            )
-            return
-
         start_time = time.perf_counter()
         if self._use_d_matrix:
             if self._max_iter is None:
@@ -92,6 +87,15 @@ class PikaiaModel(GeneticModel):
                 )
             logger.info("D-matrix path selected. Precomputing D matrix...")
             self._compute_d_matrix()
+
+        if self._initial_org_fitness_range == 0:
+            logger.info(
+                "Skipping fit: organism fitness range is 0, so no organism "
+                "ranking is possible."
+            )
+            return
+
+        if self._use_d_matrix:
             logger.info(
                 f"Running D-matrix simulation for up to {self._max_iter} iterations."
             )
@@ -373,15 +377,21 @@ class PikaiaModel(GeneticModel):
             step = linear + bilinear
             gamma_new = gamma * (1.0 + step)
 
-            if np.any(gamma_new <= 0):
+            normalization = gamma_new.sum()
+            if (
+                not np.all(np.isfinite(gamma_new))
+                or np.any(gamma_new < 0)
+                or not np.isfinite(normalization)
+                or normalization <= 0
+            ):
                 raise ValueError(
-                    "D-matrix step produced non-positive gene fitness at iteration "
+                    "D-matrix step produced invalid gene fitness at iteration "
                     f"{i}. The selected population, strategies, coefficients, or "
                     "initial fitness values are outside the stable numerical range "
                     "of the reduced update. Use the iterative path or revise the "
                     "configuration."
                 )
-            gamma_new /= gamma_new.sum()
+            gamma_new /= normalization
 
             self._gene_fitness_hist[i, :] = gamma_new
             self._org_fitness_hist[i, :] = self._population.matrix @ gamma_new

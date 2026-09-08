@@ -20,9 +20,6 @@ from pikaia.strategies.base_strategies import (
     OrgStrategy,
 )
 from pikaia.strategies.mix_strategies.fixed_strategy import FixedMixStrategy
-from pikaia.strategies.mix_strategies.self_consistent_strategy import (
-    SelfConsistentMixStrategy,
-)
 
 
 def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
@@ -491,24 +488,29 @@ class GeneticModel(ABC):
         gene strategy and one selfish organism strategy, both with fixed unit
         coefficients. The math-paper dominant strategy is independently exact
         when paired with the formulation-neutral no-op organism strategy.
-        Every formulation requires fixed mixing because the reduced equation
-        does not represent the per-organism coefficient update used by
-        ``SelfConsistentMixStrategy``.
+        Every formulation requires the built-in ``FixedMixStrategy`` because
+        the reduced equation does not represent coefficient updates performed
+        by adaptive, custom, or overridden mixers.
 
         Raises:
-            ValueError: If mixing is self-consistent or a math-paper request is
-                neither historical Alt-Sel nor isolated dominant gene.
+            ValueError: If either mixer is not fixed or a math-paper request is
+                neither historical Alt-Sel nor isolated dominant gene, or if
+                isolated math-paper dominant starts outside the gene-fitness
+                simplex required by its row-constant kernel.
 
         """
+        has_fixed_mixing = all(
+            type(strategy) is FixedMixStrategy
+            for strategy in (self._gene_mix_strategy, self._org_mix_strategy)
+        )
+        if not has_fixed_mixing:
+            raise ValueError(
+                "use_d_matrix=True requires FixedMixStrategy for both gene and "
+                "organism mixing. Use use_d_matrix=False with adaptive or "
+                "custom mixing strategies, including overridden subclasses."
+            )
+
         if self._formulation is StrategyFormulation.ORIGINAL:
-            if isinstance(
-                self._gene_mix_strategy, SelfConsistentMixStrategy
-            ) or isinstance(self._org_mix_strategy, SelfConsistentMixStrategy):
-                raise ValueError(
-                    "use_d_matrix=True requires fixed mixing coefficients for "
-                    "the ORIGINAL formulation. Use use_d_matrix=False with "
-                    "SelfConsistentMixStrategy."
-                )
             return
 
         from pikaia.strategies.gs_strategies.altruistic_strategy import (
@@ -522,12 +524,9 @@ class GeneticModel(ABC):
             SelfishOrgStrategy,
         )
 
-        has_fixed_unit_mixing = (
-            self._initial_gene_mixing_coeffs == [1.0]
-            and self._initial_org_mixing_coeffs == [1.0]
-            and not isinstance(self._gene_mix_strategy, SelfConsistentMixStrategy)
-            and not isinstance(self._org_mix_strategy, SelfConsistentMixStrategy)
-        )
+        has_fixed_unit_mixing = self._initial_gene_mixing_coeffs == [
+            1.0
+        ] and self._initial_org_mixing_coeffs == [1.0]
 
         is_altsel = (
             len(self._gene_strategies) == 1
@@ -543,15 +542,22 @@ class GeneticModel(ABC):
             and isinstance(self._org_strategies[0], NoneOrgStrategy)
             and has_fixed_unit_mixing
         )
-        if is_isolated_dominant and not np.isclose(
-            np.sum(self._initial_gene_fitness), 1.0, rtol=1e-12, atol=1e-12
-        ):
-            raise ValueError(
-                "MATH_PAPER DominantGeneStrategy with use_d_matrix=True "
-                "requires initial_gene_fitness to sum to one because its exact "
-                "row-constant D matrix uses the normalized gene-fitness "
-                "simplex."
+        if is_isolated_dominant:
+            initial_gene_fitness = self._initial_gene_fitness
+            is_on_simplex = (
+                np.all(np.isfinite(initial_gene_fitness))
+                and np.all(initial_gene_fitness >= 0)
+                and np.isclose(
+                    np.sum(initial_gene_fitness), 1.0, rtol=1e-12, atol=1e-12
+                )
             )
+            if not is_on_simplex:
+                raise ValueError(
+                    "MATH_PAPER DominantGeneStrategy with use_d_matrix=True "
+                    "requires initial_gene_fitness to contain finite, non-negative "
+                    "values that sum to one because its exact row-constant D matrix "
+                    "uses the normalized gene-fitness simplex."
+                )
         if not (is_altsel or is_isolated_dominant):
             raise ValueError(
                 "MATH_PAPER use_d_matrix=True is available only for an "
