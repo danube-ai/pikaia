@@ -2,7 +2,7 @@
 
 > Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
-## Introduction
+## 1. Introduction
 
 Grouped-Query Attention (GQA) has become the new standard replacement for a more compute- and parameter-efficient alternative to Multi-Head Attention (MHA) in recent years. Note that it's not new and goes back to the 2023 [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245). And even the larger variants in the good old Llama 2 series used it.
 
@@ -20,7 +20,7 @@ While GQA is mainly a computational-efficiency workaround for MHA, ablation stud
 
 However, this assumes that the number of key-value groups is chosen carefully. In the extreme case where all attention heads share a single key-value group, known as multi-query attention, the memory usage decreases even more drastically but modeling performance can suffer. (And, on the other extreme, if we set the number of key-value groups equal to the number of query heads, we are back at standard multi-head attention.)
 
-## GQA Memory Savings
+## 2. GQA Memory Savings
 
 The memory savings are mostly reflected in the KV storage. We can compute the KV storage size with the following formula:
 
@@ -57,7 +57,7 @@ The savings when using GQA over MHA are further shown in the plot below for diff
 
 You can reproduce the plot via `uv run plot_memory_estimates_gqa.py`.
 
-## GQA Code Examples
+## 3. GQA Code Examples
 
 The [gpt_with_kv_mha.py](gpt_with_kv_mha.py) and [gpt_with_kv_gqa.py](gpt_with_kv_gqa.py) scripts in this folder provide hands-on examples for comparing the MHA and GQA memory usage in the context of a GPT model implementation.
 

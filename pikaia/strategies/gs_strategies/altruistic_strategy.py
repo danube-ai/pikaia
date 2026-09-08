@@ -1,12 +1,19 @@
+"""Implement the altruistic gene strategy and its supported formulations."""
+
+from typing import ClassVar
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import (
+    StrategyFormulation,
+    StrategyNormalizations,
+)
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class AltruisticGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that promotes altruistic behavior.
+    """A gene strategy that promotes altruistic behavior.
 
     This strategy models altruism where a gene's fitness is influenced by its
     interaction with other genes. The delta for a gene's fitness is calculated
@@ -16,12 +23,17 @@ class AltruisticGeneStrategy(GeneStrategy):
 
     """
 
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+    )
+
     def __init__(self, **kwargs):
         """Initialise the Altruistic gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `GeneStrategy` and
+            **kwargs (object): Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -31,8 +43,7 @@ class AltruisticGeneStrategy(GeneStrategy):
         return "Altruistic"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for an altruistic gene.
+        """Compute the delta for an altruistic gene.
 
         The formula is derived from the replicator equation, considering the
         interactions between the current gene and all other genes in the organism.
@@ -42,6 +53,7 @@ class AltruisticGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+
         """
         # Get all gene indices except the current gene
         indices = np.arange(ctx.population.M) != ctx.gene_id
@@ -49,6 +61,25 @@ class AltruisticGeneStrategy(GeneStrategy):
         # Vectorized computation for all genes except self
         # 16 / N * similarity * fitness_self * (pop_self - 0.5) * fitness_others *
         # (pop_others - pop_self)
+        interaction = (
+            ctx.gene_similarity[ctx.gene_id, indices]
+            * ctx.gene_fitness[ctx.gene_id]
+            * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            * ctx.gene_fitness[indices]
+            * (
+                ctx.population[ctx.org_id, indices]
+                - ctx.population[ctx.org_id, ctx.gene_id]
+            )
+        )
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if ctx.normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            return float(
+                np.sum(interaction)
+                / ctx.population.N
+                / ctx.normalizations.require_gene_mean_pairwise_difference()
+            )
+
         return float(
             np.sum(
                 # constant factor and normalization by population size
@@ -79,6 +110,7 @@ class AltruisticGeneStrategy(GeneStrategy):
         org_similarity: np.ndarray,
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
+        normalizations: StrategyNormalizations | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
         """Full ``(M, M)`` D matrix encoding cross-gene altruistic interactions.
 
@@ -88,12 +120,15 @@ class AltruisticGeneStrategy(GeneStrategy):
             org_similarity: Unused.
             initial_org_fitness_range: Unused.
             y: Unused.
+            normalizations: Population-derived normalisation values required by
+                the ``MATH_PAPER`` formulation; ignored by ``ORIGINAL``.
 
         Returns:
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
-            ``D[j, k] = (16/M) * gene_similarity[j, k]``
-            ``* mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``
-            and the diagonal set to zero.
+            the formulation-specific scaling applied to
+            ``gene_similarity[j, k] * mean_i[(x_ij - 0.5) * (x_ik - x_ij)]``.
+            The diagonal is set to zero.
+
         """
         X = population.matrix  # (N, M)
         M = population.M
@@ -101,6 +136,29 @@ class AltruisticGeneStrategy(GeneStrategy):
         # X_diff[i, j, k] = X[i,k] - X[i,j]
         X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
         kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
-        D = (16.0 / M) * gene_similarity * kernel
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            if normalizations is None:
+                raise ValueError("MATH_PAPER requires population normalizations.")
+            D = (
+                gene_similarity
+                * kernel
+                / normalizations.require_gene_mean_pairwise_difference()
+            )
+        else:
+            D = (16.0 / M) * gene_similarity * kernel
         np.fill_diagonal(D, 0.0)
         return D, None
+
+    @property
+    def requires_normalizations(self) -> bool:
+        """Indicate that the strategy requires population normalisations.
+
+        The calculation uses a shared normalisation value supplied by the
+        model before strategy evaluation.
+        """
+        return True
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that both supported formulations have an exact D kernel."""
+        return True

@@ -1,11 +1,12 @@
+"""Implement the score-based strategy that buys hard organisms."""
+
 import numpy as np
 
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
 class BuyHardOrgStrategy(OrgStrategy):
-    """
-    Trading buy-phase paired with `SellHardGeneStrategy`.
+    r"""Trading buy-phase paired with `SellHardGeneStrategy`.
 
     Each organism spends its sell capital (earned from hard genes) on genes it
     failed, weighted by how easy those genes are (``mean_j``).  Organisms that
@@ -36,13 +37,29 @@ class BuyHardOrgStrategy(OrgStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the strategy with options accepted by ``OrgStrategy``.
+
+        Args:
+            **kwargs (object): Options forwarded to :class:`OrgStrategy`.
+
+        """
         super().__init__(**kwargs)
 
     @property
     def name(self) -> str:
+        """Return the stable registry name for this strategy."""
         return "BuyHard"
 
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
+        """Return the hard-trade buy contribution for one organism.
+
+        Args:
+            ctx: Evaluation context identifying the organism to evaluate.
+
+        Returns:
+            Vector of gene-fitness deltas for the selected organism.
+
+        """
         X = ctx.population.matrix
         N, M = X.shape
         gamma = ctx.gene_fitness

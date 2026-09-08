@@ -8,7 +8,7 @@ Both Qwen3-Next and Kimi Linear use a 3:1 ratio, meaning for every three transfo
 
 ![Qwen3-Next versus Kimi Linear](https://sebastianraschka.com/images/LLMs-from-scratch-images/bonus/gated_deltanet/01.webp)
 
-## Introduction and Overview
+## 1. Introduction and Overview
 
 Gated DeltaNet is a linear attention variant with inspiration from recurrent neural networks, including a gating mechanism from the [Gated Delta Networks: Improving Mamba2 with Delta Rule](https://arxiv.org/abs/2412.06464) paper. In a sense, Gated DeltaNet is a DeltaNet with Mamba-style gating, and DeltaNet is a linear attention mechanism.
 
@@ -20,7 +20,7 @@ The MLA in Kimi Linear does not use the gate, which was intentional so that the 
 
 Since we already covered MLA in `mla.md`, this section focuses on the Gated DeltaNet aspect.
 
-## Gated Attention
+## 2. Gated Attention
 
 Before we get to the Gated DeltaNet itself, let's briefly talk about the gate. As you can see in the upper part of the Qwen3-Next architecture in the previous figure, Qwen3-Next uses "gated attention". This is essentially regular full attention with an additional sigmoid gate.
 
@@ -92,7 +92,7 @@ class GatedMultiHeadAttention(nn.Module):
         context = context.reshape(b, num_tokens, self.d_out)
 
         ####################################################
-        ### NEW: Add gate        
+        ### NEW: Add gate
         context = context * torch.sigmoid(gate)
         ####################################################
         out = self.out_proj(context)
@@ -103,7 +103,7 @@ As we can see, after computing attention as usual, the model uses a separate gat
 
 > [...] the attention output gating mechanism helps eliminate issues like Attention Sink and Massive Activation, ensuring numerical stability across the model.
 
-## Gated DeltaNet
+## 3. Gated DeltaNet
 
 Now, what is Gated DeltaNet? Gated DeltaNet (short for *Gated Delta Network*) is Qwen3-Next's linear-attention layer, which is intended as an alternative to standard softmax attention. It was adopted from the [Gated Delta Networks: Improving Mamba2 with Delta Rule](https://arxiv.org/abs/2412.06464) paper as mentioned earlier.
 
@@ -152,7 +152,7 @@ class GatedDeltaNet(nn.Module):
         ### NEW: Gates for delta rule and output gating
         self.W_gate = nn.Linear(d_in, d_out, bias=False)
         self.W_beta = nn.Linear(d_in, d_out, bias=False)
-        
+
         # Note: The decay gate alpha corresponds to
         # A_log + W_alpha(x) + dt_bias
         self.W_alpha = nn.Linear(d_in, num_heads, bias=False)
@@ -163,7 +163,7 @@ class GatedDeltaNet(nn.Module):
         # W_alpha = nn.Linear(d_in, num_heads, bias=True)
         # but the bias is separate for interpretability and
         # to mimic the official implementation
-  
+
         self.norm = nn.RMSNorm(self.head_dim, eps=1e-6)
         ####################################################
 
@@ -299,7 +299,7 @@ Gated DeltaNet, can, to some extend, still capture context, but it has to go thr
 
 That's why the Qwen3-Next and Kimi Linear architectures don't replace all attention layers with DeltaNet layers but use the 3:1 ratio mentioned earlier.
 
-## DeltaNet Memory Savings
+## 4. DeltaNet Memory Savings
 
 In the previous section, we discussed the advantage of the DeltaNet over full attention in terms of linear instead of quadratic compute complexity with respect to the context length.
 

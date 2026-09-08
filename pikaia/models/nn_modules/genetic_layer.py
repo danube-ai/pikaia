@@ -1,14 +1,11 @@
-"""
-Genetic Layer Module
-"""
+"""Genetic Layer Module."""
 
 import torch
 import torch.nn as nn
 
 
 class GeneticLayer(nn.Module):
-    """
-    A PyTorch nn.Module implementing a genetic-inspired feed-forward layer.
+    """A PyTorch nn.Module implementing a genetic-inspired feed-forward layer.
 
     Projects the input through a hidden space, constructs a latent population
     matrix (organisms × genes) via sigmoid activation, applies a fixed-point
@@ -44,6 +41,7 @@ class GeneticLayer(nn.Module):
                 Defaults to :class:`torch.nn.SiLU`.
             dropout_rate: Dropout probability applied after activations. Defaults
                 to ``0.1``.
+
         """
         super().__init__()
         self.input_shape = input_shape
@@ -68,8 +66,7 @@ class GeneticLayer(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass of the GeneticLayer.
+        """Forward pass of the GeneticLayer.
 
         Args:
             x (torch.Tensor):
@@ -80,6 +77,7 @@ class GeneticLayer(nn.Module):
             torch.Tensor:
                 Output tensor of shape (..., output_shape) if output_shape is provided,
                 otherwise (..., orgs_shape).
+
         """
         # 1. Validate input and extract shape information
         original_shape = x.shape
@@ -125,8 +123,7 @@ class GeneticLayer(nn.Module):
 
 
 class InputProjection(nn.Module):
-    """
-    Input projection: LayerNorm → Linear → activation → Dropout.
+    """Input projection: LayerNorm → Linear → activation → Dropout.
 
     Projects input features into a higher-dimensional hidden space suitable
     for the genetic population computation.
@@ -146,6 +143,7 @@ class InputProjection(nn.Module):
             hidden_dim: Number of hidden dimensions to project to.
             activation_fn: Activation function applied after the linear layer.
             dropout_rate: Dropout probability. ``0`` disables dropout.
+
         """
         super().__init__()
         self.layer_norm = nn.LayerNorm(input_shape)
@@ -154,8 +152,7 @@ class InputProjection(nn.Module):
         self.dropout = nn.Dropout(dropout_rate) if dropout_rate > 0 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass through the input projection.
+        """Forward pass through the input projection.
 
         Args:
             x (torch.Tensor):
@@ -165,6 +162,7 @@ class InputProjection(nn.Module):
             torch.Tensor:
                 Output tensor of shape (..., hidden_dim) after layer normalization,
                 linear transformation, activation, and dropout.
+
         """
         x = self.layer_norm(x)
         x = self.linear(x)
@@ -174,8 +172,7 @@ class InputProjection(nn.Module):
 
 
 class GeneticProjection(nn.Module):
-    """
-    Genetic projection: LayerNorm → Linear → activation → Dropout → sigmoid.
+    """Genetic projection: LayerNorm → Linear → activation → Dropout → sigmoid.
 
     Transforms hidden features into a population matrix of shape
     ``(batch, length, orgs_shape, genes_shape)`` with values in ``[0, 1]``.
@@ -197,6 +194,7 @@ class GeneticProjection(nn.Module):
             genes_shape: Number of latent genes per organism.
             activation_fn: Activation function applied after the linear layer.
             dropout_rate: Dropout probability. ``0`` disables dropout.
+
         """
         super().__init__()
         self.layer_norm = nn.LayerNorm(hidden_dim)
@@ -212,8 +210,7 @@ class GeneticProjection(nn.Module):
         orgs_shape: int,
         genes_shape: int,
     ) -> torch.Tensor:
-        """
-        Forward pass through the genetic projection.
+        """Forward pass through the genetic projection.
 
         Args:
             x (torch.Tensor):
@@ -231,6 +228,7 @@ class GeneticProjection(nn.Module):
             torch.Tensor:
                 Population matrix of shape (batch_size, input_length, orgs_shape,
                 genes_shape) with values in [0, 1] after sigmoid activation.
+
         """
         x = self.layer_norm(x)
         x = self.linear(x)
@@ -243,8 +241,7 @@ class GeneticProjection(nn.Module):
 
 
 class StrategyModule(nn.Module):
-    """
-    Genetic fitness computation strategy encapsulation.
+    """Genetic fitness computation strategy encapsulation.
 
     Wraps a named strategy function for computing organism fitness from a
     population matrix.  Currently only ``"fixed_org_balanced_gene_dominant"``
@@ -252,6 +249,7 @@ class StrategyModule(nn.Module):
 
     Raises:
         ValueError: If an unsupported strategy name is provided.
+
     """
 
     def __init__(self, strategy: str):
@@ -263,6 +261,7 @@ class StrategyModule(nn.Module):
 
         Raises:
             ValueError: If ``strategy`` is not a recognised name.
+
         """
         super().__init__()
         self.strategy = strategy
@@ -276,8 +275,7 @@ class StrategyModule(nn.Module):
                 )
 
     def forward(self, population_matrix: torch.Tensor) -> torch.Tensor:
-        """
-        Compute organism fitness using the selected strategy.
+        """Compute organism fitness using the selected strategy.
 
         Args:
             population_matrix (torch.Tensor):
@@ -287,14 +285,14 @@ class StrategyModule(nn.Module):
         Returns:
             torch.Tensor:
                 Organism fitness values of shape (batch_size, input_length, orgs_shape).
+
         """
         return self._run_strategy(population_matrix)
 
     def _fixed_org_balanced_gene_dominant_strategy(
         self, population_matrix: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute organism fitness via the dominant-gene fixed-point formula.
+        """Compute organism fitness via the dominant-gene fixed-point formula.
 
         Args:
             population_matrix (torch.Tensor):
@@ -304,6 +302,7 @@ class StrategyModule(nn.Module):
         Returns:
             torch.Tensor:
                 Organism fitness of shape (batch_size, input_length, orgs_shape).
+
         """
         # (batch_size, input_length, genes_shape)
         gene_means = torch.mean(population_matrix, dim=2)
@@ -326,8 +325,7 @@ class StrategyModule(nn.Module):
 
 
 class OutputProjection(nn.Module):
-    """
-    Output projection: LayerNorm → Linear → activation → Dropout.
+    """Output projection: LayerNorm → Linear → activation → Dropout.
 
     Projects organism fitness scores to the final output dimensionality.
     """
@@ -346,6 +344,7 @@ class OutputProjection(nn.Module):
             output_shape: Number of output features.
             activation_fn: Activation function applied after the linear layer.
             dropout_rate: Dropout probability. ``0`` disables dropout.
+
         """
         super().__init__()
         self.layer_norm = nn.LayerNorm(orgs_shape)
@@ -354,8 +353,7 @@ class OutputProjection(nn.Module):
         self.dropout = nn.Dropout(dropout_rate) if dropout_rate > 0 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass through the output projection.
+        """Forward pass through the output projection.
 
         Args:
             x (torch.Tensor):
@@ -366,6 +364,7 @@ class OutputProjection(nn.Module):
             torch.Tensor:
                 Output tensor of shape (..., output_shape) after layer normalization,
                 linear transformation, activation, and dropout.
+
         """
         x = self.layer_norm(x)
         x = self.linear(x)

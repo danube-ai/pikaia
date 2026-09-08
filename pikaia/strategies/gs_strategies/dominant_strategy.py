@@ -1,25 +1,35 @@
+"""Implement the dominant-gene strategy and its supported formulations."""
+
+from typing import ClassVar
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import StrategyFormulation
 from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class DominantGeneStrategy(GeneStrategy):
-    """
-    A gene strategy that promotes dominant genes.
+    """A gene strategy that promotes dominant genes.
 
     This strategy increases the fitness of genes that are highly expressed
-    (dominant), reinforcing their prevalence in the population. The delta is
-    proportional to the square of the gene's fitness and its expression level.
-    This implementation follows the logic from the original `alg.py`.
+    (dominant), reinforcing their prevalence in the population. ``ORIGINAL``
+    makes the direct delta proportional to the square of the focal gene's
+    fitness. ``MATH_PAPER`` reproduces the historical branch's revised delta,
+    which is linear in the focal gene's fitness.
     """
+
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+    )
 
     def __init__(self, **kwargs):
         """Initialise the Dominant gene strategy.
 
         Args:
-            **kwargs: Keyword options forwarded to `GeneStrategy` and
+            **kwargs (object): Keyword options forwarded to `GeneStrategy` and
                 stored in ``self.options``.
+
         """
         super().__init__(**kwargs)
 
@@ -29,8 +39,7 @@ class DominantGeneStrategy(GeneStrategy):
         return "Dominant"
 
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for a dominant gene.
+        """Compute the delta for a dominant gene.
 
         The formula reinforces the fitness of the gene based on its current
         fitness and expression.
@@ -40,7 +49,15 @@ class DominantGeneStrategy(GeneStrategy):
 
         Returns:
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
+
         """
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            return float(
+                (1 / ctx.population.N)
+                * ctx.gene_fitness[ctx.gene_id]
+                * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            )
+
         return float(
             # constant factor and normalization by population size
             (4 / ctx.population.N)
@@ -58,7 +75,7 @@ class DominantGeneStrategy(GeneStrategy):
         initial_org_fitness_range: float,
         y: np.ndarray | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Diagonal D matrix from population mean expression.
+        """Return the formulation-specific exact dominant-gene D matrix.
 
         Args:
             population: Population providing the ``(N, M)`` data matrix.
@@ -68,8 +85,25 @@ class DominantGeneStrategy(GeneStrategy):
             y: Unused.
 
         Returns:
-            Tuple ``(D, None)`` where ``D`` is a diagonal ``(M, M)`` matrix
-            with ``D[j, j] = 4 * (x_bar_j - 0.5)``.
+            ``(D, None)``. For ``ORIGINAL``, ``D`` is diagonal with
+            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``MATH_PAPER``, every entry
+            in row ``j`` equals ``x_bar_j - 0.5``. Because gene fitness is
+            normalised to sum to one, the row-constant matrix exactly encodes
+            the formulation's signal ``gamma_j * (x_bar_j - 0.5)``.
+
         """
-        D = np.diag(4.0 * (population.matrix.mean(axis=0) - 0.5))
+        mean_centered_expression = population.matrix.mean(axis=0) - 0.5
+        if self.formulation is StrategyFormulation.MATH_PAPER:
+            D = np.broadcast_to(
+                mean_centered_expression[:, np.newaxis],
+                (population.M, population.M),
+            ).copy()
+            return D, None
+
+        D = np.diag(4.0 * mean_centered_expression)
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that both supported formulations have exact D kernels."""
+        return True

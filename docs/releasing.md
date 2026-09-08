@@ -10,9 +10,9 @@ There is no `develop` branch. There is no `develop → main` sync. Releases are 
 
 ---
 
-## Day-to-day contribution flow
+## 1. Day-to-day contribution flow
 
-```
+```text
 feature branch  ──PR──▶  main   ──▶  TestPyPI + dev docs   (automatic, every merge)
 ```
 
@@ -25,31 +25,31 @@ No version bump is required for regular PRs. Bumping the version is a **release*
 
 ---
 
-## Cutting a production release
+## 2. Cutting a production release
 
-```
+```text
 git tag v0.3.0  ──push──▶  PyPI + versioned docs   (manual approval gate)
 ```
 
-### 1. Bump the version
+### 2.1. Bump the version
 
 Open a PR that:
 
 1. Bumps `project.version` in `pyproject.toml`.
 2. Runs `uv lock` so the lockfile stays in sync (CI enforces `uv lock --locked`).
-3. Adds a `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md` summarising what changed, and appends a comparison link at the bottom (e.g. `[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z`).
+3. Adds the next numbered `## N. [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md` summarising what changed, and appends a comparison link at the bottom (e.g. `[X.Y.Z]: https://github.com/danube-ai/pikaia/compare/vX.Y.(Z-1)...vX.Y.Z`).
 
 ```bash
 git checkout -b release/0.3.0
 # edit pyproject.toml: version = "0.3.0"
-# edit CHANGELOG.md: add [0.3.0] section and comparison link
+# edit CHANGELOG.md: add the numbered [0.3.0] section and comparison link
 uv lock
 git commit -am "chore: bump version to 0.3.0"
 ```
 
 Open the PR, get it reviewed, and merge into `main`.
 
-### 2. Verify on TestPyPI
+### 2.2. Verify on TestPyPI
 
 Merging the bump publishes `0.3.0` to TestPyPI automatically. Confirm it installs cleanly before releasing to production:
 
@@ -59,7 +59,7 @@ pip install -i https://test.pypi.org/simple/ \
             pikaia==0.3.0
 ```
 
-### 3. Tag the release
+### 2.3. Tag the release
 
 Tag the merge commit on `main` (make sure your local `main` is up to date first):
 
@@ -72,7 +72,7 @@ git push origin v0.3.0
 
 The tag **must** point at a commit whose `pyproject.toml` already contains the matching version — the publish and docs jobs read the version from `pyproject.toml` at the tagged commit.
 
-### 4. Approve the deployment
+### 2.4. Approve the deployment
 
 The tag push starts the **Publish** workflow. The production `pypi` environment has a **required-reviewer gate**: the workflow pauses at the "Publish to PyPI" job until a maintainer approves it in the GitHub Actions run. This is the last checkpoint before an irreversible upload — nothing reaches production PyPI without it.
 
@@ -84,7 +84,7 @@ Approve it, and the workflow:
 
 > **Do not create the GitHub Release by hand.** Pushing the tag is the single trigger; the release is generated from the changelog so every release is consistent. If a release object already exists for the tag (e.g. someone created it in the UI), the job **reconciles** its notes from the changelog rather than failing — but the tag push, not the UI, is the canonical way to cut a release.
 
-### 5. Verify production
+### 2.5. Verify production
 
 ```bash
 pip install pikaia==0.3.0
@@ -94,7 +94,7 @@ Confirm the [GitHub Releases page](https://github.com/danube-ai/pikaia/releases)
 
 ---
 
-## Version numbers and tags
+## 3. Version numbers and tags
 
 - The tag name is `v` + the `pyproject.toml` version, e.g. version `0.3.0` → tag `v0.3.0`.
 - `check_pypi_version.py` runs in the build step and **refuses to publish a version that already exists** on the target index — PyPI uploads are irreversible, so this guards against accidental duplicates.
@@ -102,7 +102,7 @@ Confirm the [GitHub Releases page](https://github.com/danube-ai/pikaia/releases)
 
 ---
 
-## Summary
+## 4. Summary
 
 | Action | Trigger | Target | Gate |
 |---|---|---|---|
@@ -114,13 +114,13 @@ PyPI publish succeeds — there is no manual "draft a release" step.
 
 ---
 
-## Why trunk-based, and not GitFlow?
+## 5. Why trunk-based, and not GitFlow?
 
 pikaia previously used a **GitFlow**-style model: a long-lived `develop` branch for
 integration and a separate `main` branch for releases, with periodic `develop → main`
 "sync" pull requests. We deliberately moved away from it. Here's the reasoning.
 
-### The problem with the two-branch model
+### 5.1. The problem with the two-branch model
 
 GitFlow keeps two permanent branches in sync by merging one into the other. In
 practice this is fragile:
@@ -144,7 +144,7 @@ Notably, GitFlow's own author added a
 *against* it for teams doing continuous delivery of a single versioned product —
 exactly pikaia's situation.
 
-### The trunk-based model we adopted
+### 5.2. The trunk-based model we adopted
 
 - **One long-lived branch (`main`).** Short-lived feature branches merge into it and are
   deleted. There is no second branch to keep in sync, so the divergence/conflict cycle
@@ -159,7 +159,7 @@ exactly pikaia's situation.
   PyPI — sits behind a manual approval on the `pypi` environment, instead of being an
   implicit side effect of a branch merge.
 
-### This is the mainstream approach for Python libraries
+### 5.3. This is the mainstream approach for Python libraries
 
 The Python libraries pikaia takes as models all release from a **single branch + tags**,
 not GitFlow:

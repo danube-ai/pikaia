@@ -13,38 +13,38 @@ Welcome to **Pikaia** — a Python package for evolutionary algorithms, genetic 
 
 ---
 
-## ✨ Key Features
+## 1. ✨ Key Features
 
 - 🧬 Evolutionary simulation for data analysis
 - 📊 Built-in plotting and visualization
 - 🧩 Modular, extensible strategy system — 12 gene strategies and 7 organism strategies; supervised and unsupervised modes supported
-- ⚡ D-matrix accelerated iteration mode — typically 30–80× faster than standard iterative mode
+- ⚡ D-matrix accelerated iteration mode for rigorously verified strategy configurations
 - 📝 Jupyter notebook examples included
 - 🔬 Scientific approach, ready for research and teaching
 - ✅ 99% test coverage across the `pikaia` package
 
 ---
 
-## 📚 Table of Contents
+## 2. 📚 Table of Contents
 
 - [🧬 Pikaia](#-pikaia)
-  - [✨ Key Features](#-key-features)
-  - [📚 Table of Contents](#-table-of-contents)
-  - [📖 Documentation](#-documentation)
-  - [🚀 Installation](#-installation)
-  - [🛠️ Local Development](#️-local-development)
-    - [Prerequisites](#prerequisites)
-    - [Install UV](#install-uv)
-    - [Set up a Local Environment](#set-up-a-local-environment)
-  - [📝 Quickstart](#-quickstart)
-  - [🧬 Scientific Background](#-scientific-background)
-  - [👥 Authors \& Contact](#-authors--contact)
-  - [📄 License](#-license)
-  - [📚 How to Cite](#-how-to-cite)
+  - [✨ Key Features](#1--key-features)
+  - [📚 Table of Contents](#2--table-of-contents)
+  - [📖 Documentation](#3--documentation)
+  - [🚀 Installation](#4--installation)
+  - [Local Development](#5-local-development)
+    - [Prerequisites](#51-prerequisites)
+    - [Install UV](#52-install-uv)
+    - [Set up a Local Environment](#53-set-up-a-local-environment)
+  - [📝 Quickstart](#6--quickstart)
+  - [🧬 Scientific Background](#7--scientific-background)
+  - [👥 Authors \& Contact](#8--authors--contact)
+  - [📄 License](#9--license)
+  - [📚 How to Cite](#10--how-to-cite)
 
 ---
 
-## 📖 Documentation
+## 3. 📖 Documentation
 
 Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai.github.io/pikaia/)**.
 
@@ -57,7 +57,7 @@ Full documentation is hosted at **[danube-ai.github.io/pikaia](https://danube-ai
 
 ---
 
-## 🚀 Installation
+## 4. 🚀 Installation
 
 Install the package using pip:
 
@@ -69,11 +69,11 @@ pip install pikaia
 
 ---
 
-## 🛠️ Local Development
+## 5. Local Development
 
 For local development, we recommend using [UV](https://astral.sh/uv), a fast Python package installer and resolver.
 
-### Prerequisites
+### 5.1. Prerequisites
 
 Clone the repository and navigate to the project directory:
 
@@ -82,7 +82,7 @@ git clone https://github.com/danube-ai/pikaia.git
 cd pikaia
 ```
 
-### Install UV
+### 5.2. Install UV
 
 Install UV using the official installer:
 
@@ -92,7 +92,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 For more installation options, visit the [UV installation guide](https://astral.sh/uv/installation).
 
-### Set up a Local Environment
+### 5.3. Set up a Local Environment
 
 1. Create a virtual environment:
 
@@ -118,7 +118,7 @@ For more installation options, visit the [UV installation guide](https://astral.
 
 ---
 
-## 📝 Quickstart
+## 6. 📝 Quickstart
 
 Here's a minimal example to get you started:
 
@@ -161,16 +161,18 @@ model.fit()
 print("Gene fitness history:", model.gene_fitness_history)
 ```
 
-For a significant speed-up on large populations, enable the **D-matrix accelerated** mode:
+For a significant speed-up on large populations, enable the **D-matrix accelerated** mode with a [verified compatible configuration](https://danube-ai.github.io/pikaia/d-matrix/):
 
 ```python
 model = PikaiaModel(
     population=population,
-    gene_strategies=gene_strategies,
-    org_strategies=org_strategies,
-    gene_mix_strategy=gene_mix_strategy,
-    org_mix_strategy=org_mix_strategy,
-    use_d_matrix=True,  # 30–80× faster for compatible strategy combinations
+    gene_strategies=[
+        GeneStrategyFactory.get_strategy(GeneStrategyEnum.DOMINANT)
+    ],
+    org_strategies=[
+        OrgStrategyFactory.get_strategy(OrgStrategyEnum.NONE)
+    ],
+    use_d_matrix=True,
     max_iter=500,
 )
 model.fit()
@@ -180,13 +182,13 @@ model.fit()
 - See [`examples/README.md`](examples/README.md) for a full index of all examples.
 - See `examples/examples.ipynb` for a hands-on walkthrough or run individual example scripts like `python examples/example1.py`.
 - See `examples/paper_example.py` for the paper example script.
-- See `examples/d_matrix_comparison.py` to benchmark all 40 strategy combinations with D-matrix acceleration.
+- See `examples/d_matrix_comparison.py` to compare every supported D-matrix configuration with its iterative equivalent.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ---
 
-## 🧬 Scientific Background
+## 7. 🧬 Scientific Background
 
 Genetic AI is a framework for evolutionary simulation and data analysis. In Genetic AI, a data problem is converted into a model of genes and organisms, and evolutionary simulations are run to gain insight into the input data.
 
@@ -199,7 +201,7 @@ Genetic AI is a framework for evolutionary simulation and data analysis. In Gene
 
 ---
 
-## 👥 Authors & Contact
+## 8. 👥 Authors & Contact
 
 - Philipp Wissgott (<philipp@danube.ai>)
 - Andreas Roschal (<andreas@danube.ai>)
@@ -212,7 +214,7 @@ For questions, suggestions, or contributions, please feel free to open an issue 
 
 ---
 
-## 📄 License
+## 9. 📄 License
 
 This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
 
@@ -220,7 +222,7 @@ This project is licensed under the terms of the MIT License. See the [LICENSE](L
 
 ---
 
-## 📚 How to Cite
+## 10. 📚 How to Cite
 
 If you use Pikaia in your research, please cite our preprint:
 

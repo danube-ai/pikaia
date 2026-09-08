@@ -1,17 +1,17 @@
 # Security Policy
 
-## Supported versions
+## 1. Supported versions
 
 | Version | Supported |
 | ------- | --------- |
 | Latest release on PyPI | Yes |
 | Older releases | No |
 
-## Reporting a vulnerability
+## 2. Reporting a vulnerability
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Report vulnerabilities by email to **carlos@danube.ai**. Include:
+Report vulnerabilities by email to [carlos@danube.ai](mailto:carlos@danube.ai). Include:
 
 - A description of the vulnerability and its potential impact.
 - Steps to reproduce or a minimal proof-of-concept.

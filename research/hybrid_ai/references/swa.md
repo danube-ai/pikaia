@@ -2,7 +2,7 @@
 
 > Reference notes based on [LLMs from Scratch](https://github.com/rasbt/LLMs-from-scratch) by Sebastian Raschka.
 
-## Introduction
+## 1. Introduction
 
 What is sliding window attention (SWA)? If we think of regular self-attention as a *global* attention mechanism, since each sequence element can access every other sequence element, then we can think of SWA as *local* attention, because here we restrict the context size around the current query position. This is illustrated in the figure below.
 
@@ -20,7 +20,7 @@ Sliding window attention was originally introduced in the [LongFormer paper in 2
 
 Interestingly, the ablation studies in the Gemma 3 technical report indicate that these changes have only a minor effect on overall model quality. In other words, the substantial memory and compute savings achieved through sliding window attention come with minimal loss in modeling performance.
 
-## Sliding Window Attention (SWA) Memory Savings
+## 2. Sliding Window Attention (SWA) Memory Savings
 
 The memory savings are mostly reflected in the KV storage. We can compute the KV storage size with the following formula:
 
@@ -73,7 +73,7 @@ uv run plot_memory_estimates_swa.py \
   --sliding_window_size 2048 --swa_ratio "5:1"
 ```
 
-## SWA Code Examples
+## 3. SWA Code Examples
 
 The [gpt_with_kv_mha.py](gpt_with_kv_mha.py) and [gpt_with_kv_swa.py](gpt_with_kv_swa.py) scripts in this folder provide hands-on examples for comparing the MHA and SWA memory usage in the context of a GPT model implementation.
 

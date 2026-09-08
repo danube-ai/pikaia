@@ -1,20 +1,20 @@
-# 🧬 Genetic Attention Ablation Study Report
+# Genetic Attention Ablation Study Report
 
-## Table of Contents
+## 1. Table of Contents
 
-1. [🧪 Ablation Procedure](#1-ablation-procedure)
-2. [📊 Dataset Description](#2-dataset-description)
-3. [🏗️ Model Architecture](#3-model-architecture)
-4. [🧬 Genetic Attention Mechanism](#4-genetic-attention-mechanism)
-5. [📈 Results and Analysis](#5-results-and-analysis)
+1. [Ablation Procedure](#2-ablation-procedure)
+2. [Dataset Description](#3-dataset-description)
+3. [Model Architecture](#4-model-architecture)
+4. [Genetic Attention Mechanism](#5-genetic-attention-mechanism)
+5. [Results and Analysis](#6-results-and-analysis)
 
 ---
 
-## 1. 🧪 Ablation Procedure
+## 2. Ablation Procedure
 
 This report details an ablation study comparing **Genetic Attention** against **Standard Attention** in a dual-encoder architecture for passage retrieval on the MS-MARCO dataset. The experiment evaluates whether incorporating evolutionary fitness principles into attention mechanisms improves retrieval performance.
 
-### Training Methodology
+### 2.1. Training Methodology
 
 The ablation uses a **dual-encoder framework** where separate BERT encoders process queries and passages independently. During training:
 
@@ -30,7 +30,7 @@ where `sim_matrix` is the query-passage similarity matrix, and labels indicate t
 
 The model learns by maximizing similarity between query-positive pairs while minimizing similarity with negative pairs, effectively training embeddings for semantic retrieval.
 
-### Experimental Setup
+### 2.2. Experimental Setup
 
 - **Configurations**: Two runs - one with genetic attention enabled, one disabled
 - **Reproducibility**: All random seeds set to 8080
@@ -43,9 +43,9 @@ The model learns by maximizing similarity between query-positive pairs while min
 
 ---
 
-## 2. 📊 Dataset Description
+## 3. Dataset Description
 
-### MS-MARCO Passage Ranking
+### 3.1. MS-MARCO Passage Ranking
 
 The experiment uses the **MS-MARCO (Microsoft Machine Reading Comprehension)** passage ranking dataset, a large-scale benchmark for information retrieval tasks.
 
@@ -55,7 +55,7 @@ The experiment uses the **MS-MARCO (Microsoft Machine Reading Comprehension)** p
 - **Validation**: 101,093 queries with 55,578 positive pairs
 - **Test**: 101,092 queries with 101,092 positive pairs
 
-### Data Processing
+### 3.2. Data Processing
 
 The raw MS-MARCO data contains queries with multiple passages, each marked as relevant (`is_selected=1`) or irrelevant (`is_selected=0`). Each query typically has 10 passages, with usually 1 relevant passage.
 
@@ -103,11 +103,11 @@ This setup creates a **self-supervised contrastive learning** environment where 
 
 ---
 
-## 3. 🏗️ Model Architecture
+## 4. Model Architecture
 
 The model implements a **dual-encoder architecture** using BERT-base with modifications for genetic attention.
 
-### Overall Architecture
+### 4.1. Overall Architecture
 
 ```text
 Input Query ──► BERT Encoder ──► Query Embedding (384-dim)
@@ -117,7 +117,7 @@ Input Passage ──► BERT Encoder ──► Passage Embedding (384-dim)
 
 Both encoders share the same architecture but are trained separately.
 
-### BERT Configuration
+### 4.2. BERT Configuration
 
 - **Vocabulary Size**: 30,522
 - **Hidden Size**: 384
@@ -127,7 +127,7 @@ Both encoders share the same architecture but are trained separately.
 - **Max Position Embeddings**: 512
 - **Dropout**: 0.1
 
-### Forward Pass Details
+### 4.3. Forward Pass Details
 
 Let $B = 512$ (batch size), $D = 384$ (hidden dimension), $L = 512$ (max sequence length).
 
@@ -164,7 +164,7 @@ Let $B = 512$ (batch size), $D = 384$ (hidden dimension), $L = 512$ (max sequenc
      - $\mathbf{p}_{emb}^\top \in \mathbb{R}^{(D \times B)}$: Transposed passage embeddings
      - $S \in \mathbb{R}^{(B \times B)}$: Similarity matrix for in-batch negatives
 
-### Training Dynamics
+### 4.4. Training Dynamics
 
 The dual-encoder learns by:
 
@@ -177,20 +177,20 @@ The dual-encoder learns by:
 
 ---
 
-## 4. 🧬 Genetic Attention Mechanism
+## 5. Genetic Attention Mechanism
 
-### Overview
+### 5.1. Overview
 
 **Multi-Head Genetic Attention (MGA)** replaces standard scaled dot-product attention with a biologically-inspired mechanism that modulates attention weights using evolutionary fitness scores.
 
-### Key Innovation
+### 5.2. Key Innovation
 
 Unlike traditional attention that weights values directly by query-key similarities, MGA:
 
 - Computes attention weights normally from QK similarities
 - But applies them to **genetically modulated values** where features are weighted by evolutionary fitness
 
-### Genetic Fitness Computation
+### 5.3. Genetic Fitness Computation
 
 For each attention head, MGA computes gene fitness scores:
 
@@ -206,19 +206,19 @@ For each attention head, MGA computes gene fitness scores:
 4. **Value Modulation**: Element-wise multiply values by fitness scores
    $$ V_{\text{genetic}} = V \odot \gamma_g^* $$
 
-### Attention Computation
+### 5.4. Attention Computation
 
 Standard attention applied to modulated values:
 $$ \text{Attention}(Q, K, V*{\text{genetic}}) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right) V*{\text{genetic}} $$
 
-### Biological Interpretation
+### 5.5. Biological Interpretation
 
 - **Genes**: Feature dimensions in value projections
 - **Organisms**: Sequence positions (tokens)
 - **Fitness**: Evolutionary advantage based on expression levels
 - **Selection**: Higher fitness genes contribute more to attention
 
-### Ablation Configurations
+### 5.6. Ablation Configurations
 
 - **Standard Attention**: Disable genetic modulation ($V_{\text{genetic}} = V$)
 - **Genetic Attention**: Enable fitness computation and value modulation
@@ -229,18 +229,18 @@ This provides a direct comparison of traditional vs. evolutionary attention weig
 
 ---
 
-## 5. 📈 Results and Analysis
+## 6. Results and Analysis
 
-### Evaluation Metrics
+### 6.1. Evaluation Metrics
 
 The ablation evaluates retrieval performance using standard information retrieval metrics, grouped by category:
 
-#### Ranking Quality Metrics
+#### 6.1.1. Ranking Quality Metrics
 
 These metrics assess how well the system ranks relevant documents at the top positions.
 
-- **MRR (Mean Reciprocal Rank)**: Measures the average rank position of the first relevant document across all queries.  
-  For each query, the reciprocal rank is $RR = \frac{1}{k}$ where $k$ is the position of the first relevant document.  
+- **MRR (Mean Reciprocal Rank)**: Measures the average rank position of the first relevant document across all queries.
+  For each query, the reciprocal rank is $RR = \frac{1}{k}$ where $k$ is the position of the first relevant document.
   MRR is the mean: $MRR = \frac{1}{|Q|} \sum_{q \in Q} RR_q$. Higher values (max 1.0) indicate better performance.
 
   - _Example_: For 3 queries with first relevant at positions 1, 3, 2, respectively:
@@ -249,7 +249,7 @@ These metrics assess how well the system ranks relevant documents at the top pos
     3. $RR_3 = 1/2 = 0.5$
     4. $MRR = (1.0 + 0.333 + 0.5) / 3 \approx 0.611$
 
-- **MAP (Mean Average Precision)**: Evaluates precision at each relevant document position and averages them.  
+- **MAP (Mean Average Precision)**: Evaluates precision at each relevant document position and averages them.
   For relevant documents at positions $k_1, k_2, \dots, k_m$: $$AP = \frac{1}{m} \sum_{i=1}^m \frac{i}{k_i}$$
   MAP is the mean AP across queries: $$MAP = \frac{1}{|Q|} \sum_{q \in Q} AP_q$$
 
@@ -258,7 +258,7 @@ These metrics assess how well the system ranks relevant documents at the top pos
   - Query with relevant docs at positions 2, 4, 6:
   - $AP = (1/2 + 2/4 + 3/6) / 3 = (0.5 + 0.5 + 0.5) / 3 = 0.5$
 
-- **NDCG@5 (Normalized Discounted Cumulative Gain)**: Assesses ranking quality considering relevance and position.  
+- **NDCG@5 (Normalized Discounted Cumulative Gain)**: Assesses ranking quality considering relevance and position.
   $$DCG@5 = \sum_{i=1}^5 \frac{rel_i}{\log_2(i+1)}$$ where $rel_i$ is relevance (1/0).
 
   NDCG@5 normalizes by ideal DCG: $$NDCG@5 = \frac{DCG@5}{IDCG@5}$$ Range: 0-1.
@@ -268,20 +268,20 @@ These metrics assess how well the system ranks relevant documents at the top pos
     - $IDCG@5$ (ideal [1,1,1,0,0]) $\approx 2.13$
     - $NDCG@5 = 1.93 / 2.13 \approx 0.91$
 
-#### Threshold-Based Metrics
+#### 6.1.2. Threshold-Based Metrics
 
 These metrics evaluate performance at specific cutoff points (K=1,5).
 
-- **Precision@K**: Fraction of top-K results that are relevant: $P@K = \frac{\text{relevant in top K}}{K}$  
+- **Precision@K**: Fraction of top-K results that are relevant: $P@K = \frac{\text{relevant in top K}}{K}$
   _Example_: 3 relevant in top 5: $P@5 = 3/5 = 0.6$
 
-- **Recall@K**: Fraction of relevant documents found in top-K: $R@K = \frac{\text{relevant in top K}}{\text{total relevant}}$  
+- **Recall@K**: Fraction of relevant documents found in top-K: $R@K = \frac{\text{relevant in top K}}{\text{total relevant}}$
   _Example_: 3 relevant in top 5 of 4 total: $R@5 = 3/4 = 0.75$
 
-- **Hit Rate@K**: Binary metric - whether at least one relevant document appears in top-K.  
+- **Hit Rate@K**: Binary metric - whether at least one relevant document appears in top-K.
   _Example_: Any relevant in top 5: 1 (yes) or 0 (no)
 
-#### Embedding Quality Metrics
+#### 6.1.3. Embedding Quality Metrics
 
 These metrics assess the quality of learned embeddings.
 
@@ -289,7 +289,7 @@ These metrics assess the quality of learned embeddings.
 - **Embedding Variance**: Variance of embedding components (measures diversity)
 - **Norms**: L2 norms of query/passage embeddings (checks normalization)
 
-### Results Summary
+### 6.2. Results Summary
 
 | Configuration | MRR   | MAP   | NDCG@5 | P@1   | P@5   | R@1   | R@5   | Hit@5 | Pos Sim | Variance |
 | ------------- | ----- | ----- | ------ | ----- | ----- | ----- | ----- | ----- | ------- | -------- |
@@ -302,7 +302,7 @@ These metrics assess the quality of learned embeddings.
 - Genetic: 11947s training time, final loss 3.987
 - Standard: 7822s training time, final loss 3.689
 
-### Results Interpretation
+### 6.3. Results Interpretation
 
 **Performance Comparison**: After extended training (2048 steps vs 128 steps), standard attention now outperforms genetic attention across all retrieval metrics:
 

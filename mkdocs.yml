@@ -47,6 +47,7 @@ nav:
   - Home: index.md
   - Tutorial: tutorial.md
   - Overview: overview.md
+  - D-matrix formulation: d-matrix.md
   - Contributing: contributing.md
   - Releasing: releasing.md
   - Reference: reference.md

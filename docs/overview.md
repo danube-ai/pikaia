@@ -6,11 +6,11 @@ For a step-by-step first run, see the [Tutorial](tutorial.md). For adding new st
 
 ---
 
-## The replicator equation
+## 1. The replicator equation
 
 pikaia evolves a gene-fitness vector **γ** (one value per feature, summing to 1) using the **replicator equation**:
 
-```
+```text
 γ_j(t+1) = γ_j(t) · (1 + Σ_i Δ(i, j))
 ```
 
@@ -20,7 +20,7 @@ This differs from gradient-based optimisation: there is no loss function, no tra
 
 ---
 
-## Organisms, genes, and the population matrix
+## 2. Organisms, genes, and the population matrix
 
 | Concept | Meaning | Representation |
 |---------|---------|----------------|
@@ -33,11 +33,11 @@ Data must be normalised to [0, 1] (higher = better) before passing to `PikaiaPop
 
 ---
 
-## Strategies
+## 3. Strategies
 
 Strategies are the rules that determine how organisms and genes interact each iteration. They produce the delta values that feed the replicator equation.
 
-### Gene strategies (`GeneStrategy`)
+### 3.1. Gene strategies (`GeneStrategy`)
 
 Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j* based on how organism *i* expressed it.
 
@@ -57,7 +57,7 @@ Called once per *(organism i, gene j)* pair. Returns a scalar delta for gene *j*
 | `REDUNDANCY_PENALTY` | Penalises genes that are redundant with the rest; supports supervised mode |
 | `NONE` | No contribution |
 
-### Organism strategies (`OrgStrategy`)
+### 3.2. Organism strategies (`OrgStrategy`)
 
 Called once per organism *i*. Returns an array of shape (M,) — the delta for every gene in one shot. Organism strategies can express **cross-gene** interactions that a per-gene strategy cannot.
 
@@ -72,7 +72,7 @@ Called once per organism *i*. Returns an array of shape (M,) — the delta for e
 | `BUY_EASY` | Inverse redistribution — mirror of `BUY_HARD`; pair with `SELL_EASY` |
 | `NONE` | No contribution |
 
-### Supervised mode
+### 3.3. Supervised mode
 
 Four gene strategies (`ENTROPY_MAX`, `ORTHO_GENE`, `PARTIAL_CORR`, `REDUNDANCY_PENALTY`) can optionally incorporate a target variable. Pass `y` to `PikaiaModel` and they blend it into their signal automatically — without `y` they run fully unsupervised:
 
@@ -80,7 +80,7 @@ Four gene strategies (`ENTROPY_MAX`, `ORTHO_GENE`, `PARTIAL_CORR`, `REDUNDANCY_P
 model = PikaiaModel(population=population, gene_strategies=gene_strategies, y=labels)
 ```
 
-### Mixing strategies (`MixStrategy`)
+### 3.4. Mixing strategies (`MixStrategy`)
 
 When multiple gene or organism strategies are active, a mixing strategy determines how their deltas are combined each iteration.
 
@@ -91,15 +91,15 @@ When multiple gene or organism strategies are active, a mixing strategy determin
 
 ---
 
-## D-matrix accelerated mode
+## 4. D-matrix accelerated mode
 
 For compatible strategy combinations, pikaia precomputes a compact kernel `(D, d)` once before the iteration loop and then runs cheap `O(M²)` updates:
 
-```
-γ_new = γ * (1 + D @ γ + d)
+```text
+γ_new = γ * (1 + d + γ * (D @ γ))
 ```
 
-instead of the full `O(N·M²)` per-organism loop. This is typically **30–80× faster** for large populations.
+instead of the full `O(N·M²)` per-organism loop. The practical speed-up depends on population size, gene count, and the selected strategies.
 
 Enable it with:
 
@@ -113,16 +113,13 @@ model = PikaiaModel(
 )
 ```
 
-Most built-in strategies support the D-matrix path — each implements `kernel()` returning at least one non-`None` term. Two categories are exceptions:
+In `ORIGINAL`, D-matrix execution is limited to the built-in `FixedMixStrategy` and strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. In `MATH_PAPER`, the exact public configurations are dominant gene paired with a no-op organism strategy and the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Adaptive, custom, and otherwise unsupported requests raise `ValueError` instead of silently omitting a contribution or using an approximation.
 
-- **`NONE` strategies** return `(None, None)`; a combination of only `NONE` strategies has no kernel at all.
-- **The trading buy strategies** (`BUY_HARD`, `BUY_UNIFORM`, `BUY_EASY`) do **not** support the D-matrix path. Their per-organism delta (`buy_abs / γ_j`) depends on the current gene fitness **γ** in a way that cannot be captured by a static `(D, d)` kernel, so they only run correctly under the standard iterative loop. If you enable `use_d_matrix=True` with a buy strategy active, its contribution is silently skipped — use standard iterative mode for trading pairs.
-
-Custom strategies must implement `kernel()` to participate; see the [Contributor Guide](contributing.md).
+See the [D-matrix formulation](d-matrix.md) for the exact equations, historical similarity scaling, compatibility table, and limits.
 
 ---
 
-## Key classes
+## 5. Key classes
 
 | Class | Role |
 |-------|------|
@@ -136,7 +133,7 @@ Custom strategies must implement `kernel()` to participate; see the [Contributor
 
 ---
 
-## Where to go next
+## 6. Where to go next
 
 - [Tutorial](tutorial.md) — run your first analysis end to end
 - [Contributor Guide](contributing.md) — add new strategies and extend pikaia

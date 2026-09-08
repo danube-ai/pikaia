@@ -42,6 +42,7 @@ print("=== Example 8: EntropyMax — Fast Supervised Feature Selection ===\n")
 # Data
 # ---------------------------------------------------------------------------
 data = load_wine()
+assert not isinstance(data, tuple)
 X_raw, y = data.data, data.target
 feature_names = list(data.feature_names)
 

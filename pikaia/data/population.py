@@ -1,19 +1,19 @@
+"""Represent and validate the organism-by-gene population matrix used by Pikaia."""
+
 import numpy as np
 
 from pikaia.config.logger import logger
 
 
 class PikaiaPopulation:
-    """
-    Represents a population matrix for genetic algorithms.
+    """Represents a population matrix for genetic algorithms.
 
     The matrix shape is ``(N, M)`` where ``N`` is the number of organisms and
     ``M`` is the number of genes (features). All values must lie in ``[0, 1]``.
     """
 
     def __init__(self, matrix: np.ndarray, skip_correlation_validation: bool = True):
-        """
-        Initialize the Population with a matrix.
+        """Initialize the Population with a matrix.
 
         Args:
             matrix (np.ndarray):
@@ -33,8 +33,7 @@ class PikaiaPopulation:
         self._validate_matrix()
 
     def _validate_matrix(self):
-        """
-        Validates the population matrix.
+        """Validate the population matrix.
 
         Checks that all values are between 0 and 1, and that for high linear
         correlation between features (columns).
@@ -82,8 +81,7 @@ class PikaiaPopulation:
             )
 
     def __getitem__(self, idx):
-        """
-        Allows direct indexing into the population.
+        """Provide direct indexing into the population.
 
         Example:
             population[i, j] or population[i].
@@ -93,24 +91,15 @@ class PikaiaPopulation:
 
     @property
     def N(self) -> int:
-        """
-        Returns the number of organisms (rows) in the population matrix.
-
-        """
+        """Returns the number of organisms (rows) in the population matrix."""
         return self._matrix.shape[0]
 
     @property
     def M(self) -> int:
-        """
-        Returns the number of genes (columns) in the population matrix.
-
-        """
+        """Returns the number of genes (columns) in the population matrix."""
         return self._matrix.shape[1]
 
     @property
     def matrix(self) -> np.ndarray:
-        """
-        Returns the underlying population matrix.
-
-        """
+        """Returns the underlying population matrix."""
         return self._matrix

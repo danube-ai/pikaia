@@ -1,11 +1,12 @@
+"""Implement the score-based strategy that buys organisms uniformly."""
+
 import numpy as np
 
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
 class BuyUniformOrgStrategy(OrgStrategy):
-    """
-    Trading buy-phase paired with `SellUniformGeneStrategy`.
+    r"""Trading buy-phase paired with `SellUniformGeneStrategy`.
 
     Each organism spends its uniform sell capital (proportional to average
     performance) on genes it failed, weighted by how hard those genes are
@@ -35,13 +36,29 @@ class BuyUniformOrgStrategy(OrgStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the strategy with options accepted by ``OrgStrategy``.
+
+        Args:
+            **kwargs (object): Options forwarded to :class:`OrgStrategy`.
+
+        """
         super().__init__(**kwargs)
 
     @property
     def name(self) -> str:
+        """Return the stable registry name for this strategy."""
         return "BuyUniform"
 
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
+        """Return the uniform-trade buy contribution for one organism.
+
+        Args:
+            ctx: Evaluation context identifying the organism to evaluate.
+
+        Returns:
+            Vector of gene-fitness deltas for the selected organism.
+
+        """
         X = ctx.population.matrix
         N, M = X.shape
         gamma = ctx.gene_fitness

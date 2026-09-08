@@ -1,3 +1,5 @@
+"""Implement the score-based strategy that preferentially sells easy genes."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class SellEasyGeneStrategy(GeneStrategy):
-    """
-    Trading sell signal weighted by gene ease — the inverse of `SellHardGeneStrategy`.
+    r"""Trading sell signal weighted by gene ease — the inverse of `SellHardGeneStrategy`.
 
     Easy genes (high mean expression, low exclusiveness) lose more value.
 
@@ -26,13 +27,29 @@ class SellEasyGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the strategy with options accepted by ``GeneStrategy``.
+
+        Args:
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
 
     @property
     def name(self) -> str:
+        """Return the stable registry name for this strategy."""
         return "SellEasy"
 
     def __call__(self, ctx: StrategyContext) -> float:
+        """Return this organism's ease-weighted sell contribution.
+
+        Args:
+            ctx: Evaluation context identifying the organism and gene.
+
+        Returns:
+            Signed gene-fitness delta for the selected organism and gene.
+
+        """
         X = ctx.population.matrix
         N = ctx.population.N
         mean_j = X[:, ctx.gene_id].mean()
@@ -54,3 +71,8 @@ class SellEasyGeneStrategy(GeneStrategy):
         sell_signal = excl / (1.0 - excl + 1e-8)
         d = mean_all * sell_signal
         return None, d
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the population-static linear kernel is exact."""
+        return True

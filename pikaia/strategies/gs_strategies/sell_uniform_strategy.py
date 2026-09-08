@@ -1,3 +1,5 @@
+"""Implement the score-based strategy that sells genes uniformly."""
+
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
@@ -5,8 +7,7 @@ from pikaia.strategies.base_strategies import GeneStrategy, StrategyContext
 
 
 class SellUniformGeneStrategy(GeneStrategy):
-    """
-    Trading sell signal applied uniformly to all genes.
+    r"""Trading sell signal applied uniformly to all genes.
 
     All genes lose value at the same rate regardless of difficulty — organisms
     "sell" their solved genes uniformly.
@@ -24,13 +25,29 @@ class SellUniformGeneStrategy(GeneStrategy):
     """
 
     def __init__(self, **kwargs):
+        """Initialise the strategy with options accepted by ``GeneStrategy``.
+
+        Args:
+            **kwargs (object): Options forwarded to :class:`GeneStrategy`.
+
+        """
         super().__init__(**kwargs)
 
     @property
     def name(self) -> str:
+        """Return the stable registry name for this strategy."""
         return "SellUniform"
 
     def __call__(self, ctx: StrategyContext) -> float:
+        """Return the uniform sell contribution for the selected gene.
+
+        Args:
+            ctx: Evaluation context identifying the organism and gene.
+
+        Returns:
+            Signed gene-fitness delta for the selected organism and gene.
+
+        """
         X = ctx.population.matrix
         N = X.shape[0]
         j = ctx.gene_id
@@ -55,3 +72,8 @@ class SellUniformGeneStrategy(GeneStrategy):
         mask = (excl > 1e-6) & (excl < 1.0 - 1e-6)
         d = -mean * mask.astype(float)
         return None, d
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Indicate that the population-static linear kernel is exact."""
+        return True

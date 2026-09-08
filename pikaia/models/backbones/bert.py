@@ -1,3 +1,5 @@
+"""Provide the BERT-style encoder backbone used by Pikaia neural models."""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,8 +8,9 @@ from ..nn_modules.mga import MultiheadGeneticAttention
 
 
 class BertModel(nn.Module):
-    """
-    The BERT model for sentence embeddings, based on the BERT architecture.
+    """Provide BERT sentence embeddings.
+
+    This BERT model is based on the BERT architecture.
     It includes token embeddings, position embeddings, token type embeddings,
     an encoder stack, and mean pooling with L2 normalization.
     """
@@ -25,8 +28,7 @@ class BertModel(nn.Module):
         dropout: float = 0.1,
         use_genetic: bool = False,
     ):
-        """
-        Initialize the BERT model.
+        """Initialize the BERT model.
 
         Args:
             vocab_size (int):
@@ -49,6 +51,7 @@ class BertModel(nn.Module):
                 Dropout probability.
             use_genetic (bool):
                 Whether to use genetic attention in the encoder.
+
         """
         super().__init__()
 
@@ -82,8 +85,7 @@ class BertModel(nn.Module):
         attention_mask: torch.Tensor | None = None,
         token_type_ids: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
-        """
-        Forward pass for the BERT model.
+        """Forward pass for the BERT model.
 
         Args:
             input_ids (torch.Tensor):
@@ -98,6 +100,7 @@ class BertModel(nn.Module):
             dict[str, torch.Tensor]: Dictionary containing:
                 - "token_embeddings": Tensor of shape (batch, seq_len, hidden_size).
                 - "pooled_embedding": Tensor of shape (batch, hidden_size).
+
         """
         batch_size, seq_len = input_ids.size()
         if token_type_ids is None:
@@ -141,8 +144,9 @@ class BertModel(nn.Module):
 
 
 class BertEncoder(nn.Module):
-    """
-    The encoder component of the BERT model, consisting of a stack of
+    """Provide the BERT encoder component.
+
+    It consists of a stack of
     BertEncoderLayer modules.
     """
 
@@ -156,8 +160,7 @@ class BertEncoder(nn.Module):
         attention_dropout: float = 0.1,
         use_genetic: bool = False,
     ):
-        """
-        Initialize the BERT encoder.
+        """Initialize the BERT encoder.
 
         Args:
             num_layers (int):
@@ -174,6 +177,7 @@ class BertEncoder(nn.Module):
                 Dropout probability for attention.
             use_genetic (bool):
                 Whether to use genetic attention in encoder layers.
+
         """
         super().__init__()
         self.layers = nn.ModuleList(
@@ -193,8 +197,7 @@ class BertEncoder(nn.Module):
     def forward(
         self, x: torch.Tensor, attn_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """
-        Forward pass for the BERT encoder.
+        """Forward pass for the BERT encoder.
 
         Args:
             x (torch.Tensor):
@@ -205,6 +208,7 @@ class BertEncoder(nn.Module):
 
         Returns:
             torch.Tensor: Output tensor of shape (batch, seq_len, hidden_size).
+
         """
         for layer in self.layers:
             x = layer(x, attn_mask=attn_mask)
@@ -212,8 +216,9 @@ class BertEncoder(nn.Module):
 
 
 class BertEncoderLayer(nn.Module):
-    """
-    A single encoder layer for the BERT model, consisting of multi-head self-attention
+    """Provide a single BERT encoder layer.
+
+    It consists of multi-head self-attention
     and a feed-forward network with residual connections and layer normalization.
     """
 
@@ -226,8 +231,7 @@ class BertEncoderLayer(nn.Module):
         attention_dropout: float = 0.1,
         use_genetic: bool = False,
     ):
-        """
-        Initialize the BERT encoder layer.
+        """Initialize the BERT encoder layer.
 
         Args:
             hidden_size (int):
@@ -242,6 +246,7 @@ class BertEncoderLayer(nn.Module):
                 Dropout probability for attention.
             use_genetic (bool):
                 Whether to use genetic attention instead of standard multi-head attention.
+
         """
         super().__init__()
         if use_genetic:
@@ -270,8 +275,7 @@ class BertEncoderLayer(nn.Module):
     def forward(
         self, x: torch.Tensor, attn_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """
-        Forward pass for the BERT encoder layer.
+        """Forward pass for the BERT encoder layer.
 
         Args:
             x (torch.Tensor):
@@ -282,6 +286,7 @@ class BertEncoderLayer(nn.Module):
 
         Returns:
             torch.Tensor: Output tensor of shape (batch, seq_len, hidden_size).
+
         """
         if attn_mask is not None:
             # assume attn_mask is 1 for tokens to keep, 0 for pad

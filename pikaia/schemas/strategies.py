@@ -1,4 +1,65 @@
+"""Declare validated enums and configuration models for evolutionary strategies."""
+
 from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StrategyFormulation(str, Enum):
+    """Mathematical formulation used by strategies with revised equations."""
+
+    ORIGINAL = "ORIGINAL"
+    MATH_PAPER = "MATH_PAPER"
+
+
+class StrategyFormulationConfig(BaseModel):
+    """Validated configuration shared by formulation-aware strategies."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    formulation: StrategyFormulation = StrategyFormulation.ORIGINAL
+
+
+class KinRangeConfig(BaseModel):
+    """Validate an optional positive kin-range request.
+
+    The model applies the population-dependent upper bound separately because
+    the number of organisms is unavailable while a strategy is constructed.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    kin_range: int | None = Field(default=None, ge=1)
+
+
+class StrategyNormalizations(BaseModel):
+    """Population-derived normalization values for math-paper strategies."""
+
+    model_config = ConfigDict(frozen=True, allow_inf_nan=False)
+
+    gene_mean_pairwise_difference: float | None = Field(default=None, ge=0)
+    harmonic_fitness_mean_pairwise_difference: float | None = Field(default=None, ge=0)
+
+    def require_gene_mean_pairwise_difference(self) -> float:
+        """Return the gene normalization or explain why it is unusable."""
+        value = self.gene_mean_pairwise_difference
+        if value is None or value == 0:
+            raise ValueError(
+                "MATH_PAPER requires a positive gene_mean_pairwise_difference. "
+                "Use a population with at least two distinct gene-column means."
+            )
+        return value
+
+    def require_harmonic_fitness_mean_pairwise_difference(self) -> float:
+        """Return the organism normalization or explain why it is unusable."""
+        value = self.harmonic_fitness_mean_pairwise_difference
+        if value is None or value == 0:
+            raise ValueError(
+                "MATH_PAPER requires a positive "
+                "harmonic_fitness_mean_pairwise_difference. Use a population "
+                "with at least two distinct harmonic organism fitness values."
+            )
+        return value
 
 
 class GeneStrategyEnum(str, Enum):

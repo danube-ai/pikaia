@@ -1,3 +1,5 @@
+"""Construct registered gene, organism, and mixing strategies from their enums."""
+
 from __future__ import annotations
 
 from pikaia.schemas.strategies import (
@@ -42,8 +44,7 @@ from pikaia.strategies.os_strategies.selfish_strategy import SelfishOrgStrategy
 
 
 class GeneStrategyFactory:
-    """
-    Factory class for creating gene strategy instances.
+    """Factory class for creating gene strategy instances.
 
     This factory provides a centralized way to instantiate gene strategy
     objects based on the `GeneStrategyEnum`. It maps the enum members to their
@@ -68,14 +69,13 @@ class GeneStrategyFactory:
 
     @classmethod
     def get_strategy(cls, name: GeneStrategyEnum, *args, **kwargs) -> GeneStrategy:
-        """
-        Retrieves an instance of the requested gene strategy.
+        """Retrieve an instance of the requested gene strategy.
 
         Args:
             name (GeneStrategyEnum): The enum member representing the desired
                 strategy.
-            ``*args``: Positional arguments to pass to the strategy's constructor.
-            ``**kwargs``: Keyword arguments to pass to the strategy's constructor.
+            *args (object): Positional arguments to pass to the strategy's constructor.
+            **kwargs (object): Keyword arguments to pass to the strategy's constructor.
 
         Returns:
             GeneStrategy: An instance of the corresponding gene strategy class.
@@ -83,6 +83,7 @@ class GeneStrategyFactory:
         Raises:
             ValueError: If the requested strategy name is not found in the
                 factory's registry.
+
         """
         strategy_cls = cls._strategies.get(name)
         if strategy_cls is None:
@@ -91,8 +92,7 @@ class GeneStrategyFactory:
 
 
 class OrgStrategyFactory:
-    """
-    Factory class for creating organism strategy instances.
+    """Factory class for creating organism strategy instances.
 
     This factory provides a centralized way to instantiate organism strategy
     objects based on the `OrgStrategyEnum`. It maps the enum members to their
@@ -112,14 +112,13 @@ class OrgStrategyFactory:
 
     @classmethod
     def get_strategy(cls, name: OrgStrategyEnum, *args, **kwargs) -> OrgStrategy:
-        """
-        Retrieves an instance of the requested organism strategy.
+        """Retrieve an instance of the requested organism strategy.
 
         Args:
             name (OrgStrategyEnum): The enum member representing the desired
                 strategy.
-            ``*args``: Positional arguments to pass to the strategy's constructor.
-            ``**kwargs``: Keyword arguments to pass to the strategy's constructor.
+            *args (object): Positional arguments to pass to the strategy's constructor.
+            **kwargs (object): Keyword arguments to pass to the strategy's constructor.
 
         Returns:
             OrgStrategy: An instance of the corresponding organism strategy class.
@@ -127,6 +126,7 @@ class OrgStrategyFactory:
         Raises:
             ValueError: If the requested strategy name is not found in the
                 factory's registry.
+
         """
         strategy_cls = cls._strategies.get(name)
         if strategy_cls is None:
@@ -135,8 +135,7 @@ class OrgStrategyFactory:
 
 
 class MixStrategyFactory:
-    """
-    Factory class for creating mixing strategy instances.
+    """Factory class for creating mixing strategy instances.
 
     This factory provides a centralized way to instantiate mixing strategy
     objects based on the `MixinGeneStrategyEnum`.
@@ -149,20 +148,20 @@ class MixStrategyFactory:
 
     @classmethod
     def get_strategy(cls, name: MixStrategyEnum, *args, **kwargs) -> MixStrategy:
-        """
-        Retrieves a singleton instance of the requested mixing strategy.
+        """Retrieve a singleton instance of the requested mixing strategy.
 
         Args:
             name (MixinGeneStrategyEnum): The enum member representing the desired
                 strategy.
-            ``*args``: Positional arguments to pass to the strategy's constructor.
-            ``**kwargs``: Keyword arguments to pass to the strategy's constructor.
+            *args (object): Positional arguments to pass to the strategy's constructor.
+            **kwargs (object): Keyword arguments to pass to the strategy's constructor.
 
         Returns:
             MixStrategy: An instance of the corresponding mixing strategy class.
 
         Raises:
             ValueError: If the requested strategy name is not found.
+
         """
         strategy_cls = cls._strategies.get(name)
         if strategy_cls is None:

@@ -1,12 +1,19 @@
+"""Define common contracts and formulation validation for evolutionary strategies."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, ClassVar, Optional
 
 import numpy as np
 
 from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import (
+    StrategyFormulation,
+    StrategyFormulationConfig,
+    StrategyNormalizations,
+)
 
 
 @dataclass(slots=True)
@@ -31,11 +38,12 @@ class StrategyContext:
     gene_id: Optional[int] = None
     #: Optional target variable for supervised strategies.
     y: Optional[np.ndarray] = None
+    #: Immutable population-derived values needed by some formulations.
+    normalizations: StrategyNormalizations | None = None
 
 
 class GeneStrategy(ABC):
-    """
-    Abstract base class for gene strategies.
+    """Abstract base class for gene strategies.
 
     Defines the interface for all gene-level evolutionary strategies. Subclasses
     must implement the `__call__` method, which calculates the fitness delta
@@ -43,17 +51,56 @@ class GeneStrategy(ABC):
 
     """
 
-    def __init__(self, **kwargs):
-        """
-        Initializes the strategy with optional parameters.
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL}
+    )
+
+    def __init__(
+        self,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        **kwargs: Any,
+    ):
+        """Initialise the strategy with optional parameters.
 
         Args:
-            **kwargs:
+            formulation (StrategyFormulation | str): Mathematical formulation to use.
+                Only formulations declared by the concrete strategy are accepted.
+            **kwargs (object):
                 Arbitrary keyword arguments that can be used to configure
                 the strategy. These are stored in the `self.options` dictionary.
 
         """
+        self.formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if self.formulation not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {self.formulation.value}; "
+                f"supported formulations: {supported}."
+            )
         self.options = kwargs
+
+    def set_formulation(self, formulation: StrategyFormulation | str) -> None:
+        """Apply a model-owned formulation after validating strategy support.
+
+        Args:
+            formulation: Formulation selected for the complete simulation.
+
+        Raises:
+            ValueError: If this strategy does not implement the formulation.
+
+        """
+        selected = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if selected not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {selected.value}; "
+                f"supported formulations: {supported}."
+            )
+        self.formulation = selected
 
     @property
     @abstractmethod
@@ -63,8 +110,7 @@ class GeneStrategy(ABC):
 
     @abstractmethod
     def __call__(self, ctx: StrategyContext) -> float:
-        """
-        Computes the delta for a gene strategy.
+        """Compute the delta for a gene strategy.
 
         Args:
             ctx (StrategyContext):
@@ -97,10 +143,24 @@ class GeneStrategy(ABC):
         """
         return None, None
 
+    @property
+    def requires_normalizations(self) -> bool:
+        """Whether this strategy's kernel accepts population normalizations."""
+        return False
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Whether this strategy implements an exact D-matrix contribution.
+
+        A strategy that returns ``False`` may still be used by the ordinary
+        iterative solver. The model rejects it when ``use_d_matrix=True`` so
+        an unsupported contribution is never silently omitted.
+        """
+        return False
+
 
 class OrgStrategy(ABC):
-    """
-    Abstract base class for organism strategies.
+    """Abstract base class for organism strategies.
 
     Defines the interface for all organism-level evolutionary strategies.
     Subclasses must implement the `__call__` method, which calculates the
@@ -108,17 +168,56 @@ class OrgStrategy(ABC):
 
     """
 
-    def __init__(self, **kwargs):
-        """
-        Initializes the strategy with optional parameters.
+    supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
+        {StrategyFormulation.ORIGINAL}
+    )
+
+    def __init__(
+        self,
+        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        **kwargs: Any,
+    ):
+        """Initialise the strategy with optional parameters.
 
         Args:
-            **kwargs:
+            formulation (StrategyFormulation | str): Mathematical formulation to use.
+                Only formulations declared by the concrete strategy are accepted.
+            **kwargs (object):
                 Arbitrary keyword arguments that can be used to configure
                 the strategy. These are stored in the `self.options` dictionary.
 
         """
+        self.formulation = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if self.formulation not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {self.formulation.value}; "
+                f"supported formulations: {supported}."
+            )
         self.options = kwargs
+
+    def set_formulation(self, formulation: StrategyFormulation | str) -> None:
+        """Apply a model-owned formulation after validating strategy support.
+
+        Args:
+            formulation: Formulation selected for the complete simulation.
+
+        Raises:
+            ValueError: If this strategy does not implement the formulation.
+
+        """
+        selected = StrategyFormulationConfig.model_validate(
+            {"formulation": formulation}
+        ).formulation
+        if selected not in self.supported_formulations:
+            supported = ", ".join(item.value for item in self.supported_formulations)
+            raise ValueError(
+                f"{type(self).__name__} does not support {selected.value}; "
+                f"supported formulations: {supported}."
+            )
+        self.formulation = selected
 
     @property
     @abstractmethod
@@ -128,8 +227,7 @@ class OrgStrategy(ABC):
 
     @abstractmethod
     def __call__(self, ctx: StrategyContext) -> np.ndarray:
-        """
-        Computes deltas for an organism strategy.
+        """Compute deltas for an organism strategy.
 
         Args:
             ctx (StrategyContext):
@@ -158,10 +256,24 @@ class OrgStrategy(ABC):
         """
         return None, None
 
+    @property
+    def requires_normalizations(self) -> bool:
+        """Whether this strategy's kernel accepts population normalizations."""
+        return False
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Whether this strategy implements an exact D-matrix contribution.
+
+        A strategy that returns ``False`` may still be used by the ordinary
+        iterative solver. The model rejects it when ``use_d_matrix=True`` so
+        an unsupported contribution is never silently omitted.
+        """
+        return False
+
 
 class MixStrategy(ABC):
-    """
-    Abstract base class for mixing strategies.
+    """Abstract base class for mixing strategies.
 
     Defines the interface for strategies that determine how to mix or weigh
     the contributions of different evolutionary strategies (gene or organism).
@@ -170,11 +282,10 @@ class MixStrategy(ABC):
     """
 
     def __init__(self, **kwargs):
-        """
-        Initializes the strategy with optional parameters.
+        """Initialise the strategy with optional parameters.
 
         Args:
-            **kwargs:
+            **kwargs (object):
                 Arbitrary keyword arguments that can be used to configure
                 the strategy. These are stored in the `self.options` dictionary.
 
@@ -191,8 +302,7 @@ class MixStrategy(ABC):
     def __call__(
         self, delta: np.ndarray, mix_coeffs: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Mixes organism deltas and dynamically updates mixing coefficients.
+        """Mixes organism deltas and dynamically updates mixing coefficients.
 
         The method first calculates the combined delta using the current mixing
         coefficients. It then updates these coefficients for the next iteration.

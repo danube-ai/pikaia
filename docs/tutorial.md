@@ -6,7 +6,7 @@ This tutorial walks you through a complete pikaia analysis from raw data to rank
 
 ---
 
-## The scenario
+## 1. The scenario
 
 You have data about 5 candidates evaluated on 4 criteria:
 
@@ -22,7 +22,7 @@ You want to know: **which criteria actually drive differentiation between candid
 
 ---
 
-## Step 1 — Prepare your data
+## 2. Step 1 — Prepare your data
 
 pikaia expects values in **[0, 1]** where higher means better. Scale each column using min-max normalisation.
 
@@ -52,7 +52,7 @@ The result is a 5×4 matrix with all values in [0, 1].
 
 ---
 
-## Step 2 — Create a population
+## 3. Step 2 — Create a population
 
 ```python
 from pikaia.data import PikaiaPopulation
@@ -66,7 +66,7 @@ In pikaia's language, each **row is an organism** (candidate) and each **column 
 
 ---
 
-## Step 3 — Choose strategies
+## 4. Step 3 — Choose strategies
 
 Strategies control how the evolutionary simulation evolves gene fitness. Start with the most common combination:
 
@@ -86,7 +86,7 @@ See the [overview](overview.md) for a conceptual explanation of what strategies 
 
 ---
 
-## Step 4 — Fit the model
+## 5. Step 4 — Fit the model
 
 ```python
 from pikaia.models import PikaiaModel
@@ -106,7 +106,7 @@ model.fit()
 
 ---
 
-## Step 5 — Read the results
+## 6. Step 5 — Read the results
 
 Gene fitness converges to a vector that sums to 1. Higher values mean that criterion drove more differentiation.
 
@@ -119,7 +119,8 @@ for label, fitness in zip(gene_labels, final_fitness):
 ```
 
 Example output:
-```
+
+```text
   Speed               : 0.2766
   Accuracy            : 0.2368
   Cost efficiency     : 0.2517
@@ -130,7 +131,7 @@ Speed emerged as the most differentiating criterion here — it spans the widest
 
 ---
 
-## Step 6 — Plot the fitness trajectory
+## 7. Step 6 — Plot the fitness trajectory
 
 ```python
 from pikaia.plotting import PikaiaPlotter, PlotType
@@ -148,10 +149,10 @@ The plot shows how each gene's fitness evolves. A steep early trajectory means t
 
 ---
 
-## What's next
+## 8. What's next
 
 - **Compare strategies** — try `GeneStrategyEnum.SELL_HARD` to favour criteria that are rare across candidates, or `GeneStrategyEnum.SELL_EASY` for the opposite. See `examples/example6.py`.
-- **Speed up large datasets** — pass `use_d_matrix=True` to `PikaiaModel` for a 30–80× speedup. See [overview](overview.md#d-matrix-accelerated-mode).
+- **Speed up compatible models** — pass `use_d_matrix=True` only for a configuration whose reduced equation has been verified as exact. See the [D-matrix formulation](d-matrix.md) for the supported configurations and measured equivalence.
 - **Mix multiple strategies** — pass a list to `gene_strategies` and use `MixStrategyEnum.SELF_CONSISTENT` to let the model self-select weights.
 - **Explore more examples** — the `examples/` directory contains scripts for real-world movie ranking, self-consistency, and a full strategy comparison grid.
 - **Extend pikaia** — add your own strategy by following the [contributor guide](contributing.md).

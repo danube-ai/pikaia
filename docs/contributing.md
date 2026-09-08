@@ -4,9 +4,9 @@ This guide explains the codebase structure and walks through adding new features
 
 ---
 
-## Repository layout
+## 1. Repository layout
 
-```
+```text
 pikaia/
 ├── pikaia/                   # Library source
 │   ├── data/                 # PikaiaPopulation — wraps the (N, M) matrix
@@ -29,31 +29,31 @@ pikaia/
 
 ---
 
-## Core concepts
+## 2. Core concepts
 
-### The replicator equation
+### 2.1. The replicator equation
 
 pikaia evolves a gene-fitness vector **γ** of shape `(M,)` (one value per gene/feature). Each iteration applies:
 
-```
+```text
 γ_j(t+1) = γ_j(t) · (1 + Σ_i Δ(i, j))
 ```
 
 then normalises **γ** to sum to 1. The deltas `Δ(i, j)` come from two complementary strategy types.
 
-### Gene strategies (`GeneStrategy`)
+### 2.2. Gene strategies (`GeneStrategy`)
 
 Called once per *(organism i, gene j)* pair. Return a **scalar** delta that drives gene *j*'s fitness up or down based on how organism *i* expressed it.
 
 **When to use:** the effect of organism *i* on gene *j* depends only on *x_ij* and population-level statistics (e.g. gene means). Examples: `DominantGeneStrategy`, `SellHardGeneStrategy`.
 
-### Organism strategies (`OrgStrategy`)
+### 2.3. Organism strategies (`OrgStrategy`)
 
 Called once per **organism i**. Return an `(M,)` array — the delta for every gene in one shot.
 
 **When to use:** organism *i*'s contribution to gene *j* depends on *i*'s performance on other genes (cross-gene interaction). Examples: `BalancedOrgStrategy`, `BuyHardOrgStrategy`.
 
-### `StrategyContext`
+### 2.4. `StrategyContext`
 
 Both strategy types receive a `StrategyContext` dataclass:
 
@@ -71,11 +71,11 @@ Both strategy types receive a `StrategyContext` dataclass:
 
 ---
 
-## Adding a new gene strategy
+## 3. Adding a new gene strategy
 
 We'll implement a toy `BiasGeneStrategy` that gives a fixed positive boost to genes above a threshold and penalises the rest.
 
-### Step 1 — Implement the class
+### 3.1. Step 1 — Implement the class
 
 Create `pikaia/strategies/gs_strategies/bias_strategy.py`:
 
@@ -105,7 +105,11 @@ class BiasGeneStrategy(GeneStrategy):
     def __call__(self, ctx: StrategyContext) -> float:
         mean_j = ctx.population.matrix[:, ctx.gene_id].mean()
         sign = 1.0 if mean_j >= self.options["threshold"] else -1.0
-        return float((4.0 / ctx.population.N) * sign * ctx.gene_fitness[ctx.gene_id])
+        return float(
+            (4.0 / ctx.population.N)
+            * sign
+            * ctx.gene_fitness[ctx.gene_id] ** 2
+        )
 
     def kernel(
         self,
@@ -121,13 +125,20 @@ class BiasGeneStrategy(GeneStrategy):
         signs = np.where(mean_all >= threshold, 1.0, -1.0)
         D = np.diag(4.0 * signs)
         return D, None
+
+    @property
+    def supports_d_matrix(self) -> bool:
+        """Declare the kernel exact for this strategy."""
+        return True
 ```
 
 **Key rules:**
-- `__call__` must return a Python `float`.
-- `kernel()` returns `(D, d)` where `D` is `(M, M)` (bilinear term) and `d` is `(M,)` (linear term). Return `None` for the term your strategy doesn't use. The default base-class implementation already returns `(None, None)`, so you can skip `kernel()` entirely if you don't need the D-matrix fast path.
 
-### Step 2 — Add an enum value
+- `__call__` must return a Python `float`.
+- `kernel()` returns `(D, d)` where `D` is `(M, M)` (bilinear term) and `d` is `(M,)` (linear term). Return `None` for the term your strategy does not use.
+- Override `supports_d_matrix` to return `True` only after proving that the kernel exactly matches the iterative update. The default is `False`, so strategies without an exact kernel can skip `kernel()` entirely.
+
+### 3.2. Step 2 — Add an enum value
 
 In `pikaia/schemas/strategies.py`, add to `GeneStrategyEnum`:
 
@@ -137,11 +148,11 @@ BIAS = "BIAS"
 
 Include a short docstring line in the class docstring:
 
-```
+```text
 BIAS: Boosts genes above a mean-expression threshold, penalises the rest.
 ```
 
-### Step 3 — Register in the factory
+### 3.3. Step 3 — Register in the factory
 
 In `pikaia/strategies/strategy_factories.py`, import the class and add it to `GeneStrategyFactory._strategies`:
 
@@ -152,7 +163,7 @@ from pikaia.strategies.gs_strategies.bias_strategy import BiasGeneStrategy
 GeneStrategyEnum.BIAS: BiasGeneStrategy,
 ```
 
-### Step 4 — Export from the package
+### 3.4. Step 4 — Export from the package
 
 In `pikaia/strategies/gs_strategies/__init__.py`:
 
@@ -165,7 +176,7 @@ __all__ = [
 ]
 ```
 
-### Step 5 — Write tests
+### 3.5. Step 5 — Write tests
 
 Add `tests/unit/test_bias_strategy.py`. At minimum cover:
 
@@ -186,14 +197,15 @@ def test_kernel_diagonal_matches_call_sum():
         sum(strat(StrategyContext(..., org_id=i, gene_id=j)) for i in range(6))
         for j in range(4)
     ])
-    np.testing.assert_allclose(np.diag(D) @ gf, call_sum @ gf, atol=1e-10)
+    np.testing.assert_allclose(gf * (D @ gf), call_sum, atol=1e-10)
 ```
 
 ---
 
-## Adding a new organism strategy
+## 4. Adding a new organism strategy
 
 The pattern is identical; the only differences are:
+
 - Subclass `OrgStrategy` instead of `GeneStrategy`.
 - `__call__` receives a context with `org_id` set and returns `np.ndarray` of shape `(M,)`.
 - File goes in `pikaia/strategies/os_strategies/`.
@@ -219,27 +231,32 @@ class MyOrgStrategy(OrgStrategy):
         return None, None
 ```
 
-See `BuyHardOrgStrategy` in `pikaia/strategies/os_strategies/buy_hard_strategy.py` for a real example where the kernel computes a linear `d`-vector from a cross-organism redistribution.
+Do not add a kernel merely because an organism equation can be partially
+rearranged. Its complete summed delta must satisfy the exact contract. The
+math-paper `SelfishOrgStrategy` derivation in the
+[D-matrix formulation](d-matrix.md#162-selfish-organism-contribution) is the
+current organism-level example.
 
 ---
 
-## The D-matrix fast path
+## 5. The D-matrix fast path
 
-When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. This is typically 30–80× faster for large populations.
+When `PikaiaModel(use_d_matrix=True)`, the model precomputes kernels once and then runs cheap `O(M²)` updates each iteration instead of the full `O(N·M²)` loop. The practical speed-up depends on population size, gene count, and the selected strategies. This mode requires the built-in `FixedMixStrategy` for both strategy families; adaptive, custom, and overridden mixers are iterative-only because the reduced path cannot observe their per-organism mixing behaviour.
 
 For your strategy to support this path:
 
 1. Override `kernel()` to return `(D, d)` where at least one is not `None`.
-2. The update applied is `γ_new = γ * (1 + D @ γ + d)`, then re-normalised.
-3. `D` captures gene–gene interactions (bilinear in **γ**); `d` captures fixed linear offsets.
+2. The update applied is `γ_new = γ * (1 + d + γ * (D @ γ))`, then re-normalised.
+3. `D` captures deltas of the form `γ_j * sum_k D_jk * γ_k`; `d` captures fixed delta offsets.
 4. If your delta does not depend on **γ** at all, return `D=None` and a precomputed `d`.
-5. If your delta scales with `γ_j`, express it as `D[j,j]` on the diagonal.
+5. If the summed delta is `c_j * γ_j²`, encode `c_j` on `D[j,j]`.
+6. If the summed delta is `c_j * γ_j`, and the model guarantees `sum_k γ_k = 1`, encode `c_j` in every entry of row `j`. The [math-paper Dominant derivation](d-matrix.md#152-row-constant-d-matrix) shows why this is exact.
 
-**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `D @ γ + d` for a few random **γ** vectors. See `tests/unit/test_strategy_kernels.py` for examples of this pattern.
+**Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `d + γ * (D @ γ)` for several random $\gamma$ vectors, then comparing complete iterative and D-matrix runs at 1, 50, and 100 iterations. See the [D-matrix formulation](d-matrix.md) for the derivation procedure and `tests/unit/test_d_matrix_equivalence.py` for end-to-end examples.
 
 ---
 
-## Development workflow
+## 6. Development workflow
 
 ```bash
 # Install all dependencies (editable mode, dev + examples extras)
@@ -261,7 +278,7 @@ All CI checks (ruff lint, ruff format, import ordering) run automatically on com
 
 ---
 
-## Branching and releases
+## 7. Branching and releases
 
 pikaia uses a **single-branch (trunk-based)** model:
 
@@ -273,7 +290,7 @@ The full step-by-step release process lives in the [Releasing guide](releasing.m
 
 ---
 
-## Pre-PR checklist
+## 8. Pre-PR checklist
 
 Before opening a pull request, verify:
 
@@ -285,7 +302,7 @@ Before opening a pull request, verify:
 
 ---
 
-## Checklist for a new strategy
+## 9. Checklist for a new strategy
 
 - [ ] Implementation file in `gs_strategies/` or `os_strategies/`
 - [ ] Enum value added to `GeneStrategyEnum` or `OrgStrategyEnum` with docstring
