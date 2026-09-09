@@ -12,12 +12,12 @@ class NoneGeneStrategy(GeneStrategy):
     This strategy is a neutral placeholder that returns a delta value of 0,
     effectively making no change to the gene's fitness. It serves as a baseline
     or a way to disable gene-level selection. Because zero is independent of
-    the selected equations, the strategy supports both ``ORIGINAL`` and
-    ``MATH_PAPER``.
+    the selected equations, the strategy supports both ``LEGACY`` and
+    ``STANDARD``.
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(self, **kwargs):

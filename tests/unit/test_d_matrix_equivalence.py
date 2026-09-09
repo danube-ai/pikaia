@@ -1,4 +1,4 @@
-"""Regression tests for exact D-matrix support in the original formulation."""
+"""Regression tests for exact D-matrix support in the LEGACY formulation."""
 
 from collections.abc import Callable
 

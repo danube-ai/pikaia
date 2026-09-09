@@ -61,9 +61,9 @@ The `artefacts/` directory is used as the default output location for generated 
 `d_matrix_comparison.py` evaluates the configurations for which the package has
 an exact reduced implementation:
 
-- `ORIGINAL`: each supported gene strategy paired with `NoneOrgStrategy`, which
+- `LEGACY`: each supported gene strategy paired with `NoneOrgStrategy`, which
   isolates its contribution.
-- `MATH_PAPER`: dominant gene paired with `NoneOrgStrategy`, plus the supported
+- `STANDARD`: dominant gene paired with `NoneOrgStrategy`, plus the supported
   altruistic-gene and selfish-organism Alt-Sel configuration.
 
 For every row, it independently runs the ordinary and D-matrix paths at 1, 50,

@@ -6,10 +6,27 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class StrategyFormulation(str, Enum):
-    """Mathematical formulation used by strategies with revised equations."""
+    """Mathematical formulation used by formulation-aware strategies.
 
-    ORIGINAL = "ORIGINAL"
-    MATH_PAPER = "MATH_PAPER"
+    ``LEGACY`` preserves the original Python-package equations and remains the
+    default. ``STANDARD`` names the revised, current equations previously
+    exposed as ``MATH_PAPER``. The old member names remain aliases for source
+    compatibility, while string inputs using their old serialized values are
+    accepted by :meth:`_missing_` during the deprecation period.
+    """
+
+    LEGACY = "LEGACY"
+    STANDARD = "STANDARD"
+
+    # Deprecated source-compatible aliases. New code must use LEGACY/STANDARD.
+    ORIGINAL = LEGACY
+    MATH_PAPER = STANDARD
+
+    @classmethod
+    def _missing_(cls, value: object) -> "StrategyFormulation | None":
+        """Accept serialized pre-0.4.2 values during the migration window."""
+        legacy_values = {"ORIGINAL": cls.LEGACY, "MATH_PAPER": cls.STANDARD}
+        return legacy_values.get(value) if isinstance(value, str) else None
 
 
 class StrategyFormulationConfig(BaseModel):
@@ -17,7 +34,7 @@ class StrategyFormulationConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    formulation: StrategyFormulation = StrategyFormulation.ORIGINAL
+    formulation: StrategyFormulation = StrategyFormulation.LEGACY
 
 
 class KinRangeConfig(BaseModel):
@@ -33,7 +50,7 @@ class KinRangeConfig(BaseModel):
 
 
 class StrategyNormalizations(BaseModel):
-    """Population-derived normalization values for math-paper strategies."""
+    """Population-derived normalization values for STANDARD strategies."""
 
     model_config = ConfigDict(frozen=True, allow_inf_nan=False)
 
@@ -45,7 +62,7 @@ class StrategyNormalizations(BaseModel):
         value = self.gene_mean_pairwise_difference
         if value is None or value == 0:
             raise ValueError(
-                "MATH_PAPER requires a positive gene_mean_pairwise_difference. "
+                "STANDARD requires a positive gene_mean_pairwise_difference. "
                 "Use a population with at least two distinct gene-column means."
             )
         return value
@@ -55,7 +72,7 @@ class StrategyNormalizations(BaseModel):
         value = self.harmonic_fitness_mean_pairwise_difference
         if value is None or value == 0:
             raise ValueError(
-                "MATH_PAPER requires a positive "
+                "STANDARD requires a positive "
                 "harmonic_fitness_mean_pairwise_difference. Use a population "
                 "with at least two distinct harmonic organism fitness values."
             )

@@ -31,12 +31,12 @@ def _mean_pairwise_absolute_difference(values: np.ndarray) -> float | None:
     return float(differences[np.triu_indices(values.size, k=1)].mean())
 
 
-def _compute_math_paper_similarity(matrix: np.ndarray, divisor: int) -> np.ndarray:
-    """Return the similarity scaling selected by ``MATH_PAPER``.
+def _compute_standard_similarity(matrix: np.ndarray, divisor: int) -> np.ndarray:
+    """Return the similarity scaling selected by ``STANDARD``.
 
     Args:
         matrix: Rows representing the items whose pairwise similarity is needed.
-        divisor: Math-paper normalisation divisor: ``N`` for genes or ``M``
+        divisor: STANDARD normalisation divisor: ``N`` for genes or ``M``
             for organisms, matching the historical Pikaia implementation.
 
     Returns:
@@ -69,7 +69,7 @@ class GeneticModel(ABC):
         epsilon: float | None = None,
         n_jobs: int = 1,
         y: np.ndarray | None = None,
-        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        formulation: StrategyFormulation | str = StrategyFormulation.LEGACY,
     ):
         """Initialise the GeneticModel.
 
@@ -111,7 +111,7 @@ class GeneticModel(ABC):
             y (np.ndarray | None, optional):
                 Optional target values for supervised strategies.
             formulation (StrategyFormulation | str): Mathematical formulation
-                selected for the complete simulation. Defaults to ``ORIGINAL``.
+                selected for the complete simulation. Defaults to ``LEGACY``.
 
         """
         # Population and strategies
@@ -205,7 +205,7 @@ class GeneticModel(ABC):
                 "fitness values will be returned unchanged."
             )
 
-        # These fixed-population values are only used by MATH_PAPER strategies.
+        # These fixed-population values are only used by STANDARD strategies.
         # Pydantic validates that any calculated values are finite and non-negative.
         self._strategy_normalizations = StrategyNormalizations(
             gene_mean_pairwise_difference=_mean_pairwise_absolute_difference(
@@ -217,14 +217,14 @@ class GeneticModel(ABC):
         )
 
         # Compute only the similarities selected for this run. This preserves
-        # ORIGINAL behaviour while avoiding its max-distance preconditions in
-        # MATH_PAPER models, whose N/M-scaled similarities remain defined when
+        # LEGACY behaviour while avoiding its max-distance preconditions in
+        # STANDARD models, whose N/M-scaled similarities remain defined when
         # all compared vectors are identical.
-        if self._formulation is StrategyFormulation.MATH_PAPER:
-            self._gene_similarity = _compute_math_paper_similarity(
+        if self._formulation is StrategyFormulation.STANDARD:
+            self._gene_similarity = _compute_standard_similarity(
                 self._population.matrix.T, self._population.N
             )
-            self._org_similarity = _compute_math_paper_similarity(
+            self._org_similarity = _compute_standard_similarity(
                 self._population.matrix, self._population.M
             )
         else:
@@ -342,10 +342,10 @@ class GeneticModel(ABC):
             raise ValueError(
                 f"formulation {self._formulation.value} is not supported by "
                 f"the selected strategies: {names}. "
-                "Use ORIGINAL or choose only strategies that implement the "
+                "Use LEGACY or choose only strategies that implement the "
                 "requested formulation."
             )
-        if self._formulation is StrategyFormulation.MATH_PAPER:
+        if self._formulation is StrategyFormulation.STANDARD:
             for strategy in strategies:
                 if "kin_range" in strategy.options:
                     KinRangeConfig.model_validate(
@@ -480,7 +480,7 @@ class GeneticModel(ABC):
 
         The historical reduced solver was derived for exactly one altruistic
         gene strategy and one selfish organism strategy, both with fixed unit
-        coefficients. The math-paper dominant strategy is independently exact
+        coefficients. The STANDARD dominant strategy is independently exact
         when paired with the formulation-neutral no-op organism strategy.
         Every formulation requires the built-in ``FixedMixStrategy`` because
         the reduced equation does not represent coefficient updates performed
@@ -488,8 +488,8 @@ class GeneticModel(ABC):
 
         Raises:
             ValueError: If a strategy lacks D-matrix support, either mixer is
-                not fixed, a math-paper request is neither historical Alt-Sel
-                nor isolated dominant gene, or isolated math-paper dominant
+                not fixed, a STANDARD request is neither historical Alt-Sel
+                nor isolated dominant gene, or isolated STANDARD dominant
                 starts outside the gene-fitness simplex required by its
                 row-constant kernel.
 
@@ -512,7 +512,7 @@ class GeneticModel(ABC):
                 "custom mixing strategies, including overridden subclasses."
             )
 
-        if self._formulation is StrategyFormulation.ORIGINAL:
+        if self._formulation is StrategyFormulation.LEGACY:
             return
 
         from pikaia.strategies.gs_strategies.altruistic_strategy import (
@@ -555,17 +555,17 @@ class GeneticModel(ABC):
             )
             if not is_on_simplex:
                 raise ValueError(
-                    "MATH_PAPER DominantGeneStrategy with use_d_matrix=True "
+                    "STANDARD DominantGeneStrategy with use_d_matrix=True "
                     "requires initial_gene_fitness to contain finite, non-negative "
                     "values that sum to one because its exact row-constant D matrix "
                     "uses the normalized gene-fitness simplex."
                 )
         if not (is_altsel or is_isolated_dominant):
             raise ValueError(
-                "MATH_PAPER use_d_matrix=True is available only for an "
+                "STANDARD use_d_matrix=True is available only for an "
                 "unmixed DominantGeneStrategy + NoneOrgStrategy model or the "
                 "unmixed AltruisticGeneStrategy + SelfishOrgStrategy (Alt-Sel) "
-                "combination. Use use_d_matrix=False for other MATH_PAPER "
+                "combination. Use use_d_matrix=False for other STANDARD "
                 "configurations."
             )
 
