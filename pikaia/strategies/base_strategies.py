@@ -51,8 +51,11 @@ class GeneStrategy(ABC):
 
     """
 
+    # Strategies whose equation is formulation-neutral support both model-wide
+    # formulations by default. A formulation-specific strategy must override
+    # this declaration and implement each advertised equation explicitly.
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.LEGACY}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(
@@ -168,8 +171,11 @@ class OrgStrategy(ABC):
 
     """
 
+    # Strategies whose equation is formulation-neutral support both model-wide
+    # formulations by default. A formulation-specific strategy must override
+    # this declaration and implement each advertised equation explicitly.
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.LEGACY}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(

@@ -372,35 +372,20 @@ def test_every_gene_and_organism_strategy_defaults_to_legacy_formulation():
         assert strategy.formulation is StrategyFormulation.LEGACY
 
 
-def test_only_standard_strategies_and_neutral_noops_accept_standard():
-    supported_gene_strategies = {
-        GeneStrategyEnum.DOMINANT,
-        GeneStrategyEnum.ALTRUISTIC,
-        GeneStrategyEnum.NONE,
-    }
-    supported_org_strategies = {OrgStrategyEnum.SELFISH, OrgStrategyEnum.NONE}
-
+def test_all_builtin_strategies_accept_standard_when_formulation_neutral():
     for strategy_enum in GeneStrategyEnum:
         factory = GeneStrategyFactory.get_strategy
-        if strategy_enum in supported_gene_strategies:
-            assert (
-                factory(strategy_enum, formulation="STANDARD").formulation
-                is StrategyFormulation.STANDARD
-            )
-        else:
-            with pytest.raises(ValueError, match="does not support STANDARD"):
-                factory(strategy_enum, formulation="STANDARD")
+        assert (
+            factory(strategy_enum, formulation="STANDARD").formulation
+            is StrategyFormulation.STANDARD
+        )
 
     for strategy_enum in OrgStrategyEnum:
         factory = OrgStrategyFactory.get_strategy
-        if strategy_enum in supported_org_strategies:
-            assert (
-                factory(strategy_enum, formulation="STANDARD").formulation
-                is StrategyFormulation.STANDARD
-            )
-        else:
-            with pytest.raises(ValueError, match="does not support STANDARD"):
-                factory(strategy_enum, formulation="STANDARD")
+        assert (
+            factory(strategy_enum, formulation="STANDARD").formulation
+            is StrategyFormulation.STANDARD
+        )
 
 
 def test_formulation_is_validated_by_pydantic():
@@ -429,22 +414,17 @@ def test_standard_rejects_zero_gene_normalization():
         model.fit()
 
 
-@pytest.mark.parametrize(
-    ("gene_strategy", "org_strategy", "unsupported_name"),
-    [
-        (SelfishGeneStrategy(), SelfishOrgStrategy(), "SelfishGeneStrategy"),
-        (AltruisticGeneStrategy(), BalancedOrgStrategy(), "BalancedOrgStrategy"),
-    ],
-)
-def test_standard_model_rejects_legacy_only_strategies(
-    gene_strategy, org_strategy, unsupported_name: str
-) -> None:
-    """Fail at construction rather than silently retaining an original equation."""
-    with pytest.raises(ValueError, match=unsupported_name):
+def test_standard_model_rejects_custom_legacy_only_strategies() -> None:
+    """Fail rather than silently retaining a custom strategy's legacy equation."""
+
+    class LegacyOnlyBalanced(BalancedOrgStrategy):
+        supported_formulations = frozenset({StrategyFormulation.LEGACY})
+
+    with pytest.raises(ValueError, match="LegacyOnlyBalanced"):
         PikaiaModel(
             population=_population(),
-            gene_strategies=[gene_strategy],
-            org_strategies=[org_strategy],
+            gene_strategies=[AltruisticGeneStrategy()],
+            org_strategies=[LegacyOnlyBalanced()],
             max_iter=1,
             formulation="STANDARD",
         )
@@ -693,11 +673,36 @@ def test_noop_strategies_are_formulation_neutral():
 
 
 def test_strategy_set_formulation_rejects_unsupported_selection():
-    """Original-only strategies retain validation after construction."""
+    """Custom strategies can still reject a formulation they do not implement."""
+
+    class LegacyOnlySelfishGene(SelfishGeneStrategy):
+        supported_formulations = frozenset({StrategyFormulation.LEGACY})
+
+    class LegacyOnlyBalanced(BalancedOrgStrategy):
+        supported_formulations = frozenset({StrategyFormulation.LEGACY})
+
     with pytest.raises(ValueError, match="does not support STANDARD"):
-        SelfishGeneStrategy().set_formulation(StrategyFormulation.STANDARD)
+        LegacyOnlySelfishGene().set_formulation(StrategyFormulation.STANDARD)
     with pytest.raises(ValueError, match="does not support STANDARD"):
-        BalancedOrgStrategy().set_formulation(StrategyFormulation.STANDARD)
+        LegacyOnlySelfishGene(formulation=StrategyFormulation.STANDARD)
+    with pytest.raises(ValueError, match="does not support STANDARD"):
+        LegacyOnlyBalanced(formulation=StrategyFormulation.STANDARD)
+    with pytest.raises(ValueError, match="does not support STANDARD"):
+        LegacyOnlyBalanced().set_formulation(StrategyFormulation.STANDARD)
+
+
+def test_standard_dominant_balanced_iterative_model_is_supported():
+    """A fixed dominant-plus-balanced pair can run under STANDARD iteratively."""
+    model = PikaiaModel(
+        population=_population(),
+        gene_strategies=[DominantGeneStrategy()],
+        org_strategies=[BalancedOrgStrategy()],
+        initial_gene_fitness=np.full(3, 1 / 3),
+        max_iter=3,
+        formulation=StrategyFormulation.STANDARD,
+    )
+    model.fit()
+    assert model.formulation is StrategyFormulation.STANDARD
 
 
 def test_standard_kernel_guards_require_normalizations():
