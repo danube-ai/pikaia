@@ -1099,7 +1099,7 @@
 </code></pre></div>
 <p>Do not add a kernel merely because an organism equation can be partially
 rearranged. Its complete summed delta must satisfy the exact contract. The
-math-paper <code>SelfishOrgStrategy</code> derivation in the
+STANDARD <code>SelfishOrgStrategy</code> derivation in the
 <a href="../d-matrix/#162-selfish-organism-contribution">D-matrix formulation</a> is the
 current organism-level example.</p>
 <hr />
@@ -1112,7 +1112,7 @@ current organism-level example.</p>
 <li><code>D</code> captures deltas of the form <code>γ_j * sum_k D_jk * γ_k</code>; <code>d</code> captures fixed delta offsets.</li>
 <li>If your delta does not depend on <strong>γ</strong> at all, return <code>D=None</code> and a precomputed <code>d</code>.</li>
 <li>If the summed delta is <code>c_j * γ_j²</code>, encode <code>c_j</code> on <code>D[j,j]</code>.</li>
-<li>If the summed delta is <code>c_j * γ_j</code>, and the model guarantees <code>sum_k γ_k = 1</code>, encode <code>c_j</code> in every entry of row <code>j</code>. The <a href="../d-matrix/#152-row-constant-d-matrix">math-paper Dominant derivation</a> shows why this is exact.</li>
+<li>If the summed delta is <code>c_j * γ_j</code>, and the model guarantees <code>sum_k γ_k = 1</code>, encode <code>c_j</code> in every entry of row <code>j</code>. The <a href="../d-matrix/#152-row-constant-d-matrix">STANDARD Dominant derivation</a> shows why this is exact.</li>
 </ol>
 <p><strong>Test your kernel</strong> by verifying that summing <code>__call__</code> over all organisms produces the same result as <code>d + γ * (D @ γ)</code> for several random <span class="arithmatex">\(\gamma\)</span> vectors, then comparing complete iterative and D-matrix runs at 1, 50, and 100 iterations. See the <a href="../d-matrix/">D-matrix formulation</a> for the derivation procedure and <code>tests/unit/test_d_matrix_equivalence.py</code> for end-to-end examples.</p>
 <hr />
