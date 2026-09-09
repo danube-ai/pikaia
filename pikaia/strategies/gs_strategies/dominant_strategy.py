@@ -13,14 +13,14 @@ class DominantGeneStrategy(GeneStrategy):
     """A gene strategy that promotes dominant genes.
 
     This strategy increases the fitness of genes that are highly expressed
-    (dominant), reinforcing their prevalence in the population. ``ORIGINAL``
+    (dominant), reinforcing their prevalence in the population. ``LEGACY``
     makes the direct delta proportional to the square of the focal gene's
-    fitness. ``MATH_PAPER`` reproduces the historical branch's revised delta,
+    fitness. ``STANDARD`` uses the revised delta,
     which is linear in the focal gene's fitness.
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(self, **kwargs):
@@ -51,7 +51,7 @@ class DominantGeneStrategy(GeneStrategy):
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
 
         """
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             return float(
                 (1 / ctx.population.N)
                 * ctx.gene_fitness[ctx.gene_id]
@@ -85,15 +85,15 @@ class DominantGeneStrategy(GeneStrategy):
             y: Unused.
 
         Returns:
-            ``(D, None)``. For ``ORIGINAL``, ``D`` is diagonal with
-            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``MATH_PAPER``, every entry
+            ``(D, None)``. For ``LEGACY``, ``D`` is diagonal with
+            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``STANDARD``, every entry
             in row ``j`` equals ``x_bar_j - 0.5``. Because gene fitness is
             normalised to sum to one, the row-constant matrix exactly encodes
             the formulation's signal ``gamma_j * (x_bar_j - 0.5)``.
 
         """
         mean_centered_expression = population.matrix.mean(axis=0) - 0.5
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             D = np.broadcast_to(
                 mean_centered_expression[:, np.newaxis],
                 (population.M, population.M),

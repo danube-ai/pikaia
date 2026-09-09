@@ -4,11 +4,11 @@
 The D-matrix path is an exact reduced execution path, not a fallback for every
 strategy. This example runs only configurations accepted by ``PikaiaModel``:
 
-1. Each D-capable ``ORIGINAL`` gene strategy, isolated with
+1. Each D-capable ``LEGACY`` gene strategy, isolated with
    ``NoneOrgStrategy``.
-2. The ``MATH_PAPER`` dominant-gene strategy, isolated with
+2. The ``STANDARD`` dominant-gene strategy, isolated with
    ``NoneOrgStrategy``.
-3. The ``MATH_PAPER`` altruistic-gene plus selfish-organism (Alt-Sel)
+3. The ``STANDARD`` altruistic-gene plus selfish-organism (Alt-Sel)
    configuration.
 
 For each configuration, independently constructed iterative and D-matrix models
@@ -95,8 +95,8 @@ def original_population() -> PikaiaPopulation:
     )
 
 
-def math_paper_population() -> PikaiaPopulation:
-    """Return a population with non-zero math-paper normalization factors."""
+def standard_population() -> PikaiaPopulation:
+    """Return a population with non-zero STANDARD normalization factors."""
     return PikaiaPopulation(
         np.array(
             [
@@ -110,7 +110,7 @@ def math_paper_population() -> PikaiaPopulation:
     )
 
 
-ORIGINAL_STRATEGIES: tuple[tuple[str, Callable[[], GeneStrategy]], ...] = (
+LEGACY_STRATEGIES: tuple[tuple[str, Callable[[], GeneStrategy]], ...] = (
     ("Dominant gene", DominantGeneStrategy),
     ("Selfish gene", SelfishGeneStrategy),
     ("Kin-altruistic gene, full neighbourhood", KinAltruisticGeneStrategy),
@@ -124,26 +124,26 @@ ORIGINAL_STRATEGIES: tuple[tuple[str, Callable[[], GeneStrategy]], ...] = (
 CONFIGURATIONS = tuple(
     DMatrixConfiguration(
         name=name,
-        formulation=StrategyFormulation.ORIGINAL,
+        formulation=StrategyFormulation.LEGACY,
         population_factory=original_population,
         gene_strategy_factory=strategy_factory,
         org_strategy_factory=NoneOrgStrategy,
         initial_gene_fitness=(0.6, 0.3, 0.1),
     )
-    for name, strategy_factory in ORIGINAL_STRATEGIES
+    for name, strategy_factory in LEGACY_STRATEGIES
 ) + (
     DMatrixConfiguration(
         name="Dominant gene",
-        formulation=StrategyFormulation.MATH_PAPER,
-        population_factory=math_paper_population,
+        formulation=StrategyFormulation.STANDARD,
+        population_factory=standard_population,
         gene_strategy_factory=DominantGeneStrategy,
         org_strategy_factory=NoneOrgStrategy,
         initial_gene_fitness=(0.4, 0.35, 0.25),
     ),
     DMatrixConfiguration(
         name="Altruistic gene + Selfish organism (Alt-Sel)",
-        formulation=StrategyFormulation.MATH_PAPER,
-        population_factory=math_paper_population,
+        formulation=StrategyFormulation.STANDARD,
+        population_factory=standard_population,
         gene_strategy_factory=AltruisticGeneStrategy,
         org_strategy_factory=SelfishOrgStrategy,
         initial_gene_fitness=(0.4, 0.35, 0.25),

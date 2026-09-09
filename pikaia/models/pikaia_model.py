@@ -65,13 +65,10 @@ class PikaiaModel(GeneticModel):
         """
         import time
 
-        if (
-            self._formulation is StrategyFormulation.MATH_PAPER
-            and self._max_iter is None
-        ):
+        if self._formulation is StrategyFormulation.STANDARD and self._max_iter is None:
             raise ValueError(
-                "MATH_PAPER requires max_iter to be set because the analytical "
-                "Dominant+Balanced fixed point implements only the ORIGINAL "
+                "STANDARD requires max_iter to be set because the analytical "
+                "Dominant+Balanced fixed point implements only the LEGACY "
                 "formulation."
             )
 

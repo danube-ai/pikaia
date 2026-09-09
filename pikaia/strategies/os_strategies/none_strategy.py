@@ -14,12 +14,12 @@ class NoneOrgStrategy(OrgStrategy):
     This strategy is a neutral placeholder that returns a delta vector of zeros,
     effectively making no change to the organism's fitness contribution. It can
     be used to disable organism-level selection. Because zero is independent of
-    the selected equations, the strategy supports both ``ORIGINAL`` and
-    ``MATH_PAPER``.
+    the selected equations, the strategy supports both ``LEGACY`` and
+    ``STANDARD``.
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(self, **kwargs):

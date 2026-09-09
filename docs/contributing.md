@@ -233,7 +233,7 @@ class MyOrgStrategy(OrgStrategy):
 
 Do not add a kernel merely because an organism equation can be partially
 rearranged. Its complete summed delta must satisfy the exact contract. The
-math-paper `SelfishOrgStrategy` derivation in the
+STANDARD `SelfishOrgStrategy` derivation in the
 [D-matrix formulation](d-matrix.md#162-selfish-organism-contribution) is the
 current organism-level example.
 
@@ -250,7 +250,7 @@ For your strategy to support this path:
 3. `D` captures deltas of the form `γ_j * sum_k D_jk * γ_k`; `d` captures fixed delta offsets.
 4. If your delta does not depend on **γ** at all, return `D=None` and a precomputed `d`.
 5. If the summed delta is `c_j * γ_j²`, encode `c_j` on `D[j,j]`.
-6. If the summed delta is `c_j * γ_j`, and the model guarantees `sum_k γ_k = 1`, encode `c_j` in every entry of row `j`. The [math-paper Dominant derivation](d-matrix.md#152-row-constant-d-matrix) shows why this is exact.
+6. If the summed delta is `c_j * γ_j`, and the model guarantees `sum_k γ_k = 1`, encode `c_j` in every entry of row `j`. The [STANDARD Dominant derivation](d-matrix.md#152-row-constant-d-matrix) shows why this is exact.
 
 **Test your kernel** by verifying that summing `__call__` over all organisms produces the same result as `d + γ * (D @ γ)` for several random $\gamma$ vectors, then comparing complete iterative and D-matrix runs at 1, 50, and 100 iterations. See the [D-matrix formulation](d-matrix.md) for the derivation procedure and `tests/unit/test_d_matrix_equivalence.py` for end-to-end examples.
 

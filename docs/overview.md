@@ -113,7 +113,7 @@ model = PikaiaModel(
 )
 ```
 
-In `ORIGINAL`, D-matrix execution is limited to the built-in `FixedMixStrategy` and strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. In `MATH_PAPER`, the exact public configurations are dominant gene paired with a no-op organism strategy and the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Adaptive, custom, and otherwise unsupported requests raise `ValueError` instead of silently omitting a contribution or using an approximation.
+In `LEGACY`, D-matrix execution is limited to the built-in `FixedMixStrategy` and strategies whose kernels are regression-tested as exact; every selected non-no-op strategy must support it. In `STANDARD`, the exact public configurations are dominant gene paired with a no-op organism strategy and the unmixed altruistic-gene plus selfish-organism (Alt-Sel) pair. Adaptive, custom, and otherwise unsupported requests raise `ValueError` instead of silently omitting a contribution or using an approximation.
 
 See the [D-matrix formulation](d-matrix.md) for the exact equations, historical similarity scaling, compatibility table, and limits.
 

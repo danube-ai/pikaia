@@ -21,7 +21,7 @@ class SelfishOrgStrategy(OrgStrategy):
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(self, **kwargs):
@@ -54,7 +54,7 @@ class SelfishOrgStrategy(OrgStrategy):
         """
         # Determine kin range
         kin_range = self.options.get("kin_range", ctx.population.N)
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             kin_range = min(kin_range or ctx.population.N, ctx.population.N)
 
         # Get indices of most similar relatives, excluding self
@@ -68,9 +68,9 @@ class SelfishOrgStrategy(OrgStrategy):
 
         # Compute gene-specific term for the selected formulation.
         gene_contribution = ctx.population[ctx.org_id, :] * ctx.gene_fitness
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             if ctx.normalizations is None:
-                raise ValueError("MATH_PAPER requires population normalizations.")
+                raise ValueError("STANDARD requires population normalizations.")
             gene_term = gene_contribution
             normalization = (
                 ctx.normalizations.require_harmonic_fitness_mean_pairwise_difference()
@@ -111,28 +111,28 @@ class SelfishOrgStrategy(OrgStrategy):
         y: np.ndarray | None = None,
         normalizations: StrategyNormalizations | None = None,
     ) -> tuple[np.ndarray | None, np.ndarray | None]:
-        """Return the historical ``MATH_PAPER`` D matrix for selfish organisms.
+        """Return the exact ``STANDARD`` D matrix for selfish organisms.
 
         Args:
             population: Population providing the ``(N, M)`` data matrix.
             gene_similarity: Unused.
             org_similarity: Organism similarity matrix of shape ``(N, N)``.
-            initial_org_fitness_range: Unused by ``MATH_PAPER``.
+            initial_org_fitness_range: Unused by ``STANDARD``.
             y: Unused.
             normalizations: Population-derived normalisation values required by
-                the ``MATH_PAPER`` formulation; ignored by ``ORIGINAL``.
+                the ``STANDARD`` formulation; ignored by ``LEGACY``.
 
         Returns:
-            For ``MATH_PAPER``, returns ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
+            For ``STANDARD``, returns ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
             ``D[j, k] = (-2 / (N * R)) * sum_i[x_ij * sum_l(s^o_il * (x_ik - x_lk))]``,
-            summed over kin neighbours of each organism. ``ORIGINAL`` returns
+            summed over kin neighbours of each organism. ``LEGACY`` returns
             ``(None, None)`` because it has no D-matrix implementation.
 
         """
-        if self.formulation is not StrategyFormulation.MATH_PAPER:
+        if self.formulation is not StrategyFormulation.STANDARD:
             return None, None
         if normalizations is None:
-            raise ValueError("MATH_PAPER requires population normalizations.")
+            raise ValueError("STANDARD requires population normalizations.")
 
         X = population.matrix
         N = population.N
@@ -175,5 +175,5 @@ class SelfishOrgStrategy(OrgStrategy):
 
     @property
     def supports_d_matrix(self) -> bool:
-        """Support the exact historical kernel only for ``MATH_PAPER``."""
-        return self.formulation is StrategyFormulation.MATH_PAPER
+        """Support the exact kernel only for ``STANDARD``."""
+        return self.formulation is StrategyFormulation.STANDARD

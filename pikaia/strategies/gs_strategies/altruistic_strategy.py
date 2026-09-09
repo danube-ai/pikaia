@@ -24,7 +24,7 @@ class AltruisticGeneStrategy(GeneStrategy):
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL, StrategyFormulation.MATH_PAPER}
+        {StrategyFormulation.LEGACY, StrategyFormulation.STANDARD}
     )
 
     def __init__(self, **kwargs):
@@ -71,9 +71,9 @@ class AltruisticGeneStrategy(GeneStrategy):
                 - ctx.population[ctx.org_id, ctx.gene_id]
             )
         )
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             if ctx.normalizations is None:
-                raise ValueError("MATH_PAPER requires population normalizations.")
+                raise ValueError("STANDARD requires population normalizations.")
             return float(
                 np.sum(interaction)
                 / ctx.population.N
@@ -121,7 +121,7 @@ class AltruisticGeneStrategy(GeneStrategy):
             initial_org_fitness_range: Unused.
             y: Unused.
             normalizations: Population-derived normalisation values required by
-                the ``MATH_PAPER`` formulation; ignored by ``ORIGINAL``.
+                the ``STANDARD`` formulation; ignored by ``LEGACY``.
 
         Returns:
             Tuple ``(D, None)`` where ``D`` is an ``(M, M)`` matrix with
@@ -136,9 +136,9 @@ class AltruisticGeneStrategy(GeneStrategy):
         # X_diff[i, j, k] = X[i,k] - X[i,j]
         X_diff = X[:, np.newaxis, :] - X[:, :, np.newaxis]  # (N, M, M)
         kernel = np.mean(X_centered[:, :, np.newaxis] * X_diff, axis=0)  # (M, M)
-        if self.formulation is StrategyFormulation.MATH_PAPER:
+        if self.formulation is StrategyFormulation.STANDARD:
             if normalizations is None:
-                raise ValueError("MATH_PAPER requires population normalizations.")
+                raise ValueError("STANDARD requires population normalizations.")
             D = (
                 gene_similarity
                 * kernel

@@ -52,12 +52,12 @@ class GeneStrategy(ABC):
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL}
+        {StrategyFormulation.LEGACY}
     )
 
     def __init__(
         self,
-        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        formulation: StrategyFormulation | str = StrategyFormulation.LEGACY,
         **kwargs: Any,
     ):
         """Initialise the strategy with optional parameters.
@@ -169,12 +169,12 @@ class OrgStrategy(ABC):
     """
 
     supported_formulations: ClassVar[frozenset[StrategyFormulation]] = frozenset(
-        {StrategyFormulation.ORIGINAL}
+        {StrategyFormulation.LEGACY}
     )
 
     def __init__(
         self,
-        formulation: StrategyFormulation | str = StrategyFormulation.ORIGINAL,
+        formulation: StrategyFormulation | str = StrategyFormulation.LEGACY,
         **kwargs: Any,
     ):
         """Initialise the strategy with optional parameters.
