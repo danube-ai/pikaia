@@ -64,7 +64,6 @@ class PikaiaModel(GeneticModel):
         threshold, indicating convergence.
         """
         import time
-
         if self._formulation is StrategyFormulation.STANDARD and self._max_iter is None:
             raise ValueError(
                 "STANDARD requires max_iter to be set because the analytical "
@@ -91,6 +90,14 @@ class PikaiaModel(GeneticModel):
             )
             return
 
+        # Alternative implementation starts here
+        use_new_d_matrix = True
+        if use_new_d_matrix:
+            self._compute_new_d_matrix()
+            self._run_new_d_matrix_iterations()
+            #import pdb; pdb.set_trace()
+
+        # Classical implementation below
         start_time = time.perf_counter()
         if self._use_d_matrix:
             logger.info("D-matrix path selected. Precomputing D matrix...")
@@ -233,6 +240,9 @@ class PikaiaModel(GeneticModel):
         gene_fitness = current_gene_fitness * (
             1 + np.sum(mixed_delta_g + mixed_delta_o, axis=0)
         )
+        logger.info(
+                        f"Classical result. gamma=[{', '.join(f'{x:.6g}' for x in gene_fitness)}]. . "
+                    )
         gene_fitness /= np.sum(gene_fitness)
 
         org_fitness = np.dot(self._population.matrix, gene_fitness)
@@ -434,6 +444,93 @@ class PikaiaModel(GeneticModel):
                 f"D-matrix completed {self._max_iter} iterations without ESE. "
                 f"Total: {total_elapsed:.4f}s."
             )
+
+    def _run_new_d_matrix_iterations(self) -> None:
+            """Run the new D-matrix fast iteration loop.
+    
+            Uses the precomputed ``self._newDmatrix`` to execute each
+            step in ``O(M²)`` instead of ``O(N·M²)``.
+    
+            """
+            import time
+           
+            
+            epsilon = self._epsilon
+
+ 
+            gene_mix_coeffs = np.array(self._initial_gene_mixing_coeffs)
+            org_mix_coeffs = np.array(self._initial_org_mixing_coeffs)
+            
+    
+            logger.info(
+                f"Starting new D-matrix iteration for up to {self._max_iter} iterations."
+            )
+            total_start = time.perf_counter()
+    
+            for i in range(1, (self._max_iter or 1) + 1):
+                iter_start = time.perf_counter()
+                logger.debug(f"new D-matrix iteration {i}...")
+                gamma = self._gene_fitness_hist[i - 1, :]
+      
+                # Fast replicator step
+                all_pairs = list(
+                    zip(self._gene_strategies, gene_mix_coeffs)
+                ) + list(zip(self._org_strategies, org_mix_coeffs))
+                step = np.zeros([1, self._population.M])
+                for strat, coeff in all_pairs:
+                    if strat.is_bilinear:
+                        step += coeff * gamma * (strat._newDmatrix @ gamma) 
+                    else:
+                        step += coeff*strat._newDmatrix @ gamma 
+
+                gamma_new = gamma * (1.0 + step)
+                logger.info(
+                        f"New D-matrix result. gamma=[{', '.join(f'{x:.6g}' for x in gamma_new.ravel())}]. . "
+                )
+    
+                normalization = gamma_new.sum()
+                if (
+                    not np.all(np.isfinite(gamma_new))
+                    or np.any(gamma_new < 0)
+                    or not np.isfinite(normalization)
+                    or normalization <= 0
+                ):
+                    raise ValueError(
+                        "D-matrix step produced invalid gene fitness at iteration "
+                        f"{i}. The selected population, strategies, coefficients, or "
+                        "initial fitness values are outside the stable numerical range "
+                        "of the reduced update. Use the iterative path or revise the "
+                        "configuration."
+                    )
+                gamma_new /= normalization
+    
+                self._gene_fitness_hist[i, :] = gamma_new
+                
+                self._org_fitness_hist[i, :] = (self._population.matrix @ gamma_new.T).T
+    
+                self._gene_mixing_coeffs_hist[i, :] = gene_mix_coeffs
+                self._org_mixing_coeffs_hist[i, :] = org_mix_coeffs
+    
+                delta_norm = np.linalg.norm(gamma_new - gamma)
+                iter_elapsed = time.perf_counter() - iter_start
+                logger.debug(
+                    f"D-matrix iteration {i} done. Δ={delta_norm:.6g}. "
+                    f"Time: {iter_elapsed:.4f}s."
+                )
+                if epsilon is not None and delta_norm < epsilon:
+                    self._ESE_iter = i
+                    total_elapsed = time.perf_counter() - total_start
+                    logger.info(
+                        f"D-matrix reached ESE after {i} iterations. "
+                        f"Δ={delta_norm}. Total: {total_elapsed:.4f}s."
+                    )
+                    break
+            else:
+                total_elapsed = time.perf_counter() - total_start
+                logger.info(
+                    f"D-matrix completed {self._max_iter} iterations without ESE. "
+                    f"Total: {total_elapsed:.4f}s."
+                )
 
     def predict(self, population: PikaiaPopulation) -> np.ndarray:
         """Predicts the organism fitness for a new population using the fitted model.

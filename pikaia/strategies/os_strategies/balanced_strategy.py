@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from pikaia.data.population import PikaiaPopulation
+from pikaia.schemas.strategies import StrategyFormulation
 from pikaia.strategies.base_strategies import OrgStrategy, StrategyContext
 
 
@@ -59,3 +61,39 @@ class BalancedOrgStrategy(OrgStrategy):
             * current_org_fitness
         )
         return delta_o
+
+    def kernel(
+            self,
+            population: PikaiaPopulation,
+            gene_similarity: np.ndarray,
+            org_similarity: np.ndarray,
+            initial_org_fitness_range: float,
+            y: np.ndarray | None = None,
+        ) -> tuple[np.ndarray | None, np.ndarray | None]:
+            """Return the formulation-specific exact dominant-gene D matrix.
+    
+            Args:
+                population: Population providing the ``(N, M)`` data matrix.
+                gene_similarity: Unused.
+                org_similarity: Unused.
+                initial_org_fitness_range: Unused.
+                y: Unused.
+    
+            Returns:
+                ``(D, None)``. Returns the D-Matrix for Org-Balanced according 
+                to the formula in arxiv 2605.26685v2
+    
+            """
+            
+            diagonal = -2*population.matrix.mean(axis=0)
+            addvec = 2/population.M*population.matrix.mean(axis=0)
+            D = np.diag(diagonal)
+            
+            D += np.matlib.repmat(addvec, population.M, 1)
+    
+            
+            return D, None
+
+    @property
+    def is_bilinear(self) -> bool:
+        return False

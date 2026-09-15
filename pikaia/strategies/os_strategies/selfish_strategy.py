@@ -177,3 +177,7 @@ class SelfishOrgStrategy(OrgStrategy):
     def supports_d_matrix(self) -> bool:
         """Support the exact kernel only for ``STANDARD``."""
         return self.formulation is StrategyFormulation.STANDARD
+
+    @property
+    def is_bilinear(self) -> bool:
+        return True

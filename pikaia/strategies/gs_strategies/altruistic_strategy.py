@@ -162,3 +162,7 @@ class AltruisticGeneStrategy(GeneStrategy):
     def supports_d_matrix(self) -> bool:
         """Indicate that both supported formulations have an exact D kernel."""
         return True
+
+    @property
+    def is_bilinear(self) -> bool:
+        return True

@@ -475,6 +475,38 @@ class GeneticModel(ABC):
         self._D_matrix = D_total if has_D else None
         self._d_vector = d_total if has_d else None
 
+    def _compute_new_d_matrix(self) -> None:
+            """Precompute the combined D matrix for the new D-matrix path.
+    
+            Calls ``strategy.kernel(...)`` to obtain each used strategies variant.
+    
+            Populates:
+    
+            - ``self._newDmatrix``: combined ``(M, M)`` bilinear matrix, or ``None``.
+            """
+            M = self._population.M
+    
+            all_pairs = list(
+                zip(self._gene_strategies, self._initial_gene_mixing_coeffs)
+            ) + list(zip(self._org_strategies, self._initial_org_mixing_coeffs))
+    
+            for strat, coeff in all_pairs:
+                kernel_kwargs = (
+                    {"normalizations": self._strategy_normalizations}
+                    if strat.requires_normalizations
+                    else {}
+                )
+                D_s, d_s = strat.kernel(
+                    self._population,
+                    self._active_gene_similarity,
+                    self._active_org_similarity,
+                    self._initial_org_fitness_range,
+                    self._y,
+                    **kernel_kwargs,
+                )
+                strat._newDmatrix = D_s
+
+
     def _validate_d_matrix_configuration(self) -> None:
         """Validate formulation-specific D-matrix configuration constraints.
 

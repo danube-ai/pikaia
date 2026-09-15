@@ -161,6 +161,10 @@ class GeneStrategy(ABC):
         """
         return False
 
+    @property
+    def is_bilinear(self) -> bool:
+        return False
+
 
 class OrgStrategy(ABC):
     """Abstract base class for organism strategies.

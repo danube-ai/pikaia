@@ -86,18 +86,13 @@ class DominantGeneStrategy(GeneStrategy):
 
         Returns:
             ``(D, None)``. For ``LEGACY``, ``D`` is diagonal with
-            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``STANDARD``, every entry
-            in row ``j`` equals ``x_bar_j - 0.5``. Because gene fitness is
-            normalised to sum to one, the row-constant matrix exactly encodes
-            the formulation's signal ``gamma_j * (x_bar_j - 0.5)``.
+            ``D[j, j] = 4 * (x_bar_j - 0.5)``. For ``STANDARD``, ``D`` is diagonal with
+            ``x_bar_j - 0.5``. 
 
         """
         mean_centered_expression = population.matrix.mean(axis=0) - 0.5
         if self.formulation is StrategyFormulation.STANDARD:
-            D = np.broadcast_to(
-                mean_centered_expression[:, np.newaxis],
-                (population.M, population.M),
-            ).copy()
+            D = np.diag(mean_centered_expression)
             return D, None
 
         D = np.diag(4.0 * mean_centered_expression)
@@ -107,3 +102,7 @@ class DominantGeneStrategy(GeneStrategy):
     def supports_d_matrix(self) -> bool:
         """Indicate that both supported formulations have exact D kernels."""
         return True
+
+    @property
+    def is_bilinear(self) -> bool:
+        return False
