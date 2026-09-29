@@ -45,18 +45,25 @@ class BalancedOrgStrategy(OrgStrategy):
             np.ndarray: A vector of computed delta values `Delta_O(i,j)` of shape `(m,)`.
 
         """
+        if ctx.sub_population is None:
+            population = ctx.population
+            gene_fitness = ctx.gene_fitness
+        else:
+            population = ctx.sub_population
+            gene_fitness = ctx.gene_fitness[ctx.org_id,:]
+
         current_org_fitness = ctx.org_fitness[ctx.org_id]
 
         if current_org_fitness == 0:
-            return np.zeros(ctx.population.M)
+            return np.zeros(population.M)
 
         delta_o = (
             # constant factor and normalization by population size
-            (-2 / ctx.population.N)
+            (-2 / population.N)
             # deviation from ideal balanced contribution
             * (
-                (ctx.population[ctx.org_id, :] * ctx.gene_fitness) / current_org_fitness
-                - 1 / ctx.population.M
+                (population[ctx.org_id, :] * gene_fitness) / current_org_fitness
+                - 1 / population.M
             )
             * current_org_fitness
         )

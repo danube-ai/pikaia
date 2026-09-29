@@ -51,20 +51,26 @@ class DominantGeneStrategy(GeneStrategy):
             float: The computed delta value `Delta_G(i,j)` for the specified gene and organism.
 
         """
+        if ctx.sub_population is None:
+            population = ctx.population
+            gene_fitness = ctx.gene_fitness[ctx.gene_id]
+        else:
+            population = ctx.sub_population
+            #import pdb; pdb.set_trace()
+            gene_fitness = ctx.gene_fitness[ctx.org_id, ctx.gene_id]
+            #import pdb; pdb.set_trace()
+
         if self.formulation is StrategyFormulation.STANDARD:
-            return float(
-                (1 / ctx.population.N)
-                * ctx.gene_fitness[ctx.gene_id]
-                * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            return float((1 / ctx.population.N) * gene_fitness * (population[ctx.org_id, ctx.gene_id] - 0.5)
             )
 
         return float(
             # constant factor and normalization by population size
-            (4 / ctx.population.N)
+            (4 / population.N)
             # fitness of current gene squared
-            * ctx.gene_fitness[ctx.gene_id] ** 2
+            * gene_fitness ** 2
             # gene variant fitness minus 0.5
-            * (ctx.population[ctx.org_id, ctx.gene_id] - 0.5)
+            * (population[ctx.org_id, ctx.gene_id] - 0.5)
         )
 
     def kernel(

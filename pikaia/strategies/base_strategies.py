@@ -40,6 +40,8 @@ class StrategyContext:
     y: Optional[np.ndarray] = None
     #: Immutable population-derived values needed by some formulations.
     normalizations: StrategyNormalizations | None = None
+    # a given set of organisms for the Strategy to be computed
+    sub_population: PikaiaPopulation | None = None
 
 
 class GeneStrategy(ABC):

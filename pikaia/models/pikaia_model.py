@@ -54,7 +54,8 @@ class PikaiaModel(GeneticModel):
         self._D_matrix: np.ndarray | None = None
         self._d_vector: np.ndarray | None = None
 
-    def fit(self) -> None:
+    def fit(self, subset_orgs: PikaiaPopulation | None=None,
+            initial_gene_fitness: np.ndarray | None=None) -> None:
         """Fit the genetic model by running the simulation.
 
         This method iteratively updates the gene and organism fitness values based on the
@@ -64,6 +65,35 @@ class PikaiaModel(GeneticModel):
         threshold, indicating convergence.
         """
         import time
+
+        if subset_orgs is not None:
+            
+            NSUB = subset_orgs.N
+            # History containers
+            self._subset_gene_fitness_hist = np.zeros(
+                [(self._max_iter or 1) + 1, NSUB, subset_orgs.M]
+            )
+            self._subset_gene_fitness_hist[0, :, :] = (
+                np.array(initial_gene_fitness)
+                if initial_gene_fitness is not None
+                else np.array([np.ones(subset_orgs.M) / subset_orgs.M]*NSUB)
+            )
+            self._subset_org_fitness_hist = np.zeros(
+                [(self._max_iter or 1) + 1, NSUB]
+            )
+            self._subset_org_fitness_hist[0, :] = np.dot(
+                subset_orgs.matrix, self._subset_gene_fitness_hist[0, :, :].T
+            )
+            self._subset_gene_mixing_coeffs_hist = np.zeros(
+                [(self._max_iter or 1) + 1, len(self._gene_strategies), NSUB]
+            )
+            self._subset_gene_mixing_coeffs_hist[0, :, :] = np.array([self._initial_gene_mixing_coeffs]*NSUB)
+            self._subset_org_mixing_coeffs_hist = np.zeros(
+                [(self._max_iter or 1) + 1, len(self._org_strategies), NSUB]
+            )
+            self._subset_org_mixing_coeffs_hist[0, :, :] = np.array(self._initial_org_mixing_coeffs*NSUB)
+            
+
         if self._formulation is StrategyFormulation.STANDARD and self._max_iter is None:
             raise ValueError(
                 "STANDARD requires max_iter to be set because the analytical "
@@ -95,7 +125,6 @@ class PikaiaModel(GeneticModel):
         if use_new_d_matrix:
             self._compute_new_d_matrix()
             self._run_new_d_matrix_iterations()
-            #import pdb; pdb.set_trace()
 
         # Classical implementation below
         start_time = time.perf_counter()
@@ -111,7 +140,7 @@ class PikaiaModel(GeneticModel):
             self._run_fix_point()
         else:
             logger.info(f"Running simulation for up to {self._max_iter} iterations.")
-            self._run_iterations()
+            self._run_iterations(subset_orgs=subset_orgs)
         total_time = time.perf_counter() - start_time
         logger.info(f"Total fit process time: {total_time:.4f} seconds.")
 
@@ -151,7 +180,8 @@ class PikaiaModel(GeneticModel):
         elapsed = time.perf_counter() - start_time
         logger.debug(f"_run_fix_point completed in {elapsed:.4f} seconds.")
 
-    def _run_iterations(self):
+    def _run_iterations(self,
+                        subset_orgs: PikaiaPopulation | None = None):
         """Run the evolutionary simulation for multiple iterations.
 
         This method iterates over the specified number of iterations, updating
@@ -168,13 +198,23 @@ class PikaiaModel(GeneticModel):
         for i in range(1, (self._max_iter or 1) + 1):
             iter_start = time.perf_counter()
             logger.debug(f"Starting iteration {i}...")
-            # 1. Run iteration
-            (
-                self._gene_fitness_hist[i, :],
-                self._org_fitness_hist[i, :],
-                self._gene_mixing_coeffs_hist[i, :],
-                self._org_mixing_coeffs_hist[i, :],
-            ) = self._run_iteration(i)
+
+            if subset_orgs is None:
+                # 1. Run iteration
+                (
+                    self._gene_fitness_hist[i, :],
+                    self._org_fitness_hist[i, :],
+                    self._gene_mixing_coeffs_hist[i, :],
+                    self._org_mixing_coeffs_hist[i, :],
+                ) = self._run_iteration(i)
+            else:
+                (
+                    self._subset_gene_fitness_hist[i, :, :],
+                    self._subset_org_fitness_hist[i, :],
+                    self._gene_mixing_coeffs_hist[i, :],
+                    self._org_mixing_coeffs_hist[i, :],
+                ) = self._run_iteration(i, subset_orgs)
+
 
             # 2. Check for convergence
             delta = np.linalg.norm(
@@ -200,9 +240,10 @@ class PikaiaModel(GeneticModel):
                 f"Completed all {self._max_iter} iterations without reaching ESE. "
                 f"Total time: {total_elapsed:.4f} seconds."
             )
+            
 
     def _run_iteration(
-        self, iter_num: int
+        self, iter_num: int, subset_orgs: PikaiaPopulation | None=None
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Run a single evolutionary step of the simulation.
 
@@ -221,31 +262,47 @@ class PikaiaModel(GeneticModel):
                 - The new organism mixing coefficients.
 
         """
-        current_org_fitness = self._org_fitness_hist[iter_num - 1, :]
-        current_gene_fitness = self._gene_fitness_hist[iter_num - 1, :]
+        if subset_orgs is None:
+            current_org_fitness = self._org_fitness_hist[iter_num - 1, :]
+            current_gene_fitness = self._gene_fitness_hist[iter_num - 1, :]
+            population = self._population
+        else:
+            current_org_fitness = self._subset_org_fitness_hist[iter_num - 1, :]
+            current_gene_fitness = self._subset_gene_fitness_hist[iter_num - 1, :, :]
+            population = subset_orgs
 
         delta_g, delta_o = self._calculate_deltas(
-            current_org_fitness, current_gene_fitness
+            current_org_fitness, current_gene_fitness, subset_orgs
         )
 
         # 2. Mix evolutionary strategies
         mixed_delta_g, gene_mixing_coeffs = self._gene_mix_strategy(
             delta_g, self._gene_mixing_coeffs_hist[iter_num - 1, :]
-        )
+            )
         mixed_delta_o, org_mixing_coeffs = self._org_mix_strategy(
             delta_o, self._org_mixing_coeffs_hist[iter_num - 1, :]
-        )
+            )
+        
 
         # 3. Apply delta in form of the central replicator equations
-        gene_fitness = current_gene_fitness * (
-            1 + np.sum(mixed_delta_g + mixed_delta_o, axis=0)
-        )
-        logger.info(
-                        f"Classical result. gamma=[{', '.join(f'{x:.6g}' for x in gene_fitness)}]. . "
-                    )
+        if subset_orgs is None:
+            gene_fitness = current_gene_fitness * (
+                1 + np.sum(mixed_delta_g + mixed_delta_o, axis=0)
+            )
+            logger.info(
+                f"Classical result. gamma=[{', '.join(f'{x:.6g}' for x in gene_fitness)}]. . "
+            )
+        else:
+            gene_fitness = current_gene_fitness * (
+                            1 + mixed_delta_g + mixed_delta_o
+                        )
+        
         gene_fitness /= np.sum(gene_fitness)
 
-        org_fitness = np.dot(self._population.matrix, gene_fitness)
+        if subset_orgs is None:
+            org_fitness = np.dot(population.matrix, gene_fitness)
+        else:
+            org_fitness = np.dot(population.matrix, gene_fitness.T)
 
         return (
             gene_fitness,
@@ -255,7 +312,8 @@ class PikaiaModel(GeneticModel):
         )
 
     def _calculate_deltas(
-        self, current_org_fitness: np.ndarray, current_gene_fitness: np.ndarray
+        self, current_org_fitness: np.ndarray, current_gene_fitness: np.ndarray,
+        subset_orgs: PikaiaPopulation | None=None
     ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate delta contributions for gene and organism fitness updates.
 
@@ -269,11 +327,17 @@ class PikaiaModel(GeneticModel):
             tuple[np.ndarray, np.ndarray]: A tuple containing the delta_g and delta_o matrices.
 
         """
+
+        if subset_orgs is None:
+            population = self._population
+        else:
+            population = subset_orgs
+
         delta_g = np.zeros(
-            [self._population.N, self._population.M, len(self._gene_strategies)]
+            [population.N, population.M, len(self._gene_strategies)]
         )
         delta_o = np.zeros(
-            [self._population.N, self._population.M, len(self._org_strategies)]
+            [population.N, population.M, len(self._org_strategies)]
         )
 
         context_args = {
@@ -285,6 +349,7 @@ class PikaiaModel(GeneticModel):
             "gene_similarity": self._active_gene_similarity,
             "normalizations": self._strategy_normalizations,
             "y": self._y,
+            "sub_population": subset_orgs
         }
 
         if self._n_jobs > 1:
@@ -324,16 +389,26 @@ class PikaiaModel(GeneticModel):
                             res_idx += 1
         else:
             # Naive loop-based calculation
-            for org_id in range(self._population.N):
+            for org_id in range(population.N):
                 for i, strat in enumerate(self._org_strategies):
-                    delta_o[org_id, :, i] = PikaiaModel._compute_single_delta(
-                        strat, org_id, None, context_args
-                    )
-                for gene_id in range(self._population.M):
-                    for i, strat in enumerate(self._gene_strategies):
-                        delta_g[org_id, gene_id, i] = PikaiaModel._compute_single_delta(
-                            strat, org_id, gene_id, context_args
+                    if subset_orgs is None:
+                        delta_o[org_id, :, i] = PikaiaModel._compute_single_delta(
+                            strat, org_id, None, context_args
                         )
+                    else:
+                        delta_o[org_id, :, i] = PikaiaModel._compute_subset_delta(
+                            strat, org_id, None, subset_orgs, context_args
+                        )
+                for gene_id in range(population.M):
+                    for i, strat in enumerate(self._gene_strategies):
+                        if subset_orgs is None:
+                            delta_g[org_id, gene_id, i] = PikaiaModel._compute_single_delta(
+                                strat, org_id, gene_id, context_args
+                            )
+                        else:
+                            delta_g[org_id, gene_id, i] = PikaiaModel._compute_subset_delta(
+                                                            strat, org_id, gene_id, subset_orgs, context_args
+                                                        )
         return delta_g, delta_o
 
     @staticmethod
@@ -359,6 +434,35 @@ class PikaiaModel(GeneticModel):
             StrategyContext(
                 org_id=org_id,
                 gene_id=gene_id,
+                **context_args,
+            )
+        )
+
+    @staticmethod
+    def _compute_subset_delta(
+        strat: GeneStrategy | OrgStrategy,
+        org_id: int,
+        gene_id: int | None,
+        sub_population: PikaiaPopulation,
+        context_args: dict,
+    ) -> np.ndarray | float:
+        """Compute one delta contribution for an organism or gene strategy.
+
+        Args:
+            strat (GeneStrategy | OrgStrategy): The strategy to apply.
+            org_id (int): The organism ID.
+            gene_id (int | None): The gene ID, required for "gene" type.
+            context_args (dict): A dictionary of common arguments for StrategyContext.
+
+        Returns:
+            np.ndarray | float: The computed delta value(s).
+
+        """
+        return strat(
+            StrategyContext(
+                org_id=org_id,
+                gene_id=gene_id,
+                #sub_population=sub_population,
                 **context_args,
             )
         )
